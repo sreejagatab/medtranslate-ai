@@ -1,0 +1,74 @@
+---
+# AWS IoT Greengrass Configuration for MedTranslate AI Edge Device
+system:
+  certificateFilePath: "/config/certificates/device.pem.crt"
+  privateKeyPath: "/config/certificates/private.pem.key"
+  rootCaPath: "/config/certificates/AmazonRootCA1.pem"
+  thingName: "${DEVICE_ID:-MedTranslateEdgeDevice}"
+  
+services:
+  aws.greengrass.Nucleus:
+    version: "2.5.0"
+    configuration:
+      awsRegion: "${AWS_REGION:-us-east-1}"
+      iotCredEndpoint: "${IOT_CRED_ENDPOINT}"
+      iotDataEndpoint: "${IOT_DATA_ENDPOINT}"
+      iotRoleAlias: "${IOT_ROLE_ALIAS:-MedTranslateEdgeRoleAlias}"
+      
+  aws.greengrass.StreamManager:
+    version: "2.0.0"
+    configuration:
+      memorySize: 64
+
+components:
+  # Translation Service Component
+  com.medtranslate.TranslationService:
+    version: "1.0.0"
+    configuration:
+      modelDir: "/models"
+      cacheDir: "/cache"
+      syncDir: "/sync"
+      logLevel: "INFO"
+      cloudApiUrl: "${CLOUD_API_URL:-https://api.medtranslate.ai}"
+      supportedLanguages: ["en", "es", "fr", "de", "zh", "ja", "ar", "ru"]
+    dependencies:
+      - aws.greengrass.StreamManager
+    lifecycle:
+      install:
+        script: |
+          mkdir -p /models /cache /sync /logs
+          pip3 install -r /app/requirements.txt
+      run:
+        script: |
+          cd /app
+          node server.js
+          
+  # Model Sync Component
+  com.medtranslate.ModelSync:
+    version: "1.0.0"
+    configuration:
+      modelDir: "/models"
+      configDir: "/config"
+      syncInterval: 3600  # Sync every hour (in seconds)
+    dependencies:
+      - com.medtranslate.TranslationService
+    lifecycle:
+      install:
+        script: |
+          mkdir -p /models /config
+      run:
+        script: |
+          cd /app
+          python3 model_sync.py --sync-interval ${syncInterval}
+          
+  # Health Monitor Component
+  com.medtranslate.HealthMonitor:
+    version: "1.0.0"
+    configuration:
+      logDir: "/logs"
+      checkInterval: 300  # Check every 5 minutes (in seconds)
+    lifecycle:
+      run:
+        script: |
+          cd /app
+          node health_monitor.js

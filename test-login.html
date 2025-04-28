@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedTranslate AI - Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #0077CC;
+        }
+        .card {
+            border: 1px solid #EEEEEE;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #CCCCCC;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #0077CC;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005599;
+        }
+        pre {
+            background-color: #F5F5F5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>MedTranslate AI - Test Pages</h1>
+    
+    <div class="card">
+        <h2>Provider Login</h2>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" value="demo">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="demo123">
+        </div>
+        <button onclick="login()">Login</button>
+        
+        <div class="result" id="loginResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Create Session</h2>
+        <div class="form-group">
+            <label for="medicalContext">Medical Context:</label>
+            <input type="text" id="medicalContext" value="cardiology">
+        </div>
+        <button onclick="createSession()">Create Session</button>
+        
+        <div class="result" id="sessionResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Join Session</h2>
+        <div class="form-group">
+            <label for="sessionCode">Session Code:</label>
+            <input type="text" id="sessionCode" placeholder="Enter session code">
+        </div>
+        <button onclick="joinSession()">Join Session</button>
+        
+        <div class="result" id="joinResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Translate Text</h2>
+        <div class="form-group">
+            <label for="sourceText">Text to Translate:</label>
+            <input type="text" id="sourceText" value="Hello, how are you feeling today?">
+        </div>
+        <div class="form-group">
+            <label for="sourceLanguage">Source Language:</label>
+            <input type="text" id="sourceLanguage" value="en">
+        </div>
+        <div class="form-group">
+            <label for="targetLanguage">Target Language:</label>
+            <input type="text" id="targetLanguage" value="es">
+        </div>
+        <button onclick="translateText()">Translate</button>
+        
+        <div class="result" id="translateResult"></div>
+    </div>
+    
+    <script>
+        let authToken = '';
+        let currentSessionId = '';
+        let currentSessionCode = '';
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://localhost:3001/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loginResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success && data.token) {
+                    authToken = data.token;
+                    alert('Login successful! Token saved.');
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function createSession() {
+            if (!authToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const medicalContext = document.getElementById('medicalContext').value;
+            
+            try {
+                const response = await fetch('http://localhost:3001/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ medicalContext })
+                });
+                
+                const data = await response.json();
+                document.getElementById('sessionResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success && data.sessionId) {
+                    currentSessionId = data.sessionId;
+                    currentSessionCode = data.sessionCode;
+                    document.getElementById('sessionCode').value = data.sessionCode;
+                    alert(`Session created! Code: ${data.sessionCode}`);
+                }
+            } catch (error) {
+                document.getElementById('sessionResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function joinSession() {
+            const sessionCode = document.getElementById('sessionCode').value;
+            
+            try {
+                const response = await fetch('http://localhost:3001/sessions/join', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionCode })
+                });
+                
+                const data = await response.json();
+                document.getElementById('joinResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success && data.token) {
+                    alert('Session joined successfully!');
+                }
+            } catch (error) {
+                document.getElementById('joinResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function translateText() {
+            if (!authToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const text = document.getElementById('sourceText').value;
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            
+            try {
+                const response = await fetch('http://localhost:3001/translate/text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ 
+                        text, 
+                        sourceLanguage, 
+                        targetLanguage 
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('translateResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('translateResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

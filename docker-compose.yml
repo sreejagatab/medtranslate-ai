@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # Backend API service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - AWS_REGION=us-east-1
+      - PROVIDERS_TABLE=MedTranslateProviders-local
+      - SESSIONS_TABLE=MedTranslateSessions-local
+      - MEDICAL_TERMINOLOGY_TABLE=MedicalTerminology-local
+      - JWT_SECRET=local-development-secret
+    depends_on:
+      - dynamodb-local
+  
+  # Edge device emulator
+  edge:
+    build:
+      context: ./edge
+      dockerfile: runtime/Dockerfile
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./edge/app:/app
+      - ./edge/models:/models
+      - ./edge/cache:/cache
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MODEL_DIR=/models
+      - CACHE_DIR=/cache
+      - CLOUD_API_URL=http://backend:3001
+      - DEVICE_ID=local-dev-device
+  
+  # Provider app development server
+  provider-app:
+    build:
+      context: ./frontend/provider-app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./frontend/provider-app:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_EDGE_URL=http://localhost:3002
+    depends_on:
+      - backend
+  
+  # Patient app development server
+  patient-app:
+    build:
+      context: ./frontend/patient-app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3004:3000"
+    volumes:
+      - ./frontend/patient-app:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_EDGE_URL=http://localhost:3002
+    depends_on:
+      - backend
+  
+  # Local DynamoDB for development
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    volumes:
+      - ./data/dynamodb:/home/dynamodblocal/data
+  
+  # DynamoDB initialization
+  dynamodb-init:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.dynamodb-init
+    environment:
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+    depends_on:
+      - dynamodb-local
+    volumes:
+      - ./scripts:/app
+    command: "node /app/init-dynamodb.js"
+  
+  # Local S3 for development
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - ./data/localstack:/tmp/localstack/data
+      - /var/run/docker.sock:/var/run/docker.sock

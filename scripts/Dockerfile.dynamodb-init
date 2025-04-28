@@ -1,0 +1,9 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install AWS SDK
+RUN npm install aws-sdk
+
+# The script will be mounted as a volume
+CMD ["node", "/app/init-dynamodb.js"]

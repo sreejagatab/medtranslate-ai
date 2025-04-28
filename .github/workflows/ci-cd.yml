@@ -1,0 +1,358 @@
+name: MedTranslate AI CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+  
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test
+  
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+      
+      - name: Package Lambda functions
+        run: |
+          mkdir -p dist
+          
+          # Auth Lambda
+          cd backend/lambda/auth
+          zip -r ../../../dist/auth.zip .
+          cd ../../..
+          
+          # Translation Lambda
+          cd backend/lambda/translation
+          zip -r ../../../dist/translation.zip .
+          cd ../../..
+          
+          # Storage Lambda
+          cd backend/lambda/storage
+          zip -r ../../../dist/storage.zip .
+          cd ../../..
+      
+      - name: Upload Lambda packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: lambda-packages
+          path: dist/*.zip
+  
+  build-frontend-provider:
+    name: Build Provider Frontend
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          cd frontend/provider-app
+          npm ci
+      
+      - name: Build provider app
+        run: |
+          cd frontend/provider-app
+          npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: provider-app-build
+          path: frontend/provider-app/build
+  
+  build-frontend-patient:
+    name: Build Patient Frontend
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          cd frontend/patient-app
+          npm ci
+      
+      - name: Build patient app
+        run: |
+          cd frontend/patient-app
+          npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: patient-app-build
+          path: frontend/patient-app/build
+  
+  build-edge:
+    name: Build Edge Runtime
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Build and export Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: edge/runtime/Dockerfile
+          tags: medtranslate-edge:latest
+          outputs: type=docker,dest=/tmp/medtranslate-edge.tar
+      
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: edge-docker-image
+          path: /tmp/medtranslate-edge.tar
+  
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend-provider, build-frontend-patient, build-edge]
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    environment: dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Download Lambda packages
+        uses: actions/download-artifact@v3
+        with:
+          name: lambda-packages
+          path: dist
+      
+      - name: Upload Lambda packages to S3
+        run: |
+          aws s3 cp dist/auth.zip s3://medtranslate-deployment-dev/dev/lambda/auth.zip
+          aws s3 cp dist/translation.zip s3://medtranslate-deployment-dev/dev/lambda/translation.zip
+          aws s3 cp dist/storage.zip s3://medtranslate-deployment-dev/dev/lambda/storage.zip
+      
+      - name: Deploy infrastructure
+        run: |
+          cd infrastructure
+          chmod +x deploy.sh
+          ./deploy.sh dev us-east-1
+      
+      - name: Download provider app build
+        uses: actions/download-artifact@v3
+        with:
+          name: provider-app-build
+          path: frontend/provider-app/build
+      
+      - name: Download patient app build
+        uses: actions/download-artifact@v3
+        with:
+          name: patient-app-build
+          path: frontend/patient-app/build
+      
+      - name: Deploy frontend apps to S3
+        run: |
+          aws s3 sync frontend/provider-app/build s3://medtranslate-provider-app-dev --delete
+          aws s3 sync frontend/patient-app/build s3://medtranslate-patient-app-dev --delete
+      
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PROVIDER_APP_DISTRIBUTION_ID }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PATIENT_APP_DISTRIBUTION_ID }} --paths "/*"
+  
+  deploy-test:
+    name: Deploy to Test
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend-provider, build-frontend-patient, build-edge]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'test')
+    environment: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Download Lambda packages
+        uses: actions/download-artifact@v3
+        with:
+          name: lambda-packages
+          path: dist
+      
+      - name: Upload Lambda packages to S3
+        run: |
+          aws s3 cp dist/auth.zip s3://medtranslate-deployment-test/test/lambda/auth.zip
+          aws s3 cp dist/translation.zip s3://medtranslate-deployment-test/test/lambda/translation.zip
+          aws s3 cp dist/storage.zip s3://medtranslate-deployment-test/test/lambda/storage.zip
+      
+      - name: Deploy infrastructure
+        run: |
+          cd infrastructure
+          chmod +x deploy.sh
+          ./deploy.sh test us-east-1
+      
+      - name: Download provider app build
+        uses: actions/download-artifact@v3
+        with:
+          name: provider-app-build
+          path: frontend/provider-app/build
+      
+      - name: Download patient app build
+        uses: actions/download-artifact@v3
+        with:
+          name: patient-app-build
+          path: frontend/patient-app/build
+      
+      - name: Deploy frontend apps to S3
+        run: |
+          aws s3 sync frontend/provider-app/build s3://medtranslate-provider-app-test --delete
+          aws s3 sync frontend/patient-app/build s3://medtranslate-patient-app-test --delete
+      
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PROVIDER_APP_DISTRIBUTION_ID }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PATIENT_APP_DISTRIBUTION_ID }} --paths "/*"
+  
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-test
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    environment: prod
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Download Lambda packages
+        uses: actions/download-artifact@v3
+        with:
+          name: lambda-packages
+          path: dist
+      
+      - name: Upload Lambda packages to S3
+        run: |
+          aws s3 cp dist/auth.zip s3://medtranslate-deployment-prod/prod/lambda/auth.zip
+          aws s3 cp dist/translation.zip s3://medtranslate-deployment-prod/prod/lambda/translation.zip
+          aws s3 cp dist/storage.zip s3://medtranslate-deployment-prod/prod/lambda/storage.zip
+      
+      - name: Deploy infrastructure
+        run: |
+          cd infrastructure
+          chmod +x deploy.sh
+          ./deploy.sh prod us-east-1
+      
+      - name: Download provider app build
+        uses: actions/download-artifact@v3
+        with:
+          name: provider-app-build
+          path: frontend/provider-app/build
+      
+      - name: Download patient app build
+        uses: actions/download-artifact@v3
+        with:
+          name: patient-app-build
+          path: frontend/patient-app/build
+      
+      - name: Deploy frontend apps to S3
+        run: |
+          aws s3 sync frontend/provider-app/build s3://medtranslate-provider-app-prod --delete
+          aws s3 sync frontend/patient-app/build s3://medtranslate-patient-app-prod --delete
+      
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PROVIDER_APP_DISTRIBUTION_ID }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PATIENT_APP_DISTRIBUTION_ID }} --paths "/*"

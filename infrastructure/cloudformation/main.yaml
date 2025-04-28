@@ -1,0 +1,480 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'MedTranslate AI - Main Infrastructure Stack'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: Deployment environment
+
+  RetentionPeriodDays:
+    Type: Number
+    Default: 30
+    Description: Number of days to retain data before automatic deletion
+
+Resources:
+  # IAM Roles
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: MedTranslatePermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt ProvidersTable.Arn
+                  - !GetAtt SessionsTable.Arn
+                  - !Sub "${SessionsTable.Arn}/index/*"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${SecureStorageBucket}"
+                  - !Sub "arn:aws:s3:::${SecureStorageBucket}/*"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:GenerateDataKey
+                Resource: !GetAtt EncryptionKey.Arn
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref JwtSecret
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: "*"
+
+  EdgeDeviceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: greengrass.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/GreengrassServiceRole
+      Policies:
+        - PolicyName: MedTranslateEdgePermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${ModelsBucket}/*"
+              - Effect: Allow
+                Action:
+                  - execute-api:Invoke
+                Resource: "*"
+
+  # KMS Key for Encryption
+  EncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Key for encrypting MedTranslate data
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: kms:*
+            Resource: "*"
+          - Sid: Allow Lambda to use the key
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt LambdaExecutionRole.Arn
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: "*"
+
+  EncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/MedTranslateKey
+      TargetKeyId: !Ref EncryptionKey
+
+  # Secrets Manager for JWT Secret
+  JwtSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: MedTranslateJwtSecret
+      Description: JWT signing secret for MedTranslate AI
+      GenerateSecretString:
+        SecretStringTemplate: '{"secret":""}'
+        GenerateStringKey: "secret"
+        PasswordLength: 32
+        ExcludeCharacters: '"@/\\'
+
+  # DynamoDB Tables
+  ProvidersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "MedTranslateProviders-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: username
+          AttributeType: S
+        - AttributeName: providerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: username
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ProviderIdIndex
+          KeySchema:
+            - AttributeName: providerId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "MedTranslateSessions-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sessionId
+          AttributeType: S
+        - AttributeName: sessionCode
+          AttributeType: S
+        - AttributeName: providerId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sessionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: SessionCodeIndex
+          KeySchema:
+            - AttributeName: sessionCode
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: ProviderSessionsIndex
+          KeySchema:
+            - AttributeName: providerId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expirationTime
+        Enabled: true
+
+  # S3 Buckets
+  SecureStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "medtranslate-secure-storage-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldData
+            Status: Enabled
+            ExpirationInDays: !Ref RetentionPeriodDays
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ModelsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "medtranslate-models-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # Lambda Functions
+  AuthFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-auth-${Environment}"
+      Runtime: nodejs18.x
+      Handler: auth/handler.login
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/auth.zip"
+      Environment:
+        Variables:
+          PROVIDERS_TABLE: !Ref ProvidersTable
+          SESSIONS_TABLE: !Ref SessionsTable
+          JWT_SECRET_ARN: !Ref JwtSecret
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+
+  CreateSessionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-create-session-${Environment}"
+      Runtime: nodejs18.x
+      Handler: auth/handler.createSession
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/auth.zip"
+      Environment:
+        Variables:
+          PROVIDERS_TABLE: !Ref ProvidersTable
+          SESSIONS_TABLE: !Ref SessionsTable
+          JWT_SECRET_ARN: !Ref JwtSecret
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+
+  GeneratePatientTokenFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-generate-patient-token-${Environment}"
+      Runtime: nodejs18.x
+      Handler: auth/handler.generatePatientToken
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/auth.zip"
+      Environment:
+        Variables:
+          PROVIDERS_TABLE: !Ref ProvidersTable
+          SESSIONS_TABLE: !Ref SessionsTable
+          JWT_SECRET_ARN: !Ref JwtSecret
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+
+  JoinSessionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-join-session-${Environment}"
+      Runtime: nodejs18.x
+      Handler: auth/handler.joinSession
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/auth.zip"
+      Environment:
+        Variables:
+          PROVIDERS_TABLE: !Ref ProvidersTable
+          SESSIONS_TABLE: !Ref SessionsTable
+          JWT_SECRET_ARN: !Ref JwtSecret
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+
+  TranslateTextFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-translate-text-${Environment}"
+      Runtime: nodejs18.x
+      Handler: translation/handler.translateText
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/translation.zip"
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: amazon.titan-text-express-v1
+          MEDICAL_TERMINOLOGY_TABLE: !Ref MedicalTerminologyTable
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 512
+
+  TranslateAudioFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-translate-audio-${Environment}"
+      Runtime: nodejs18.x
+      Handler: translation/handler.translateAudio
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/translation.zip"
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: amazon.titan-text-express-v1
+          MEDICAL_TERMINOLOGY_TABLE: !Ref MedicalTerminologyTable
+          AUDIO_BUCKET: !Ref SecureStorageBucket
+          ENVIRONMENT: !Ref Environment
+      Timeout: 60
+      MemorySize: 1024
+
+  StoreTranscriptFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-store-transcript-${Environment}"
+      Runtime: nodejs18.x
+      Handler: storage/handler.storeTranscript
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/storage.zip"
+      Environment:
+        Variables:
+          SECURE_STORAGE_BUCKET: !Ref SecureStorageBucket
+          KMS_KEY_ID: !Ref EncryptionKey
+          JWT_SECRET_ARN: !Ref JwtSecret
+          RETENTION_PERIOD_DAYS: !Ref RetentionPeriodDays
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+
+  GetSessionDataFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-get-session-data-${Environment}"
+      Runtime: nodejs18.x
+      Handler: storage/handler.getSessionData
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/storage.zip"
+      Environment:
+        Variables:
+          SECURE_STORAGE_BUCKET: !Ref SecureStorageBucket
+          KMS_KEY_ID: !Ref EncryptionKey
+          JWT_SECRET_ARN: !Ref JwtSecret
+          ENVIRONMENT: !Ref Environment
+      Timeout: 30
+      MemorySize: 256
+
+  CleanupExpiredDataFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-cleanup-expired-data-${Environment}"
+      Runtime: nodejs18.x
+      Handler: storage/handler.cleanupExpiredData
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Sub "${Environment}/lambda/storage.zip"
+      Environment:
+        Variables:
+          SECURE_STORAGE_BUCKET: !Ref SecureStorageBucket
+          RETENTION_PERIOD_DAYS: !Ref RetentionPeriodDays
+          ENVIRONMENT: !Ref Environment
+      Timeout: 300
+      MemorySize: 512
+
+  # Scheduled Event for Data Cleanup
+  CleanupScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Scheduled rule to clean up expired data"
+      ScheduleExpression: "rate(1 day)"
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt CleanupExpiredDataFunction.Arn
+          Id: "CleanupExpiredData"
+
+  CleanupPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CleanupExpiredDataFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt CleanupScheduledRule.Arn
+
+  # Additional DynamoDB Table for Medical Terminology
+  MedicalTerminologyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "MedicalTerminology-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: term_source
+          AttributeType: S
+        - AttributeName: domain
+          AttributeType: S
+      KeySchema:
+        - AttributeName: term_source
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: DomainIndex
+          KeySchema:
+            - AttributeName: domain
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # Deployment Bucket Parameter
+  DeploymentBucket:
+    Type: String
+    Default: medtranslate-deployment
+    Description: S3 bucket containing Lambda deployment packages
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+
+  SecureStorageBucketName:
+    Description: Name of the secure storage S3 bucket
+    Value: !Ref SecureStorageBucket
+
+  ModelsBucketName:
+    Description: Name of the models S3 bucket
+    Value: !Ref ModelsBucket
+
+  ProvidersTableName:
+    Description: Name of the providers DynamoDB table
+    Value: !Ref ProvidersTable
+
+  SessionsTableName:
+    Description: Name of the sessions DynamoDB table
+    Value: !Ref SessionsTable
+
+  MedicalTerminologyTableName:
+    Description: Name of the medical terminology DynamoDB table
+    Value: !Ref MedicalTerminologyTable

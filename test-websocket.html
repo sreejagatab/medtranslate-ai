@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedTranslate AI - WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #0077CC;
+        }
+        .card {
+            border: 1px solid #EEEEEE;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #CCCCCC;
+            border-radius: 4px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #0077CC;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #005599;
+        }
+        pre {
+            background-color: #F5F5F5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .messages {
+            border: 1px solid #EEEEEE;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background-color: #F9F9F9;
+        }
+        .message {
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+        .provider-message {
+            background-color: #E1F5FE;
+            margin-left: 20%;
+            margin-right: 5%;
+        }
+        .patient-message {
+            background-color: #FFFFFF;
+            margin-left: 5%;
+            margin-right: 20%;
+            border: 1px solid #EEEEEE;
+        }
+        .system-message {
+            background-color: #E8F5E9;
+            margin-left: 10%;
+            margin-right: 10%;
+            text-align: center;
+            font-style: italic;
+        }
+        .message-header {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 4px;
+        }
+        .message-text {
+            font-size: 14px;
+        }
+        .connection-status {
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .connected {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+        .disconnected {
+            background-color: #FFEBEE;
+            color: #C62828;
+        }
+    </style>
+</head>
+<body>
+    <h1>MedTranslate AI - WebSocket Test</h1>
+    
+    <div class="card">
+        <h2>Provider Login</h2>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" value="demo">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="demo123">
+        </div>
+        <button onclick="login()">Login</button>
+        
+        <div class="result" id="loginResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Create Session</h2>
+        <div class="form-group">
+            <label for="medicalContext">Medical Context:</label>
+            <input type="text" id="medicalContext" value="cardiology">
+        </div>
+        <button onclick="createSession()">Create Session</button>
+        
+        <div class="result" id="sessionResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>WebSocket Session</h2>
+        <div class="form-group">
+            <label for="sessionId">Session ID:</label>
+            <input type="text" id="sessionId" placeholder="Enter session ID">
+        </div>
+        <div class="form-group">
+            <label for="sessionToken">Session Token:</label>
+            <input type="text" id="sessionToken" placeholder="Enter session token">
+        </div>
+        <button onclick="connectWebSocket()">Connect</button>
+        <button onclick="disconnectWebSocket()">Disconnect</button>
+        
+        <div id="connectionStatus" class="connection-status disconnected">
+            Disconnected
+        </div>
+        
+        <div class="messages" id="messagesContainer"></div>
+        
+        <div class="form-group">
+            <label for="messageText">Message:</label>
+            <textarea id="messageText" placeholder="Type your message here..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="messageType">Message Type:</label>
+            <select id="messageType">
+                <option value="provider">Provider Message</option>
+                <option value="patient">Patient Message</option>
+                <option value="system">System Message</option>
+            </select>
+        </div>
+        <button onclick="sendMessage()">Send Message</button>
+    </div>
+    
+    <script>
+        let authToken = '';
+        let currentSessionId = '';
+        let currentSessionCode = '';
+        let webSocket = null;
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://localhost:3001/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loginResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success && data.token) {
+                    authToken = data.token;
+                    document.getElementById('sessionToken').value = authToken;
+                    alert('Login successful! Token saved.');
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function createSession() {
+            if (!authToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const medicalContext = document.getElementById('medicalContext').value;
+            
+            try {
+                const response = await fetch('http://localhost:3001/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ medicalContext })
+                });
+                
+                const data = await response.json();
+                document.getElementById('sessionResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success && data.sessionId) {
+                    currentSessionId = data.sessionId;
+                    currentSessionCode = data.sessionCode;
+                    document.getElementById('sessionId').value = data.sessionId;
+                    alert(`Session created! ID: ${data.sessionId}, Code: ${data.sessionCode}`);
+                }
+            } catch (error) {
+                document.getElementById('sessionResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        function connectWebSocket() {
+            const sessionId = document.getElementById('sessionId').value;
+            const token = document.getElementById('sessionToken').value;
+            
+            if (!sessionId || !token) {
+                alert('Please enter session ID and token!');
+                return;
+            }
+            
+            // Close existing connection if any
+            if (webSocket) {
+                webSocket.close();
+            }
+            
+            // Connect to WebSocket
+            webSocket = new WebSocket(`ws://localhost:3001/sessions/${sessionId}/ws?token=${token}`);
+            
+            webSocket.onopen = () => {
+                console.log('WebSocket connected');
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('connectionStatus').className = 'connection-status connected';
+                
+                // Add system message
+                addMessage({
+                    type: 'system',
+                    text: 'Connected to session',
+                    timestamp: new Date().toISOString()
+                });
+            };
+            
+            webSocket.onmessage = (event) => {
+                console.log('WebSocket message received:', event.data);
+                
+                try {
+                    const message = JSON.parse(event.data);
+                    addMessage(message);
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                }
+            };
+            
+            webSocket.onclose = () => {
+                console.log('WebSocket disconnected');
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+                
+                // Add system message
+                addMessage({
+                    type: 'system',
+                    text: 'Disconnected from session',
+                    timestamp: new Date().toISOString()
+                });
+                
+                webSocket = null;
+            };
+            
+            webSocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                document.getElementById('connectionStatus').textContent = 'Error: ' + error.message;
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+            };
+        }
+        
+        function disconnectWebSocket() {
+            if (webSocket) {
+                webSocket.close();
+            }
+        }
+        
+        function sendMessage() {
+            if (!webSocket || webSocket.readyState !== WebSocket.OPEN) {
+                alert('WebSocket not connected!');
+                return;
+            }
+            
+            const text = document.getElementById('messageText').value;
+            const type = document.getElementById('messageType').value;
+            
+            if (!text) {
+                alert('Please enter a message!');
+                return;
+            }
+            
+            const message = {
+                type: 'translation',
+                messageId: `msg-${Date.now()}`,
+                sessionId: document.getElementById('sessionId').value,
+                sender: type,
+                originalText: text,
+                translatedText: `[Translated] ${text}`,
+                confidence: 'high',
+                timestamp: new Date().toISOString()
+            };
+            
+            webSocket.send(JSON.stringify(message));
+            document.getElementById('messageText').value = '';
+        }
+        
+        function addMessage(message) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            
+            if (message.type === 'system') {
+                messageElement.className += ' system-message';
+                messageElement.innerHTML = `
+                    <div class="message-text">${message.text}</div>
+                `;
+            } else if (message.type === 'translation') {
+                if (message.sender === 'provider') {
+                    messageElement.className += ' provider-message';
+                } else if (message.sender === 'patient') {
+                    messageElement.className += ' patient-message';
+                }
+                
+                const time = new Date(message.timestamp).toLocaleTimeString();
+                
+                messageElement.innerHTML = `
+                    <div class="message-header">${message.sender} - ${time}</div>
+                    <div class="message-text">${message.translatedText || message.text}</div>
+                `;
+                
+                if (message.originalText && message.translatedText && message.originalText !== message.translatedText) {
+                    messageElement.innerHTML += `
+                        <div class="message-header">Original:</div>
+                        <div class="message-text">${message.originalText}</div>
+                    `;
+                }
+            } else if (message.type === 'patient_joined') {
+                messageElement.className += ' system-message';
+                messageElement.innerHTML = `
+                    <div class="message-text">Patient joined the session. Speaking ${message.language || 'unknown language'}.</div>
+                `;
+            } else if (message.type === 'patient_left') {
+                messageElement.className += ' system-message';
+                messageElement.innerHTML = `
+                    <div class="message-text">Patient left the session.</div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedTranslate AI - Audio Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #0077CC;
+        }
+        .card {
+            border: 1px solid #EEEEEE;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #CCCCCC;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #0077CC;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #005599;
+        }
+        .record-button {
+            background-color: #F44336;
+        }
+        .record-button:hover {
+            background-color: #D32F2F;
+        }
+        pre {
+            background-color: #F5F5F5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .controls {
+            display: flex;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>MedTranslate AI - Audio Translation Test</h1>
+    
+    <div class="card">
+        <h2>Provider Login</h2>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" value="demo">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="demo123">
+        </div>
+        <button onclick="login()">Login</button>
+        
+        <div class="result" id="loginResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Audio Translation</h2>
+        <div class="form-group">
+            <label for="sourceLanguage">Source Language:</label>
+            <select id="sourceLanguage">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="targetLanguage">Target Language:</label>
+            <select id="targetLanguage">
+                <option value="es">Spanish</option>
+                <option value="en">English</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+            </select>
+        </div>
+        
+        <div class="controls">
+            <button id="recordButton" class="record-button" onclick="toggleRecording()">Start Recording</button>
+            <button onclick="translateMockAudio()">Translate Mock Audio</button>
+        </div>
+        
+        <div class="form-group">
+            <label>Recording Status:</label>
+            <div id="recordingStatus">Not recording</div>
+        </div>
+        
+        <div class="result" id="translateResult"></div>
+    </div>
+    
+    <script>
+        let authToken = '';
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://localhost:3001/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loginResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success && data.token) {
+                    authToken = data.token;
+                    alert('Login successful! Token saved.');
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function toggleRecording() {
+            if (!isRecording) {
+                // Start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+                    
+                    mediaRecorder.addEventListener('stop', async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        await translateAudio(audioBlob);
+                    });
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('recordButton').textContent = 'Stop Recording';
+                    document.getElementById('recordingStatus').textContent = 'Recording...';
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    alert('Error accessing microphone: ' + error.message);
+                }
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('recordButton').textContent = 'Start Recording';
+                document.getElementById('recordingStatus').textContent = 'Processing...';
+            }
+        }
+        
+        async function translateAudio(audioBlob) {
+            if (!authToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            
+            try {
+                // Convert blob to base64
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                
+                reader.onloadend = async () => {
+                    const base64Audio = reader.result.split(',')[1]; // Remove data URL prefix
+                    
+                    const response = await fetch('http://localhost:3001/translate/audio', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ 
+                            audioData: base64Audio, 
+                            sourceLanguage, 
+                            targetLanguage 
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    document.getElementById('translateResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    document.getElementById('recordingStatus').textContent = 'Translation complete';
+                    
+                    // Play audio response if available
+                    if (data.audioResponse) {
+                        const audio = new Audio(`data:audio/mp3;base64,${data.audioResponse}`);
+                        audio.play();
+                    }
+                };
+            } catch (error) {
+                document.getElementById('translateResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+                document.getElementById('recordingStatus').textContent = 'Error during translation';
+            }
+        }
+        
+        async function translateMockAudio() {
+            if (!authToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            
+            try {
+                // Use mock audio data
+                const mockAudioData = 'base64_audio_data';
+                
+                const response = await fetch('http://localhost:3001/translate/audio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ 
+                        audioData: mockAudioData, 
+                        sourceLanguage, 
+                        targetLanguage 
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('translateResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('translateResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

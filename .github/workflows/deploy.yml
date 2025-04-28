@@ -1,0 +1,216 @@
+name: Deploy MedTranslate AI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  build-backend:
+    name: Build Backend
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: cd backend && npm ci
+
+      - name: Build backend
+        run: cd backend && npm run build
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-build
+          path: backend/dist
+
+  build-provider-app:
+    name: Build Provider App
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: cd frontend/provider-app && npm ci
+
+      - name: Build provider app
+        run: cd frontend/provider-app && npm run build
+
+      - name: Upload provider app artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: provider-app-build
+          path: frontend/provider-app/build
+
+  build-patient-app:
+    name: Build Patient App
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: cd frontend/patient-app && npm ci
+
+      - name: Build patient app
+        run: cd frontend/patient-app && npm run build
+
+      - name: Upload patient app artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: patient-app-build
+          path: frontend/patient-app/build
+
+  deploy-dev:
+    name: Deploy to Development
+    needs: [build-backend, build-provider-app, build-patient-app]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    environment: development
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+          path: backend-build
+
+      - name: Download provider app artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: provider-app-build
+          path: provider-app-build
+
+      - name: Download patient app artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: patient-app-build
+          path: patient-app-build
+
+      - name: Deploy backend to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name medtranslate-ai-dev-backend \
+            --zip-file fileb://backend-build/backend.zip
+
+      - name: Deploy provider app to S3
+        run: |
+          aws s3 sync provider-app-build/ s3://medtranslate-ai-dev-provider-app/ --delete
+
+      - name: Deploy patient app to S3
+        run: |
+          aws s3 sync patient-app-build/ s3://medtranslate-ai-dev-patient-app/ --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.DEV_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: [build-backend, build-provider-app, build-patient-app]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+          path: backend-build
+
+      - name: Download provider app artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: provider-app-build
+          path: provider-app-build
+
+      - name: Download patient app artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: patient-app-build
+          path: patient-app-build
+
+      - name: Deploy backend to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name medtranslate-ai-prod-backend \
+            --zip-file fileb://backend-build/backend.zip
+
+      - name: Deploy provider app to S3
+        run: |
+          aws s3 sync provider-app-build/ s3://medtranslate-ai-prod-provider-app/ --delete
+
+      - name: Deploy patient app to S3
+        run: |
+          aws s3 sync patient-app-build/ s3://medtranslate-ai-prod-patient-app/ --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.PROD_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
