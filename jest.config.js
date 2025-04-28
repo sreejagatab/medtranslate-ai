@@ -39,4 +39,25 @@ module.exports = {
 
   // Indicates whether each individual test should be reported during the run
   verbose: true,
+
+  // Setup files to run before each test
+  setupFiles: [
+    '<rootDir>/tests/setup.js'
+  ],
+
+  // Test timeout
+  testTimeout: 30000, // 30 seconds
+
+  // Module name mapper for imports
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1'
+  },
+
+  // Collect coverage from these directories
+  collectCoverageFrom: [
+    'backend/**/*.js',
+    'edge/**/*.js',
+    '!**/node_modules/**',
+    '!**/vendor/**'
+  ]
 };

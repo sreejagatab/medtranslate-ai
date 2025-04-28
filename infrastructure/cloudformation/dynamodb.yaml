@@ -1,0 +1,160 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for MedTranslate AI DynamoDB tables'
+
+Resources:
+  # Sessions Table
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MedTranslateSessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+        - AttributeName: provider_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ProviderSessionsIndex
+          KeySchema:
+            - AttributeName: provider_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+
+  # Medical Terminology Table
+  MedicalTerminologyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MedicalTerminology
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: term_source
+          AttributeType: S
+        - AttributeName: domain
+          AttributeType: S
+      KeySchema:
+        - AttributeName: term_source
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: DomainIndex
+          KeySchema:
+            - AttributeName: domain
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+
+  # Users Table
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MedTranslateUsers
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+        - AttributeName: user_type
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: UserTypeIndex
+          KeySchema:
+            - AttributeName: user_type
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+
+  # Translation History Table
+  TranslationHistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TranslationHistory
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: translation_id
+          AttributeType: S
+        - AttributeName: session_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: translation_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: SessionTranslationsIndex
+          KeySchema:
+            - AttributeName: session_id
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+
+Outputs:
+  SessionsTableName:
+    Description: Name of the Sessions DynamoDB table
+    Value: !Ref SessionsTable
+    Export:
+      Name: !Sub "${AWS::StackName}-SessionsTableName"
+
+  MedicalTerminologyTableName:
+    Description: Name of the Medical Terminology DynamoDB table
+    Value: !Ref MedicalTerminologyTable
+    Export:
+      Name: !Sub "${AWS::StackName}-MedicalTerminologyTableName"
+
+  UsersTableName:
+    Description: Name of the Users DynamoDB table
+    Value: !Ref UsersTable
+    Export:
+      Name: !Sub "${AWS::StackName}-UsersTableName"
+
+  TranslationHistoryTableName:
+    Description: Name of the Translation History DynamoDB table
+    Value: !Ref TranslationHistoryTable
+    Export:
+      Name: !Sub "${AWS::StackName}-TranslationHistoryTableName"

@@ -4,21 +4,26 @@
   "description": "Real-time medical translation system using AWS Generative AI and Edge Computing",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "test:edge": "node scripts/run-edge-tests.js",
+    "test": "node tests/run-tests.js all",
+    "test:edge": "node tests/run-tests.js unit edge",
     "test:edge:unit": "jest tests/unit/edge-*.test.js",
-    "test:edge:integration": "node scripts/run-edge-integration-tests.js",
-    "test:edge:performance": "node scripts/run-edge-performance-tests.js",
-    "test:unit": "jest tests/unit",
-    "test:integration": "jest tests/integration",
-    "test:performance": "node scripts/run-edge-performance-tests.js",
+    "test:edge:integration": "node tests/run-tests.js integration edge",
+    "test:edge:performance": "node tests/run-tests.js performance edge",
+    "test:unit": "node tests/run-tests.js unit",
+    "test:integration": "node tests/run-tests.js integration",
+    "test:performance": "node tests/run-tests.js performance",
+    "test:translation": "node tests/run-tests.js all translation",
+    "test:e2e": "node tests/run-tests.js integration",
     "lint": "eslint .",
     "deploy:backend": "cd backend && npm run deploy",
     "deploy:infrastructure": "cd infrastructure && ./deploy.sh",
     "start:provider-app": "cd frontend/provider-app && npm start",
     "start:patient-app": "cd frontend/patient-app && npm start",
     "start:edge": "cd edge && npm start",
-    "start": "node run-local.js"
+    "start:backend": "cd backend && node server.js",
+    "start:dev": "cd backend && node dev-server.js",
+    "start": "node start-system.js",
+    "start:legacy": "node run-local.js"
   },
   "repository": {
     "type": "git",
@@ -41,7 +46,12 @@
   "devDependencies": {
     "eslint": "^8.38.0",
     "jest": "^29.5.0",
-    "supertest": "^7.1.0"
+    "supertest": "^7.1.0",
+    "jest-fetch-mock": "^3.0.3",
+    "mock-socket": "^9.2.1",
+    "nock": "^13.3.1",
+    "jest-websocket-mock": "^2.4.0",
+    "jest-environment-jsdom": "^29.5.0"
   },
   "workspaces": [
     "backend",
@@ -52,6 +62,11 @@
   "dependencies": {
     "aws-sdk": "^2.1692.0",
     "node-fetch": "^2.7.0",
-    "ws": "^8.18.1"
+    "ws": "^8.18.1",
+    "uuid": "^9.0.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "jsonwebtoken": "^9.0.0"
   }
 }

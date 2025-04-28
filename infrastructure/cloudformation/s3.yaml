@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for MedTranslate AI S3 buckets'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: Environment name
+
+Resources:
+  # Audio Storage Bucket
+  AudioStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "medtranslate-audio-${Environment}-${AWS::AccountId}"
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: AudioRetentionRule
+            Status: Enabled
+            ExpirationInDays: 90
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Transcript Storage Bucket
+  TranscriptStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "medtranslate-transcripts-${Environment}-${AWS::AccountId}"
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: TranscriptRetentionRule
+            Status: Enabled
+            ExpirationInDays: 365
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Edge Model Storage Bucket
+  EdgeModelStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "medtranslate-edge-models-${Environment}-${AWS::AccountId}"
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Bucket Policies
+  AudioStorageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AudioStorageBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyUnencryptedObjectUploads
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:PutObject'
+            Resource: !Sub "${AudioStorageBucket.Arn}/*"
+            Condition:
+              StringNotEquals:
+                's3:x-amz-server-side-encryption': 'AES256'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Sub "${AudioStorageBucket.Arn}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  TranscriptStorageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TranscriptStorageBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyUnencryptedObjectUploads
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:PutObject'
+            Resource: !Sub "${TranscriptStorageBucket.Arn}/*"
+            Condition:
+              StringNotEquals:
+                's3:x-amz-server-side-encryption': 'AES256'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Sub "${TranscriptStorageBucket.Arn}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  EdgeModelStorageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref EdgeModelStorageBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyUnencryptedObjectUploads
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:PutObject'
+            Resource: !Sub "${EdgeModelStorageBucket.Arn}/*"
+            Condition:
+              StringNotEquals:
+                's3:x-amz-server-side-encryption': 'AES256'
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource: !Sub "${EdgeModelStorageBucket.Arn}/*"
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+Outputs:
+  AudioStorageBucketName:
+    Description: Name of the Audio Storage S3 bucket
+    Value: !Ref AudioStorageBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-AudioStorageBucketName"
+
+  TranscriptStorageBucketName:
+    Description: Name of the Transcript Storage S3 bucket
+    Value: !Ref TranscriptStorageBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-TranscriptStorageBucketName"
+
+  EdgeModelStorageBucketName:
+    Description: Name of the Edge Model Storage S3 bucket
+    Value: !Ref EdgeModelStorageBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-EdgeModelStorageBucketName"

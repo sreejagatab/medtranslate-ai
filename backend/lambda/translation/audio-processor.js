@@ -107,8 +107,38 @@ async function transcribeAudio(audioData, languageCode) {
       if (jobStatus === 'COMPLETED') {
         // Get the transcript
         const transcriptUri = jobData.TranscriptionJob.Transcript.TranscriptFileUri;
-        const response = await fetch(transcriptUri);
-        const data = await response.json();
+
+        // Use axios or node-fetch for Node.js environment
+        let data;
+        try {
+          // Check if we're in a Node.js environment
+          if (typeof window === 'undefined') {
+            // Node.js environment - use https module
+            const https = require('https');
+            data = await new Promise((resolve, reject) => {
+              https.get(transcriptUri, (res) => {
+                let rawData = '';
+                res.on('data', (chunk) => { rawData += chunk; });
+                res.on('end', () => {
+                  try {
+                    resolve(JSON.parse(rawData));
+                  } catch (e) {
+                    reject(new Error(`JSON parsing error: ${e.message}`));
+                  }
+                });
+              }).on('error', (e) => {
+                reject(new Error(`HTTPS request error: ${e.message}`));
+              });
+            });
+          } else {
+            // Browser environment - use fetch
+            const response = await fetch(transcriptUri);
+            data = await response.json();
+          }
+        } catch (fetchError) {
+          console.error('Error fetching transcript:', fetchError);
+          throw new Error(`Failed to fetch transcript: ${fetchError.message}`);
+        }
 
         transcriptionResult = {
           text: data.results.transcripts[0].transcript,

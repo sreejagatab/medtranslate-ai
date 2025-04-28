@@ -1,0 +1,288 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for MedTranslate AI Lambda functions'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Description: Environment name
+
+  SessionsTableName:
+    Type: String
+    Description: Name of the Sessions DynamoDB table
+
+  MedicalTerminologyTableName:
+    Type: String
+    Description: Name of the Medical Terminology DynamoDB table
+
+  UsersTableName:
+    Type: String
+    Description: Name of the Users DynamoDB table
+
+  TranslationHistoryTableName:
+    Type: String
+    Description: Name of the Translation History DynamoDB table
+
+  AudioStorageBucketName:
+    Type: String
+    Description: Name of the Audio Storage S3 bucket
+
+  TranscriptStorageBucketName:
+    Type: String
+    Description: Name of the Transcript Storage S3 bucket
+
+  EdgeModelStorageBucketName:
+    Type: String
+    Description: Name of the Edge Model Storage S3 bucket
+
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-sonnet-20240229-v1:0
+    Description: Amazon Bedrock model ID for translation
+
+Resources:
+  # IAM Role for Lambda Functions
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SessionsTableName}"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MedicalTerminologyTableName}"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${UsersTableName}"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TranslationHistoryTableName}"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SessionsTableName}/index/*"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MedicalTerminologyTableName}/index/*"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${UsersTableName}/index/*"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TranslationHistoryTableName}/index/*"
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${AudioStorageBucketName}/*"
+                  - !Sub "arn:aws:s3:::${TranscriptStorageBucketName}/*"
+                  - !Sub "arn:aws:s3:::${EdgeModelStorageBucketName}/*"
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: "*"
+        - PolicyName: TranscribeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:GetTranscriptionJob
+                Resource: "*"
+        - PolicyName: PollyAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - polly:SynthesizeSpeech
+                Resource: "*"
+
+  # Lambda Functions
+  TranslationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-translation-${Environment}"
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log('Translation function called with event:', JSON.stringify(event));
+            
+            // This is a placeholder implementation
+            // The actual implementation will be deployed via CI/CD
+            
+            return {
+              statusCode: 200,
+              body: JSON.stringify({
+                message: 'Translation function placeholder'
+              })
+            };
+          };
+      Runtime: nodejs16.x
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          SESSIONS_TABLE: !Ref SessionsTableName
+          MEDICAL_TERMINOLOGY_TABLE: !Ref MedicalTerminologyTableName
+          TRANSLATION_HISTORY_TABLE: !Ref TranslationHistoryTableName
+          AUDIO_BUCKET: !Ref AudioStorageBucketName
+          TRANSCRIPT_BUCKET: !Ref TranscriptStorageBucketName
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+        - Key: Environment
+          Value: !Ref Environment
+
+  AuthFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-auth-${Environment}"
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log('Auth function called with event:', JSON.stringify(event));
+            
+            // This is a placeholder implementation
+            // The actual implementation will be deployed via CI/CD
+            
+            return {
+              statusCode: 200,
+              body: JSON.stringify({
+                message: 'Auth function placeholder'
+              })
+            };
+          };
+      Runtime: nodejs16.x
+      Timeout: 10
+      MemorySize: 128
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          USERS_TABLE: !Ref UsersTableName
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+        - Key: Environment
+          Value: !Ref Environment
+
+  SessionsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-sessions-${Environment}"
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log('Sessions function called with event:', JSON.stringify(event));
+            
+            // This is a placeholder implementation
+            // The actual implementation will be deployed via CI/CD
+            
+            return {
+              statusCode: 200,
+              body: JSON.stringify({
+                message: 'Sessions function placeholder'
+              })
+            };
+          };
+      Runtime: nodejs16.x
+      Timeout: 10
+      MemorySize: 128
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          SESSIONS_TABLE: !Ref SessionsTableName
+          USERS_TABLE: !Ref UsersTableName
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+        - Key: Environment
+          Value: !Ref Environment
+
+  WebSocketFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "medtranslate-websocket-${Environment}"
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log('WebSocket function called with event:', JSON.stringify(event));
+            
+            // This is a placeholder implementation
+            // The actual implementation will be deployed via CI/CD
+            
+            return {
+              statusCode: 200,
+              body: JSON.stringify({
+                message: 'WebSocket function placeholder'
+              })
+            };
+          };
+      Runtime: nodejs16.x
+      Timeout: 10
+      MemorySize: 128
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          SESSIONS_TABLE: !Ref SessionsTableName
+      Tags:
+        - Key: Project
+          Value: MedTranslateAI
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  TranslationFunctionArn:
+    Description: ARN of the Translation Lambda function
+    Value: !GetAtt TranslationFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-TranslationFunctionArn"
+
+  AuthFunctionArn:
+    Description: ARN of the Auth Lambda function
+    Value: !GetAtt AuthFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-AuthFunctionArn"
+
+  SessionsFunctionArn:
+    Description: ARN of the Sessions Lambda function
+    Value: !GetAtt SessionsFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SessionsFunctionArn"
+
+  WebSocketFunctionArn:
+    Description: ARN of the WebSocket Lambda function
+    Value: !GetAtt WebSocketFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-WebSocketFunctionArn"
