@@ -1,0 +1,86 @@
+{
+  "models": [
+    {
+      "source": "en",
+      "target": "es",
+      "name": "en-es",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\en-es",
+      "hash": "2f82ce1fa89c8d1660c9bf23c4ad8ef4f2bb23f18ef873174e7b7c13aaa641ca",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.316Z",
+      "isSample": true
+    },
+    {
+      "source": "es",
+      "target": "en",
+      "name": "es-en",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\es-en",
+      "hash": "3c9f230614c00bea7d5b23efa2a04a87c4025a7a738ce2d9188a8b935a4f602d",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.320Z",
+      "isSample": true
+    },
+    {
+      "source": "en",
+      "target": "fr",
+      "name": "en-fr",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\en-fr",
+      "hash": "561a7f8623547da82723f15531961f61b92658e1c94a053ee9b005dd46cee2eb",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.323Z",
+      "isSample": true
+    },
+    {
+      "source": "fr",
+      "target": "en",
+      "name": "fr-en",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\fr-en",
+      "hash": "be807fd333cbbc50ea32e3212c9f83f61a75790b546118841c2e7550e9886194",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.327Z",
+      "isSample": true
+    },
+    {
+      "source": "en",
+      "target": "zh",
+      "name": "en-zh",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\en-zh",
+      "hash": "fbda4f333fd6037f061b240100eaf09c37f85834020ff5347203b7ff7b1db58e",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.330Z",
+      "isSample": true
+    },
+    {
+      "source": "zh",
+      "target": "en",
+      "name": "zh-en",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\zh-en",
+      "hash": "4bca701be483bd97cc7002ed6f00c7b567faae2e31debc9a3c68ae28bbf73de3",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.333Z",
+      "isSample": true
+    },
+    {
+      "source": "en",
+      "target": "ar",
+      "name": "en-ar",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\en-ar",
+      "hash": "7c6f1a9ebd794acf49e732c017a799317b7bdba53e7c8743ce45e7d2f5e4961c",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.336Z",
+      "isSample": true
+    },
+    {
+      "source": "ar",
+      "target": "en",
+      "name": "ar-en",
+      "path": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\edge\\models\\ar-en",
+      "hash": "369bdde18820710bad214d1dafdb2df3fcfb7f9ae618646c8b815d692258b38f",
+      "size": 52,
+      "created": "2025-04-28T14:12:11.339Z",
+      "isSample": true
+    }
+  ],
+  "updated": "2025-04-28T14:12:11.340Z",
+  "version": "1.0.0"
+}

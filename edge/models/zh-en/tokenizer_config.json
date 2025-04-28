@@ -1,0 +1,7 @@
+{
+  "source_lang": "zh",
+  "target_lang": "en",
+  "model_max_length": 512,
+  "special_tokens_map_file": null,
+  "tokenizer_class": "MarianTokenizer"
+}

@@ -46,12 +46,12 @@
   "devDependencies": {
     "eslint": "^8.38.0",
     "jest": "^29.5.0",
-    "supertest": "^7.1.0",
+    "jest-environment-jsdom": "^29.5.0",
     "jest-fetch-mock": "^3.0.3",
+    "jest-websocket-mock": "^2.4.0",
     "mock-socket": "^9.2.1",
     "nock": "^13.3.1",
-    "jest-websocket-mock": "^2.4.0",
-    "jest-environment-jsdom": "^29.5.0"
+    "supertest": "^7.1.0"
   },
   "workspaces": [
     "backend",
@@ -61,12 +61,13 @@
   ],
   "dependencies": {
     "aws-sdk": "^2.1692.0",
-    "node-fetch": "^2.7.0",
-    "ws": "^8.18.1",
-    "uuid": "^9.0.0",
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "jsonwebtoken": "^9.0.0"
+    "csv-parser": "^3.2.0",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "node-fetch": "^2.7.0",
+    "uuid": "^9.0.1",
+    "ws": "^8.18.1"
   }
 }
