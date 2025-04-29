@@ -70,36 +70,85 @@ try {
 
 // Load prompt templates
 const promptTemplates = {
-  claude: '',
-  titan: '',
-  llama: '',
-  mistral: '',
+  claude: {},
+  titan: {},
+  llama: {},
+  mistral: {},
   terminologyVerification: ''
 };
 
+// Load specialty-specific prompts
+const SPECIALTIES = ['general', 'cardiology', 'neurology', 'gastroenterology', 'orthopedics', 'pulmonology'];
+
+// Try to load prompt templates from files
+try {
+  // Load specialty-specific prompts for each model family
+  for (const modelFamily of ['claude', 'titan', 'llama', 'mistral']) {
+    promptTemplates[modelFamily] = {};
+
+    for (const specialty of SPECIALTIES) {
+      try {
+        const promptPath = path.resolve(__dirname, `../../models/prompts/${specialty}-prompt.txt`);
+        if (fs.existsSync(promptPath)) {
+          promptTemplates[modelFamily][specialty] = fs.readFileSync(promptPath, 'utf8');
+          console.log(`Loaded ${specialty} prompt for ${modelFamily}`);
+        }
+      } catch (error) {
+        console.warn(`Error loading ${specialty} prompt for ${modelFamily}:`, error.message);
+      }
+    }
+
+    // Set default prompt if no specialty prompts were loaded
+    if (Object.keys(promptTemplates[modelFamily]).length === 0) {
+      promptTemplates[modelFamily]['general'] = `You are an expert medical translator specializing in healthcare communications.
+Translate the following text from {sourceLanguage} to {targetLanguage}.
+Maintain medical accuracy, technical terminology, and appropriate tone.
+
+Medical specialty context: {medicalContext}
+
+If there are specialized medical terms, ensure they are translated accurately according to standard medical terminology in the target language.
+
+Provide only the translated text without any explanations or notes.`;
+    }
+  }
+
+  // Load terminology verification prompt
+  try {
+    const verificationPromptPath = path.resolve(__dirname, '../../models/prompts/terminology-verification-prompt.txt');
+    if (fs.existsSync(verificationPromptPath)) {
+      promptTemplates.terminologyVerification = fs.readFileSync(verificationPromptPath, 'utf8');
+      console.log('Loaded terminology verification prompt');
+    }
+  } catch (error) {
+    console.warn('Error loading terminology verification prompt:', error.message);
+  }
+} catch (error) {
+  console.warn('Error loading prompt templates:', error.message);
+}
+
 try {
   const promptsDir = path.resolve(__dirname, PROMPT_TEMPLATES_PATH);
-  
+
   if (fs.existsSync(path.join(promptsDir, 'claude-prompt.txt'))) {
     promptTemplates.claude = fs.readFileSync(path.join(promptsDir, 'claude-prompt.txt'), 'utf8');
   }
-  
+
   if (fs.existsSync(path.join(promptsDir, 'titan-prompt.txt'))) {
     promptTemplates.titan = fs.readFileSync(path.join(promptsDir, 'titan-prompt.txt'), 'utf8');
   }
-  
+
   if (fs.existsSync(path.join(promptsDir, 'llama-prompt.txt'))) {
     promptTemplates.llama = fs.readFileSync(path.join(promptsDir, 'llama-prompt.txt'), 'utf8');
   }
-  
+
   if (fs.existsSync(path.join(promptsDir, 'mistral-prompt.txt'))) {
     promptTemplates.mistral = fs.readFileSync(path.join(promptsDir, 'mistral-prompt.txt'), 'utf8');
   }
-  
+
   if (fs.existsSync(path.join(promptsDir, 'terminology-verification-prompt.txt'))) {
     promptTemplates.terminologyVerification = fs.readFileSync(path.join(promptsDir, 'terminology-verification-prompt.txt'), 'utf8');
   }
-  
+
   console.log('Loaded prompt templates from:', promptsDir);
 } catch (error) {
   console.warn('Error loading prompt templates:', error.message);
@@ -169,7 +218,7 @@ const MEDICAL_CONTEXTS = {
  */
 function mockTranslate(text, sourceLanguage, targetLanguage, medicalContext = 'general') {
   console.log(`[MOCK] Translating from ${sourceLanguage} to ${targetLanguage} in ${medicalContext} context: ${text}`);
-  
+
   // Simple mock translations for development
   const translations = {
     'en-es': {
@@ -197,13 +246,13 @@ function mockTranslate(text, sourceLanguage, targetLanguage, medicalContext = 'g
       'cáncer': 'cancer'
     }
   };
-  
+
   const languagePair = `${sourceLanguage}-${targetLanguage}`;
-  
+
   // Check if we have a direct translation for the entire text
   if (translations[languagePair] && translations[languagePair][text.toLowerCase()]) {
     const translatedText = translations[languagePair][text.toLowerCase()];
-    
+
     return {
       translatedText,
       confidence: 'high',
@@ -214,11 +263,11 @@ function mockTranslate(text, sourceLanguage, targetLanguage, medicalContext = 'g
       processingTime: 0
     };
   }
-  
+
   // Otherwise, translate word by word
   const words = text.split(' ');
   let translatedWords = [];
-  
+
   for (const word of words) {
     const wordLower = word.toLowerCase();
     if (translations[languagePair] && translations[languagePair][wordLower]) {
@@ -228,7 +277,7 @@ function mockTranslate(text, sourceLanguage, targetLanguage, medicalContext = 'g
       translatedWords.push(word);
     }
   }
-  
+
   return {
     translatedText: translatedWords.join(' '),
     confidence: 'medium',
@@ -242,7 +291,7 @@ function mockTranslate(text, sourceLanguage, targetLanguage, medicalContext = 'g
 
 /**
  * Translates text from one language to another using Amazon Bedrock
- * with enhanced medical terminology support
+ * with enhanced medical terminology support and fallback mechanisms
  *
  * @param {string} sourceLanguage - The source language code (e.g., 'en', 'es')
  * @param {string} targetLanguage - The target language code (e.g., 'en', 'es')
@@ -250,9 +299,10 @@ function mockTranslate(text, sourceLanguage, targetLanguage, medicalContext = 'g
  * @param {string} medicalContext - Optional medical context (e.g., 'general', 'cardiology', 'pediatrics')
  * @param {string} preferredModel - Optional preferred model type ('claude', 'titan', 'llama', 'mistral')
  * @param {Array} medicalTerms - Optional array of known medical terms and translations
+ * @param {boolean} useFallback - Whether to use fallback mechanisms if primary model fails
  * @returns {Promise<Object>} - The translation result with confidence score
  */
-async function translateText(sourceLanguage, targetLanguage, text, medicalContext = 'general', preferredModel = null, medicalTerms = []) {
+async function translateText(sourceLanguage, targetLanguage, text, medicalContext = 'general', preferredModel = null, medicalTerms = [], useFallback = true) {
   // For local development, use mock translations
   if (process.env.NODE_ENV === 'development' || !bedrock) {
     console.log(`[DEV] Translating from ${sourceLanguage} to ${targetLanguage}: ${text}`);
@@ -266,26 +316,194 @@ async function translateText(sourceLanguage, targetLanguage, text, medicalContex
   const targetLang = LANGUAGE_CODES[targetLanguage] || targetLanguage;
   const context = MEDICAL_CONTEXTS[medicalContext] || medicalContext;
 
-  // Select the appropriate model based on configuration and preference
-  let modelId;
+  // Normalize medical context to match available prompts
+  const normalizedContext = SPECIALTIES.includes(medicalContext) ? medicalContext : 'general';
 
-  if (preferredModel && modelConfig.models[preferredModel]) {
-    // Use the first model from the preferred model family
-    modelId = modelConfig.models[preferredModel][0];
-  } else {
-    // Use the configured model or default to Claude
-    modelId = process.env.BEDROCK_MODEL_ID || modelConfig.defaultModel;
+  // Get ordered list of models to try (primary + fallbacks)
+  const modelsToTry = getModelFallbackChain(sourceLanguage, targetLanguage, medicalContext, preferredModel);
+
+  // Track errors for diagnostic purposes
+  const errors = [];
+
+  // Try each model in sequence until one succeeds
+  for (const modelInfo of modelsToTry) {
+    try {
+      const result = await translateWithModel(
+        text,
+        sourceLanguage,
+        targetLanguage,
+        normalizedContext,
+        modelInfo.id,
+        modelInfo.family,
+        medicalTerms
+      );
+
+      // Add fallback information if this wasn't the first choice
+      if (modelInfo.fallback) {
+        result.fallback = true;
+        result.primaryModelFailed = modelsToTry[0].id;
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`Error with model ${modelInfo.id}:`, error);
+      errors.push({ model: modelInfo.id, error: error.message });
+
+      // If fallback is disabled, don't try other models
+      if (!useFallback) {
+        throw error;
+      }
+
+      // Continue to next model in fallback chain
+    }
   }
+
+  // If all models failed and AWS Translate is available, try it as a last resort
+  if (useFallback && translate) {
+    try {
+      console.log('All Bedrock models failed, falling back to AWS Translate');
+      const translateParams = {
+        Text: text,
+        SourceLanguageCode: sourceLanguage,
+        TargetLanguageCode: targetLanguage
+      };
+
+      const translateResult = await translate.translateText(translateParams).promise();
+      const endTime = Date.now();
+      const processingTime = endTime - startTime;
+
+      return {
+        translatedText: translateResult.TranslatedText,
+        confidence: 'low', // AWS Translate doesn't have medical specialization
+        sourceLanguage,
+        targetLanguage,
+        medicalContext,
+        modelUsed: 'aws.translate',
+        fallback: true,
+        processingTime,
+        errors
+      };
+    } catch (translateError) {
+      errors.push({ model: 'aws.translate', error: translateError.message });
+    }
+  }
+
+  // If we got here, all models including fallbacks failed
+  throw new Error(`Translation failed with all models: ${JSON.stringify(errors)}`);
+}
+
+/**
+ * Get an ordered list of models to try for translation, including fallbacks
+ *
+ * @param {string} sourceLanguage - The source language code
+ * @param {string} targetLanguage - The target language code
+ * @param {string} medicalContext - The medical context
+ * @param {string} preferredModel - Optional preferred model family
+ * @returns {Array<Object>} - Ordered list of models to try
+ */
+function getModelFallbackChain(sourceLanguage, targetLanguage, medicalContext, preferredModel = null) {
+  const models = [];
+
+  // Start with preferred model if specified
+  if (preferredModel && modelConfig.models[preferredModel]) {
+    const modelId = modelConfig.models[preferredModel][0];
+    models.push({
+      id: modelId,
+      family: preferredModel,
+      fallback: false
+    });
+  } else {
+    // Otherwise use the best model for this context
+    const bestModelFamily = selectBestModelForContext(sourceLanguage, targetLanguage, medicalContext);
+    const modelId = modelConfig.models[bestModelFamily][0];
+    models.push({
+      id: modelId,
+      family: bestModelFamily,
+      fallback: false
+    });
+  }
+
+  // Add fallback models in priority order
+  // 1. Claude models are generally best for medical content
+  if (models[0].family !== 'claude' && modelConfig.models['claude']) {
+    models.push({
+      id: modelConfig.models['claude'][0],
+      family: 'claude',
+      fallback: true
+    });
+  }
+
+  // 2. Titan models are good for many languages
+  if (models[0].family !== 'titan' && modelConfig.models['titan']) {
+    models.push({
+      id: modelConfig.models['titan'][0],
+      family: 'titan',
+      fallback: true
+    });
+  }
+
+  // 3. Add other model families not already included
+  for (const family of modelConfig.modelFamilies) {
+    if (!models.some(m => m.family === family) && modelConfig.models[family]) {
+      models.push({
+        id: modelConfig.models[family][0],
+        family: family,
+        fallback: true
+      });
+    }
+  }
+
+  return models;
+}
+
+/**
+ * Translate text using a specific model
+ *
+ * @param {string} text - The text to translate
+ * @param {string} sourceLanguage - The source language code
+ * @param {string} targetLanguage - The target language code
+ * @param {string} medicalContext - The medical context
+ * @param {string} modelId - The model ID to use
+ * @param {string} modelFamily - The model family
+ * @param {Array} medicalTerms - Optional array of known medical terms
+ * @returns {Promise<Object>} - The translation result
+ */
+async function translateWithModel(text, sourceLanguage, targetLanguage, medicalContext, modelId, modelFamily, medicalTerms = []) {
+  const startTime = Date.now();
+
+  // Get full language names
+  const sourceLang = LANGUAGE_CODES[sourceLanguage] || sourceLanguage;
+  const targetLang = LANGUAGE_CODES[targetLanguage] || targetLanguage;
+  const context = MEDICAL_CONTEXTS[medicalContext] || medicalContext;
 
   console.log(`Using model ${modelId} for ${sourceLanguage} to ${targetLanguage} translation in ${medicalContext} context`);
 
   // Prepare medical terms prompt if provided
   let medicalTermsPrompt = '';
   if (medicalTerms && medicalTerms.length > 0) {
-    medicalTermsPrompt = 'Use the following medical term translations:\n';
+    medicalTermsPrompt = '\nPlease ensure these medical terms are translated correctly:\n';
     for (const term of medicalTerms) {
-      medicalTermsPrompt += `- "${term.sourceTerm}" (${sourceLanguage}) → "${term.targetTerm}" (${targetLanguage})\n`;
+      medicalTermsPrompt += `- "${term.sourceTerm}" should be translated as "${term.targetTerm}"\n`;
     }
+  }
+
+  // Get specialty-specific prompt if available
+  let promptTemplate = '';
+  if (promptTemplates[modelFamily] && promptTemplates[modelFamily][medicalContext]) {
+    promptTemplate = promptTemplates[modelFamily][medicalContext];
+  } else if (promptTemplates[modelFamily] && promptTemplates[modelFamily]['general']) {
+    promptTemplate = promptTemplates[modelFamily]['general'];
+  } else {
+    // Fallback to default prompt
+    promptTemplate = `You are an expert medical translator specializing in healthcare communications.
+Translate the following text from {sourceLanguage} to {targetLanguage}.
+Maintain medical accuracy, technical terminology, and appropriate tone.
+
+Medical specialty context: {medicalContext}
+
+If there are specialized medical terms, ensure they are translated accurately according to standard medical terminology in the target language.
+
+Provide only the translated text without any explanations or notes.`;
   }
 
   // Prepare prompt based on model
@@ -294,16 +512,9 @@ async function translateText(sourceLanguage, targetLanguage, text, medicalContex
 
   if (modelId.startsWith('anthropic.claude')) {
     // Claude-specific prompt format
-    prompt = promptTemplates.claude || `<instructions>
-You are an expert medical translator specializing in healthcare communications.
-Translate the following text from {sourceLanguage} to {targetLanguage}.
-Maintain medical accuracy, technical terminology, and appropriate tone.
-
-Medical specialty context: {medicalContext}
-
-If there are specialized medical terms, ensure they are translated accurately according to standard medical terminology in the target language.
-
-Provide only the translated text without any explanations or notes.
+    prompt = `<instructions>
+${promptTemplate}
+${medicalTermsPrompt}
 </instructions>
 
 <input>
@@ -333,17 +544,10 @@ Provide only the translated text without any explanations or notes.
     };
   } else if (modelId.startsWith('amazon.titan')) {
     // Titan-specific prompt format
-    prompt = promptTemplates.titan || `You are an expert medical translator specializing in healthcare communications.
-Translate the following text from {sourceLanguage} to {targetLanguage}.
-Maintain medical accuracy, technical terminology, and appropriate tone.
+    prompt = `${promptTemplate}
+${medicalTermsPrompt}
 
-Medical specialty context: {medicalContext}
-
-If there are specialized medical terms, ensure they are translated accurately according to standard medical terminology in the target language.
-
-Text to translate: {text}
-
-Provide only the translated text without any explanations or notes.`;
+Text to translate: {text}`;
 
     // Replace placeholders
     prompt = prompt
@@ -367,17 +571,10 @@ Provide only the translated text without any explanations or notes.`;
     };
   } else if (modelId.startsWith('meta.llama')) {
     // Llama-specific prompt format
-    prompt = promptTemplates.llama || `<s>[INST]You are an expert medical translator specializing in healthcare communications.
-Translate the following text from {sourceLanguage} to {targetLanguage}.
-Maintain medical accuracy, technical terminology, and appropriate tone.
+    prompt = `<s>[INST]${promptTemplate}
+${medicalTermsPrompt}
 
-Medical specialty context: {medicalContext}
-
-If there are specialized medical terms, ensure they are translated accurately according to standard medical terminology in the target language.
-
-Text to translate: {text}
-
-Provide only the translated text without any explanations or notes.[/INST]</s>`;
+Text to translate: {text}[/INST]</s>`;
 
     // Replace placeholders
     prompt = prompt
@@ -399,17 +596,10 @@ Provide only the translated text without any explanations or notes.[/INST]</s>`;
     };
   } else if (modelId.startsWith('mistral.')) {
     // Mistral-specific prompt format
-    prompt = promptTemplates.mistral || `<s>[INST]You are an expert medical translator specializing in healthcare communications.
-Translate the following text from {sourceLanguage} to {targetLanguage}.
-Maintain medical accuracy, technical terminology, and appropriate tone.
+    prompt = `<s>[INST]${promptTemplate}
+${medicalTermsPrompt}
 
-Medical specialty context: {medicalContext}
-
-If there are specialized medical terms, ensure they are translated accurately according to standard medical terminology in the target language.
-
-Text to translate: {text}
-
-Provide only the translated text without any explanations or notes.[/INST]</s>`;
+Text to translate: {text}[/INST]</s>`;
 
     // Replace placeholders
     prompt = prompt
@@ -431,9 +621,10 @@ Provide only the translated text without any explanations or notes.[/INST]</s>`;
     };
   } else {
     // Generic format for other models
-    prompt = `Translate the following text from ${sourceLang} to ${targetLang}. 
-Medical context: ${context}
-Text: ${text}`;
+    prompt = `${promptTemplate}
+${medicalTermsPrompt}
+
+Text to translate: ${text}`;
 
     params = {
       modelId: modelId,
@@ -626,25 +817,25 @@ Medical specialty: {medicalContext}
 function selectBestModelForContext(sourceLanguage, targetLanguage, medicalContext = 'general') {
   // For complex medical contexts, Claude models tend to perform best
   const complexMedicalContexts = ['cardiology', 'neurology', 'oncology', 'psychiatry', 'endocrinology'];
-  
+
   // For Asian languages, Titan models often perform better
   const asianLanguages = ['zh', 'ja', 'ko', 'th', 'vi'];
-  
+
   // For Slavic languages, Mistral models may perform better
   const slavicLanguages = ['ru', 'uk', 'pl', 'cs', 'sk', 'bg'];
-  
+
   // For European languages with simpler medical contexts, Llama models are efficient
   const europeanLanguages = ['es', 'fr', 'de', 'it', 'pt', 'nl'];
 
   // Check if both source and target are Asian languages
   const isAsianLanguagePair = asianLanguages.includes(sourceLanguage) && asianLanguages.includes(targetLanguage);
-  
+
   // Check if both source and target are Slavic languages
   const isSlavicLanguagePair = slavicLanguages.includes(sourceLanguage) && slavicLanguages.includes(targetLanguage);
-  
+
   // Check if both source and target are European languages
   const isEuropeanLanguagePair = europeanLanguages.includes(sourceLanguage) && europeanLanguages.includes(targetLanguage);
-  
+
   // Check if it's a complex medical context
   const isComplexMedicalContext = complexMedicalContexts.includes(medicalContext);
 
@@ -736,7 +927,7 @@ function getModelInfo(modelId) {
 
 /**
  * Get available models and their capabilities
- * 
+ *
  * @returns {Object} - Available models and their capabilities
  */
 function getAvailableModels() {
