@@ -280,9 +280,10 @@ async function endSession(sessionId) {
  *
  * @param {string} username - Provider username
  * @param {string} password - Provider password
+ * @param {string} mfaToken - Optional MFA token
  * @returns {Promise<Object>} - Authentication result
  */
-async function authenticateProvider(username, password) {
+async function authenticateProvider(username, password, mfaToken = null) {
   try {
     // For local development, use hardcoded credentials
     if (process.env.NODE_ENV === 'development') {
@@ -301,7 +302,8 @@ async function authenticateProvider(username, password) {
             providerId: 'provider-demo',
             name: 'Demo Provider',
             role: 'doctor'
-          }
+          },
+          mfaRequired: false
         };
       }
 
@@ -330,6 +332,34 @@ async function authenticateProvider(username, password) {
       return { success: false, error: 'Invalid username or password' };
     }
 
+    // Check if MFA is enabled for this user
+    if (provider.mfaEnabled) {
+      // If MFA is enabled but no token provided, return success but require MFA
+      if (!mfaToken) {
+        return {
+          success: true,
+          mfaRequired: true,
+          provider: {
+            providerId: provider.providerId,
+            name: provider.name,
+            role: provider.role
+          }
+        };
+      }
+
+      // Verify MFA token
+      const mfaService = require('./mfa-service');
+      const isValidToken = mfaService.verifyToken(provider.mfaSecret, mfaToken);
+
+      if (!isValidToken) {
+        return {
+          success: false,
+          error: 'Invalid MFA code',
+          mfaRequired: true
+        };
+      }
+    }
+
     // Generate token
     const token = await generateProviderToken(
       provider.providerId,
@@ -344,7 +374,8 @@ async function authenticateProvider(username, password) {
         providerId: provider.providerId,
         name: provider.name,
         role: provider.role
-      }
+      },
+      mfaRequired: false
     };
   } catch (error) {
     console.error('Error authenticating provider:', error);

@@ -16,7 +16,7 @@ exports.login = async (event) => {
 
     // Parse request body
     const body = JSON.parse(event.body || '{}');
-    const { username, password } = body;
+    const { username, password, mfaToken } = body;
 
     // Validate required parameters
     if (!username || !password) {
@@ -27,10 +27,15 @@ exports.login = async (event) => {
     }
 
     // Authenticate provider
-    const result = await authService.authenticateProvider(username, password);
+    const result = await authService.authenticateProvider(username, password, mfaToken);
 
     if (!result.success) {
       return formatResponse(401, result);
+    }
+
+    // If MFA is required but not provided, return 200 with mfaRequired flag
+    if (result.mfaRequired) {
+      return formatResponse(200, result);
     }
 
     return formatResponse(200, result);
