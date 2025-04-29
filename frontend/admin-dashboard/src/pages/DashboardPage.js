@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Alert } from 'react-bootstrap';
+import ApiStatusBar from '../components/ApiStatusBar';
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({
@@ -8,10 +9,10 @@ const DashboardPage = () => {
     translationsToday: 0,
     successRate: 0
   });
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Fetch dashboard data
   useEffect(() => {
     const fetchData = async () => {
@@ -33,22 +34,22 @@ const DashboardPage = () => {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
-  
+
   if (isLoading) {
     return <div>Loading dashboard data...</div>;
   }
-  
+
   if (error) {
     return <Alert variant="danger">{error}</Alert>;
   }
-  
+
   return (
     <div>
       <h1 className="mb-4">Dashboard</h1>
-      
+
       <Row>
         <Col md={3} className="mb-4">
           <Card className="card-dashboard h-100">
@@ -58,7 +59,7 @@ const DashboardPage = () => {
             </Card.Body>
           </Card>
         </Col>
-        
+
         <Col md={3} className="mb-4">
           <Card className="card-dashboard h-100">
             <Card.Body>
@@ -67,7 +68,7 @@ const DashboardPage = () => {
             </Card.Body>
           </Card>
         </Col>
-        
+
         <Col md={3} className="mb-4">
           <Card className="card-dashboard h-100">
             <Card.Body>
@@ -76,7 +77,7 @@ const DashboardPage = () => {
             </Card.Body>
           </Card>
         </Col>
-        
+
         <Col md={3} className="mb-4">
           <Card className="card-dashboard h-100">
             <Card.Body>
@@ -86,7 +87,10 @@ const DashboardPage = () => {
           </Card>
         </Col>
       </Row>
-      
+
+      {/* API Status Bar */}
+      <ApiStatusBar />
+
       <Row>
         <Col md={6} className="mb-4">
           <Card className="h-100">
@@ -98,29 +102,14 @@ const DashboardPage = () => {
             </Card.Body>
           </Card>
         </Col>
-        
+
         <Col md={6} className="mb-4">
           <Card className="h-100">
             <Card.Body>
-              <Card.Title>System Status</Card.Title>
-              <div className="mt-3">
-                <div className="mb-2">
-                  <span className="system-status-indicator status-healthy"></span>
-                  Backend API: Healthy
-                </div>
-                <div className="mb-2">
-                  <span className="system-status-indicator status-healthy"></span>
-                  WebSocket Server: Healthy
-                </div>
-                <div className="mb-2">
-                  <span className="system-status-indicator status-healthy"></span>
-                  Database: Healthy
-                </div>
-                <div className="mb-2">
-                  <span className="system-status-indicator status-warning"></span>
-                  Edge Devices: 5/6 Connected
-                </div>
-              </div>
+              <Card.Title>Translation Performance</Card.Title>
+              <Card.Text>
+                This section will display translation performance metrics.
+              </Card.Text>
             </Card.Body>
           </Card>
         </Col>

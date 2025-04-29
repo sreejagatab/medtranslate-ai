@@ -1,0 +1,171 @@
+{
+  "session-dde4ab53-8490-4e6e-a8b4-54d9c58e576f": {
+    "sessionId": "session-dde4ab53-8490-4e6e-a8b4-54d9c58e576f",
+    "sessionCode": "691536",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LWMwYWFkMjcyLTVhOWEtNDk0Ny1iYTc0LTY4NjJlYjJlZTgzNiIsInNlc3Npb25JZCI6InNlc3Npb24tZGRlNGFiNTMtODQ5MC00ZTZlLWE4YjQtNTRkOWM1OGU1NzZmIiwic2Vzc2lvbkNvZGUiOiI2OTE1MzYiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzI4NDcsImV4cCI6MTc0NTk0NzI0N30.COhWDk_lSmUjsgSzN305Ekt1-Z9Hi79cKKgPVNcB9cA",
+    "language": "es",
+    "createdAt": "2025-04-29T13:20:47.071Z",
+    "status": "active",
+    "providerId": "provider-001",
+    "context": "General Consultation",
+    "startTime": "2025-04-29T13:20:47.072Z"
+  },
+  "session-0cbfa3e8-7177-429f-8e3d-b83f94edd3ac": {
+    "sessionId": "session-0cbfa3e8-7177-429f-8e3d-b83f94edd3ac",
+    "sessionCode": "514117",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LWVmZmU1MzQyLTg1OGMtNGMzZS1iYWE5LTFlOWJjN2FhZGYxYyIsInNlc3Npb25JZCI6InNlc3Npb24tMGNiZmEzZTgtNzE3Ny00MjlmLThlM2QtYjgzZjk0ZWRkM2FjIiwic2Vzc2lvbkNvZGUiOiI1MTQxMTciLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzI4NzEsImV4cCI6MTc0NTk0NzI3MX0.WKFPLLCucK8csIWyEBThkyvuM58VkMIEWwfOQIl9F0c",
+    "language": "es",
+    "createdAt": "2025-04-29T13:21:11.878Z",
+    "status": "active",
+    "providerId": "provider-001",
+    "context": "General Consultation",
+    "startTime": "2025-04-29T13:21:11.878Z"
+  },
+  "session-e64097dd-6a78-4822-9b53-3c384d720140": {
+    "sessionId": "session-e64097dd-6a78-4822-9b53-3c384d720140",
+    "sessionCode": "521751",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LWE0MDEyYWE3LTc5OTMtNDU5Zi1hMDk3LTEyNWFjOTA1YzdlZCIsInNlc3Npb25JZCI6InNlc3Npb24tZTY0MDk3ZGQtNmE3OC00ODIyLTliNTMtM2MzODRkNzIwMTQwIiwic2Vzc2lvbkNvZGUiOiI1MjE3NTEiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzI5MzYsImV4cCI6MTc0NTk0NzMzNn0.cZ4z2WgmawRoOXorI4ddwDaQ2V-b3XmM44A1p9Yx_VQ",
+    "language": "es",
+    "createdAt": "2025-04-29T13:22:16.825Z",
+    "status": "active",
+    "providerId": "provider-001",
+    "context": "General Consultation",
+    "startTime": "2025-04-29T13:22:16.826Z"
+  },
+  "session-ef11211f-a27f-462a-8211-ccaaacc14642": {
+    "sessionId": "session-ef11211f-a27f-462a-8211-ccaaacc14642",
+    "sessionCode": "174907",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTNjOGU5MjAzLTQ5YzQtNGU1ZC05YTM5LTYwODI3YmFkYWU1MCIsInNlc3Npb25JZCI6InNlc3Npb24tZWYxMTIxMWYtYTI3Zi00NjJhLTgyMTEtY2NhYWFjYzE0NjQyIiwic2Vzc2lvbkNvZGUiOiIxNzQ5MDciLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzMwNDgsImV4cCI6MTc0NTk0NzQ0OH0.yFBi3-mLWHuh1ZPkCYypaaWLdHFy_kv8eGIrx52gbxY",
+    "language": "es",
+    "createdAt": "2025-04-29T13:24:08.011Z",
+    "status": "active",
+    "providerId": "provider-001",
+    "context": "General Consultation",
+    "startTime": "2025-04-29T13:24:08.011Z"
+  },
+  "session-d28b0843-72b6-40a1-998d-6570ffe2e16c": {
+    "sessionId": "session-d28b0843-72b6-40a1-998d-6570ffe2e16c",
+    "sessionCode": "959142",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LWJiNDc2MWY3LTA2ZmMtNDgwNy05M2FlLWE3YWI4MmMxOWFjYSIsInNlc3Npb25JZCI6InNlc3Npb24tZDI4YjA4NDMtNzJiNi00MGExLTk5OGQtNjU3MGZmZTJlMTZjIiwic2Vzc2lvbkNvZGUiOiI5NTkxNDIiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzMwODcsImV4cCI6MTc0NTk0NzQ4N30.KS85Qxg5BwboVpWN7EJx9AkGG_jx-l-f0Gq-xpz9P_w",
+    "language": "es",
+    "createdAt": "2025-04-29T13:24:47.851Z",
+    "status": "active"
+  },
+  "session-71b64e92-16ce-4397-9d7e-e1e99774b68b": {
+    "sessionId": "session-71b64e92-16ce-4397-9d7e-e1e99774b68b",
+    "sessionCode": "174431",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTY1ZmI0NzZhLWZiNjUtNGU1NS05YTlhLTQ5OWUzZmU1MzUzMCIsInNlc3Npb25JZCI6InNlc3Npb24tNzFiNjRlOTItMTZjZS00Mzk3LTlkN2UtZTFlOTk3NzRiNjhiIiwic2Vzc2lvbkNvZGUiOiIxNzQ0MzEiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzMxMzksImV4cCI6MTc0NTk0NzUzOX0.d2ufTGQMwQj1ZCw3sm1E218lrzR8XUJr_698PY9iv0Y",
+    "language": "es",
+    "createdAt": "2025-04-29T13:25:39.003Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:25:39.011Z"
+  },
+  "session-fd1543df-b70e-4984-878d-da2262c41f3d": {
+    "sessionId": "session-fd1543df-b70e-4984-878d-da2262c41f3d",
+    "sessionCode": "332179",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LWVlZjZlNGM5LTI5MzYtNDZlNC1hMDFmLTgxOWJlM2JkZTliYyIsInNlc3Npb25JZCI6InNlc3Npb24tZmQxNTQzZGYtYjcwZS00OTg0LTg3OGQtZGEyMjYyYzQxZjNkIiwic2Vzc2lvbkNvZGUiOiIzMzIxNzkiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzMzOTgsImV4cCI6MTc0NTk0Nzc5OH0.L5ixp6hip6nQPqdnUotCHP8UiJxmeQQiP4izorBfZnE",
+    "language": "es",
+    "createdAt": "2025-04-29T13:29:58.097Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:29:58.103Z"
+  },
+  "session-d6ee68a0-de90-4600-84d4-a792bbe24121": {
+    "sessionId": "session-d6ee68a0-de90-4600-84d4-a792bbe24121",
+    "sessionCode": "964635",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LWEyNmNjMGQ3LWM1ZDktNDZkYi05MmIxLTFhYmQzMmQ2N2I0OCIsInNlc3Npb25JZCI6InNlc3Npb24tZDZlZTY4YTAtZGU5MC00NjAwLTg0ZDQtYTc5MmJiZTI0MTIxIiwic2Vzc2lvbkNvZGUiOiI5NjQ2MzUiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzM0OTgsImV4cCI6MTc0NTk0Nzg5OH0._aK10re_oaAYFlwCnHy9kHuXfe2aULUvIHHVKSM6MFM",
+    "language": "es",
+    "createdAt": "2025-04-29T13:31:38.633Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:31:38.641Z"
+  },
+  "session-99ad8a5f-dbb2-4428-bd7f-51184cb71951": {
+    "sessionId": "session-99ad8a5f-dbb2-4428-bd7f-51184cb71951",
+    "sessionCode": "643052",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTFmOWQ3NmJmLTA0ZmYtNGFjYi05YTdjLTdmNzU0MjIyZTdmMiIsInNlc3Npb25JZCI6InNlc3Npb24tOTlhZDhhNWYtZGJiMi00NDI4LWJkN2YtNTExODRjYjcxOTUxIiwic2Vzc2lvbkNvZGUiOiI2NDMwNTIiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzM2NjksImV4cCI6MTc0NTk0ODA2OX0.nTHV9EM6V4y_4u37T_znVjA8TAMPSkqUsca_32y875I",
+    "language": "es",
+    "createdAt": "2025-04-29T13:34:29.060Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:34:29.069Z"
+  },
+  "session-4cb356a0-97d4-4d59-876e-117962e0c329": {
+    "sessionId": "session-4cb356a0-97d4-4d59-876e-117962e0c329",
+    "sessionCode": "307853",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTZjOTRmZDViLTUwYTctNGY0Ni04MjhiLWUwNWM5ZDM0ZWM2OSIsInNlc3Npb25JZCI6InNlc3Npb24tNGNiMzU2YTAtOTdkNC00ZDU5LTg3NmUtMTE3OTYyZTBjMzI5Iiwic2Vzc2lvbkNvZGUiOiIzMDc4NTMiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzM3NTUsImV4cCI6MTc0NTk0ODE1NX0.Kl-rSCQQIgERKpk-n42x2TSBV5VAzZKMMxN_5oGYEss",
+    "language": "es",
+    "createdAt": "2025-04-29T13:35:55.859Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:35:55.866Z"
+  },
+  "session-f048ef9e-1cc8-4a5b-81cc-2b2b40dd4ec5": {
+    "sessionId": "session-f048ef9e-1cc8-4a5b-81cc-2b2b40dd4ec5",
+    "sessionCode": "152891",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTAyOWYxNTY5LTM3YWItNGM1ZS04YzYzLWVjZTkwODZkMjJmMyIsInNlc3Npb25JZCI6InNlc3Npb24tZjA0OGVmOWUtMWNjOC00YTViLTgxY2MtMmIyYjQwZGQ0ZWM1Iiwic2Vzc2lvbkNvZGUiOiIxNTI4OTEiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzM5NzksImV4cCI6MTc0NTk0ODM3OX0.5eNEA6mN7RK-MCllBvneab7V3Oas31q8__5GV8pJsfA",
+    "language": "es",
+    "createdAt": "2025-04-29T13:39:39.412Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:39:39.419Z"
+  },
+  "session-eb0164c9-78cc-4534-a6d2-e79a64cd94de": {
+    "sessionId": "session-eb0164c9-78cc-4534-a6d2-e79a64cd94de",
+    "sessionCode": "439626",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTJkZDZmNDI1LWEzNmYtNDNiZi1iZDUzLTJlZjc1OTM1MmI3NSIsInNlc3Npb25JZCI6InNlc3Npb24tZWIwMTY0YzktNzhjYy00NTM0LWE2ZDItZTc5YTY0Y2Q5NGRlIiwic2Vzc2lvbkNvZGUiOiI0Mzk2MjYiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzQyOTMsImV4cCI6MTc0NTk0ODY5M30.9_RNv4N3fw8QaiFfwxla6fje0B-OivPpux4iFcw9hlg",
+    "language": "es",
+    "createdAt": "2025-04-29T13:44:53.952Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:44:53.959Z"
+  },
+  "session-7d0676b7-78e5-4804-992b-8f2151dc8753": {
+    "sessionId": "session-7d0676b7-78e5-4804-992b-8f2151dc8753",
+    "sessionCode": "257964",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTg4YWQ1OWM0LWMxNTEtNGVlMi05NzQ5LTE1MjdkYjU4ZGIxZiIsInNlc3Npb25JZCI6InNlc3Npb24tN2QwNjc2YjctNzhlNS00ODA0LTk5MmItOGYyMTUxZGM4NzUzIiwic2Vzc2lvbkNvZGUiOiIyNTc5NjQiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzQ2MjQsImV4cCI6MTc0NTk0OTAyNH0.M5eKNlXAlKVlcCCwUykGmqA-lBwZZjyFm5Iq9GeWdfU",
+    "language": "es",
+    "createdAt": "2025-04-29T13:50:24.142Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:50:35.166Z"
+  },
+  "session-61e20995-17b1-41e8-9ffd-52b4dd33fd88": {
+    "sessionId": "session-61e20995-17b1-41e8-9ffd-52b4dd33fd88",
+    "sessionCode": "892421",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTdhYzJiNzE4LTE4ODgtNDg1Yi1hNTA1LTBkNzlkMGM4ZDEzNiIsInNlc3Npb25JZCI6InNlc3Npb24tNjFlMjA5OTUtMTdiMS00MWU4LTlmZmQtNTJiNGRkMzNmZDg4Iiwic2Vzc2lvbkNvZGUiOiI4OTI0MjEiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzQ4MDksImV4cCI6MTc0NTk0OTIwOX0.4aIh2Zl0S2nrKXuXJxB3s6wmm1LdZWsTafKgY1H5nYI",
+    "language": "es",
+    "createdAt": "2025-04-29T13:53:29.182Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:53:30.213Z"
+  },
+  "session-65d09491-a8f9-42bd-b020-ec63399cf122": {
+    "sessionId": "session-65d09491-a8f9-42bd-b020-ec63399cf122",
+    "sessionCode": "592911",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTQ5Y2I4YWVkLWYzYWItNDRmOS05YThiLTZhZTZlZDMxMjY3NiIsInNlc3Npb25JZCI6InNlc3Npb24tNjVkMDk0OTEtYThmOS00MmJkLWIwMjAtZWM2MzM5OWNmMTIyIiwic2Vzc2lvbkNvZGUiOiI1OTI5MTEiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzQ5MDMsImV4cCI6MTc0NTk0OTMwM30.Wa7AkbHwsabDa9Y1NZQDstRu90SgZHOHqzb9EMtXrhw",
+    "language": "es",
+    "createdAt": "2025-04-29T13:55:03.189Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:55:04.225Z"
+  },
+  "session-8ed5c06f-44cd-4869-8157-e958928aa36f": {
+    "sessionId": "session-8ed5c06f-44cd-4869-8157-e958928aa36f",
+    "sessionCode": "187627",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTBlMmY5Mjg2LTU1ZmItNGZkZC1iMzA5LTVlMWFmM2VkZTc3MyIsInNlc3Npb25JZCI6InNlc3Npb24tOGVkNWMwNmYtNDRjZC00ODY5LTgxNTctZTk1ODkyOGFhMzZmIiwic2Vzc2lvbkNvZGUiOiIxODc2MjciLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzUwNzAsImV4cCI6MTc0NTk0OTQ3MH0.jNLYlGpni1sBIP-2YTlPY1bFfceycDJX9QghPySeFVQ",
+    "language": "es",
+    "createdAt": "2025-04-29T13:57:50.437Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:57:51.458Z"
+  },
+  "session-ac5eeab5-389b-491d-ac36-c8ec91dfbd7d": {
+    "sessionId": "session-ac5eeab5-389b-491d-ac36-c8ec91dfbd7d",
+    "sessionCode": "740563",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LTRkMjc1YzAzLWE3ZTAtNGViNC1iZjJkLTQ3MDhiNTg2ZjYyOCIsInNlc3Npb25JZCI6InNlc3Npb24tYWM1ZWVhYjUtMzg5Yi00OTFkLWFjMzYtYzhlYzkxZGZiZDdkIiwic2Vzc2lvbkNvZGUiOiI3NDA1NjMiLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzUxMjEsImV4cCI6MTc0NTk0OTUyMX0.d4bVyRxHWQkun51gEu-GvFrWyPRhEW_ucSpehItyNxw",
+    "language": "es",
+    "createdAt": "2025-04-29T13:58:41.037Z",
+    "status": "ended",
+    "endTime": "2025-04-29T13:58:42.063Z"
+  },
+  "session-3a397c52-fac4-4dad-92f9-29344f918f5f": {
+    "sessionId": "session-3a397c52-fac4-4dad-92f9-29344f918f5f",
+    "sessionCode": "898507",
+    "patientToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwYXRpZW50LWYwN2Q0MmUyLWQyMTEtNDkyZi1hOGEzLTJkZTQwY2NiNmFhNiIsInNlc3Npb25JZCI6InNlc3Npb24tM2EzOTdjNTItZmFjNC00ZGFkLTkyZjktMjkzNDRmOTE4ZjVmIiwic2Vzc2lvbkNvZGUiOiI4OTg1MDciLCJsYW5ndWFnZSI6ImVzIiwidHlwZSI6InBhdGllbnQiLCJpYXQiOjE3NDU5MzUyNjMsImV4cCI6MTc0NTk0OTY2M30.fQcqfjWkfXoyqseGSW4WrcKoXFz3IUkXLg-7MZ1Rfi8",
+    "language": "es",
+    "createdAt": "2025-04-29T14:01:03.666Z",
+    "status": "ended",
+    "endTime": "2025-04-29T14:01:04.680Z"
+  }
+}

@@ -26,6 +26,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { AuthContext } from '../context/AuthContext';
 import TranslationMessage from '../components/TranslationMessage';
 import VoiceRecordButton from '../components/VoiceRecordButton';
+import ConnectionStatus from '../components/ConnectionStatus';
 import websocketService from '../services/websocket-service';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
@@ -540,14 +541,15 @@ export default function SessionScreen({ navigation, route }) {
       </View>
 
       {/* Connection status */}
-      {!isConnected && (
-        <View style={styles.connectionBanner}>
-          <Ionicons name="cloud-offline" size={16} color="#FFFFFF" />
-          <Text style={styles.connectionText}>
-            Connection lost. Reconnecting...
-          </Text>
-        </View>
-      )}
+      <View style={styles.connectionStatusContainer}>
+        <ConnectionStatus
+          isConnected={isConnected}
+          activeEndpoint={API_ENDPOINTS.TRANSLATE.AUDIO}
+          style={{
+            container: styles.connectionStatus
+          }}
+        />
+      </View>
 
       {/* Messages */}
       <ScrollView
@@ -946,5 +948,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#757575',
     marginRight: 8,
+  },
+  connectionStatusContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
+    zIndex: 10,
+  },
+  connectionStatus: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });

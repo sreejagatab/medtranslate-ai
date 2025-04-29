@@ -3,15 +3,17 @@
  *
  * This server provides edge computing capabilities for the MedTranslate AI system,
  * including local translation, caching, and synchronization with the cloud.
+ * Features enhanced offline mode detection and automatic reconnection.
  */
 
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const cors = require('cors');
-const { translateLocally, initialize: initTranslation, getSupportedLanguagePairs } = require('./translation');
+const { translateLocally, initialize: initTranslation, getSupportedLanguagePairs, processAudio } = require('./translation');
 const { syncWithCloud } = require('./sync');
 const { cacheManager } = require('./cache');
+const networkMonitor = require('./network-monitor');
 
 // Initialize express app
 const app = express();
@@ -41,6 +43,8 @@ app.use((req, res, next) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  const networkStatus = networkMonitor.getNetworkStatus();
+
   res.json({
     status: 'healthy',
     onlineStatus: isOnline ? 'connected' : 'offline',
@@ -49,7 +53,15 @@ app.get('/health', (req, res) => {
     supportedLanguagePairs,
     deviceId: DEVICE_ID,
     version: VERSION,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    network: {
+      online: networkStatus.online,
+      lastOnlineTime: networkStatus.lastOnlineTime ? new Date(networkStatus.lastOnlineTime).toISOString() : null,
+      lastOfflineTime: networkStatus.lastOfflineTime ? new Date(networkStatus.lastOfflineTime).toISOString() : null,
+      reconnecting: networkStatus.reconnecting,
+      connectionAttempts: networkStatus.connectionAttempts
+    },
+    cache: cacheManager.getCacheStats()
   });
 });
 
@@ -97,7 +109,7 @@ app.post('/translate', async (req, res) => {
 // Audio translation endpoint
 app.post('/translate-audio', async (req, res) => {
   try {
-    const { audioData, sourceLanguage, targetLanguage, context } = req.body;
+    const { audioData, sourceLanguage, targetLanguage, context, useCache = true } = req.body;
 
     if (!audioData || !sourceLanguage || !targetLanguage) {
       return res.status(400).json({
@@ -105,17 +117,106 @@ app.post('/translate-audio', async (req, res) => {
       });
     }
 
+    // Generate a hash of the audio data for caching
+    const crypto = require('crypto');
+    const audioHash = crypto.createHash('md5').update(audioData).digest('hex');
+    const cacheKey = `audio:${audioHash}:${sourceLanguage}:${targetLanguage}:${context || 'general'}`;
+
+    // Check cache if enabled
+    if (useCache) {
+      const cachedResult = await cacheManager.get('audio', cacheKey);
+      if (cachedResult) {
+        console.log(`Using cached audio translation for: ${cacheKey}`);
+        return res.json({
+          ...cachedResult,
+          source: 'cache',
+          fromCache: true
+        });
+      }
+    }
+
     // Process audio locally
-    const result = await translateLocally.processAudio(
-      audioData, sourceLanguage, targetLanguage, context
+    const result = await processAudio(
+      audioData, sourceLanguage, targetLanguage, context, useCache
     );
+
+    // Cache the result
+    if (useCache) {
+      const audioTtl = 3600; // 1 hour TTL for audio translations
+      await cacheManager.set('audio', cacheKey, result, audioTtl);
+    }
+
+    // Queue for sync with cloud if online
+    if (isOnline) {
+      syncWithCloud.queueAudioTranslation(
+        audioHash, sourceLanguage, targetLanguage, context, result
+      );
+    }
 
     res.json({
       ...result,
-      source: 'local'
+      source: 'local',
+      networkStatus: {
+        online: isOnline
+      }
     });
   } catch (error) {
     console.error('Audio translation error:', error);
+    res.status(500).json({
+      error: error.message,
+      networkStatus: {
+        online: isOnline
+      }
+    });
+  }
+});
+
+// Audio file upload endpoint
+app.post('/translate-audio/upload', async (req, res) => {
+  try {
+    const multer = require('multer');
+    const upload = multer({ dest: 'temp/' });
+
+    // Handle file upload
+    upload.single('audio')(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No audio file uploaded' });
+      }
+
+      const { sourceLanguage, targetLanguage, context } = req.body;
+
+      if (!sourceLanguage || !targetLanguage) {
+        return res.status(400).json({
+          error: 'Missing required parameters: sourceLanguage, targetLanguage'
+        });
+      }
+
+      // Read file as base64
+      const fs = require('fs');
+      const audioData = fs.readFileSync(req.file.path, { encoding: 'base64' });
+
+      // Process audio
+      const result = await processAudio(
+        audioData, sourceLanguage, targetLanguage, context
+      );
+
+      // Clean up temporary file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        ...result,
+        source: 'local',
+        networkStatus: {
+          online: isOnline
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Audio file upload error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -124,11 +225,43 @@ app.post('/translate-audio', async (req, res) => {
 wss.on('connection', (ws) => {
   console.log('WebSocket client connected');
 
+  // Send initial network status
+  ws.send(JSON.stringify({
+    type: 'network_status',
+    online: isOnline,
+    timestamp: new Date().toISOString()
+  }));
+
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
 
       if (data.type === 'translate') {
+        // Check cache first
+        const cachedTranslation = cacheManager.getCachedTranslation(
+          data.text,
+          data.sourceLanguage,
+          data.targetLanguage,
+          data.context
+        );
+
+        if (cachedTranslation) {
+          ws.send(JSON.stringify({
+            type: 'translation',
+            requestId: data.requestId,
+            result: {
+              translatedText: cachedTranslation.translatedText,
+              confidence: cachedTranslation.confidence,
+              sourceLanguage: data.sourceLanguage,
+              targetLanguage: data.targetLanguage,
+              context: data.context,
+              source: 'cache'
+            }
+          }));
+          return;
+        }
+
+        // Perform local translation
         const result = await translateLocally(
           data.text,
           data.sourceLanguage,
@@ -136,16 +269,61 @@ wss.on('connection', (ws) => {
           data.context
         );
 
+        // Cache the result
+        cacheManager.cacheTranslation(
+          data.text,
+          data.sourceLanguage,
+          data.targetLanguage,
+          data.context,
+          result
+        );
+
+        // Try to sync with cloud if online
+        if (isOnline) {
+          syncWithCloud.queueTranslation(
+            data.text,
+            data.sourceLanguage,
+            data.targetLanguage,
+            data.context,
+            result
+          );
+        }
+
         ws.send(JSON.stringify({
           type: 'translation',
           requestId: data.requestId,
+          result: {
+            ...result,
+            source: 'local'
+          }
+        }));
+      } else if (data.type === 'translate_audio') {
+        // Process audio translation
+        const result = await processAudio(
+          data.audioData,
+          data.sourceLanguage,
+          data.targetLanguage,
+          data.context
+        );
+
+        ws.send(JSON.stringify({
+          type: 'audio_translation',
+          requestId: data.requestId,
           result
+        }));
+      } else if (data.type === 'network_check') {
+        // Send current network status
+        ws.send(JSON.stringify({
+          type: 'network_status',
+          online: isOnline,
+          timestamp: new Date().toISOString()
         }));
       }
     } catch (error) {
       console.error('WebSocket error:', error);
       ws.send(JSON.stringify({
         type: 'error',
+        requestId: data?.requestId,
         error: error.message
       }));
     }
@@ -161,6 +339,37 @@ app.get('/languages', (req, res) => {
   res.json({
     supported: supportedLanguagePairs
   });
+});
+
+app.get('/network/status', (req, res) => {
+  const networkStatus = networkMonitor.getNetworkStatus();
+
+  res.json({
+    online: isOnline,
+    lastOnlineTime: networkStatus.lastOnlineTime ? new Date(networkStatus.lastOnlineTime).toISOString() : null,
+    lastOfflineTime: networkStatus.lastOfflineTime ? new Date(networkStatus.lastOfflineTime).toISOString() : null,
+    reconnecting: networkStatus.reconnecting,
+    connectionAttempts: networkStatus.connectionAttempts,
+    networkInterfaces: networkStatus.networkInterfaces
+  });
+});
+
+app.post('/network/reconnect', (req, res) => {
+  // Force a network connectivity check
+  networkMonitor.checkConnectivity()
+    .then(status => {
+      res.json({
+        success: true,
+        online: status.online,
+        reason: status.reason
+      });
+    })
+    .catch(error => {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    });
 });
 
 app.get('/sync/status', (req, res) => {
@@ -227,6 +436,18 @@ async function startServer() {
       console.error('Failed to initialize translation module:', translationResult.error);
     }
 
+    // Initialize cache manager
+    console.log('Initializing cache manager...');
+    await cacheManager.initialize();
+
+    // Initialize network monitor
+    console.log('Initializing network monitor...');
+    await networkMonitor.initialize();
+
+    // Register network event listeners
+    networkMonitor.on('online', handleOnlineStatus);
+    networkMonitor.on('offline', handleOfflineStatus);
+
     // Initialize sync module
     console.log('Initializing sync module...');
     await syncWithCloud.initialize();
@@ -236,11 +457,15 @@ async function startServer() {
       console.log(`Edge application server running on port ${PORT}`);
       isInitialized = true;
 
-      // Initial cloud connection check
-      checkCloudConnection();
+      // Get initial network status
+      const networkStatus = networkMonitor.getNetworkStatus();
+      isOnline = networkStatus.online;
+      console.log(`Initial network status: ${isOnline ? 'Online' : 'Offline'}`);
 
-      // Start periodic connection checks
-      connectionCheckInterval = setInterval(checkCloudConnection, 30000);
+      // If online, sync with cloud
+      if (isOnline) {
+        syncWithCloud.syncCachedData();
+      }
     });
   } catch (error) {
     console.error('Error starting server:', error);
@@ -248,45 +473,94 @@ async function startServer() {
   }
 }
 
-// Check cloud connectivity
-async function checkCloudConnection() {
-  try {
-    const result = await syncWithCloud.testConnection();
-    isOnline = result.connected;
+// Handle online status
+function handleOnlineStatus(data) {
+  console.log(`Network is online (${new Date(data.timestamp).toISOString()})`);
+  isOnline = true;
 
-    if (isOnline) {
-      // If we're online, sync cached data
-      syncWithCloud.syncCachedData();
+  // Notify connected clients
+  broadcastNetworkStatus();
+
+  // Sync with cloud
+  syncWithCloud.syncCachedData()
+    .then(result => {
+      console.log(`Synced ${result.itemsSynced || 0} items with cloud`);
+    })
+    .catch(error => {
+      console.error('Error syncing with cloud:', error);
+    });
+
+  // Check for model updates
+  syncWithCloud.checkForModelUpdates()
+    .then(result => {
+      if (result.success && result.updatesAvailable > 0) {
+        console.log(`Downloaded ${result.updatesDownloaded} model updates`);
+        // Refresh supported language pairs
+        supportedLanguagePairs = getSupportedLanguagePairs();
+      }
+    })
+    .catch(error => {
+      console.error('Error checking for model updates:', error);
+    });
+}
+
+// Handle offline status
+function handleOfflineStatus(data) {
+  console.log(`Network is offline: ${data.reason} (${new Date(data.timestamp).toISOString()})`);
+  isOnline = false;
+
+  // Notify connected clients
+  broadcastNetworkStatus();
+}
+
+// Broadcast network status to all connected WebSocket clients
+function broadcastNetworkStatus() {
+  const status = {
+    type: 'network_status',
+    online: isOnline,
+    timestamp: new Date().toISOString()
+  };
+
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(status));
     }
-
-    console.log(`Cloud connection status: ${isOnline ? 'online' : 'offline'}`);
-  } catch (error) {
-    isOnline = false;
-    console.error('Error checking cloud connection:', error);
-  }
+  });
 }
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down...');
-  if (connectionCheckInterval) {
-    clearInterval(connectionCheckInterval);
-  }
+function shutdown() {
+  console.log('Shutting down MedTranslate Edge Application...');
+
+  // Remove network event listeners
+  networkMonitor.off('online', handleOnlineStatus);
+  networkMonitor.off('offline', handleOfflineStatus);
+
+  // Save cache to disk
+  cacheManager.saveCacheToDisk();
+
+  // Close server
   server.close(() => {
     console.log('Server closed');
     process.exit(0);
   });
+
+  // Force exit after 5 seconds if server doesn't close gracefully
+  setTimeout(() => {
+    console.log('Forcing exit after timeout');
+    process.exit(1);
+  }, 5000);
+}
+
+// Handle termination signals
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received');
+  shutdown();
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down...');
-  if (connectionCheckInterval) {
-    clearInterval(connectionCheckInterval);
-  }
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
+  console.log('SIGINT received');
+  shutdown();
 });
 
 // Start the server

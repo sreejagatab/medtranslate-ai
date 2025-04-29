@@ -10,8 +10,8 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const authHandler = require('./lambda/auth/handler');
-const translationHandler = require('./lambda/translation/handler');
+const authRoutes = require('./auth/auth-routes');
+const translationRoutes = require('./translation/translation-routes');
 const storageHandler = require('./lambda/storage/handler');
 const websocketServer = require('./websocket/server');
 
@@ -53,15 +53,10 @@ function lambdaToExpress(handler) {
 }
 
 // Auth routes
-app.post('/auth/login', lambdaToExpress(authHandler.login));
-app.post('/sessions', lambdaToExpress(authHandler.createSession));
-app.post('/sessions/join', lambdaToExpress(authHandler.joinSession));
-app.post('/sessions/patient-token', lambdaToExpress(authHandler.generatePatientToken));
-app.post('/sessions/:sessionId/end', lambdaToExpress(authHandler.endSession));
+app.use('/auth', authRoutes);
 
 // Translation routes
-app.post('/translate/text', lambdaToExpress(translationHandler.translateText));
-app.post('/translate/audio', lambdaToExpress(translationHandler.translateAudio));
+app.use('/translate', translationRoutes);
 
 // Storage routes
 app.post('/storage/transcript', lambdaToExpress(storageHandler.storeTranscript));

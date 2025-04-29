@@ -13,6 +13,9 @@ const TEST_TYPES = {
   UNIT: 'unit',
   INTEGRATION: 'integration',
   PERFORMANCE: 'performance',
+  E2E: 'e2e',
+  WEBSOCKET: 'websocket',
+  EDGE: 'edge',
   ALL: 'all'
 };
 
@@ -47,6 +50,33 @@ const getTestDirectories = () => {
   return directories;
 };
 
+// Get specific test files based on test type
+const getSpecificTestFiles = () => {
+  if (testType === TEST_TYPES.E2E) {
+    return [
+      path.join(__dirname, 'integration/complete-translation-flow.test.js')
+    ];
+  }
+
+  if (testType === TEST_TYPES.WEBSOCKET) {
+    return [
+      path.join(__dirname, 'integration/websocket-communication.test.js')
+    ];
+  }
+
+  if (testType === TEST_TYPES.EDGE) {
+    return [
+      path.join(__dirname, 'integration/edge-offline-sync.test.js'),
+      path.join(__dirname, 'unit/edge-translation.test.js'),
+      path.join(__dirname, 'unit/edge-cache.test.js'),
+      path.join(__dirname, 'unit/edge-sync.test.js'),
+      path.join(__dirname, 'unit/edge-server.test.js')
+    ];
+  }
+
+  return [];
+};
+
 // Get test files
 const getTestFiles = (directory) => {
   const testDir = path.join(__dirname, directory);
@@ -66,13 +96,19 @@ const getTestFiles = (directory) => {
 
 // Run tests
 const runTests = async () => {
-  const directories = getTestDirectories();
   let allFiles = [];
 
-  // Collect all test files
-  for (const directory of directories) {
-    const files = getTestFiles(directory);
-    allFiles = [...allFiles, ...files];
+  // Check for specific test types first
+  const specificFiles = getSpecificTestFiles();
+  if (specificFiles.length > 0) {
+    allFiles = specificFiles;
+  } else {
+    // Collect all test files from directories
+    const directories = getTestDirectories();
+    for (const directory of directories) {
+      const files = getTestFiles(directory);
+      allFiles = [...allFiles, ...files];
+    }
   }
 
   if (allFiles.length === 0) {
@@ -103,57 +139,111 @@ const runTests = async () => {
 
 // Start the server if needed
 const startServer = async () => {
-  if (testType === TEST_TYPES.UNIT) {
-    return null; // No server needed for unit tests
+  if (testType === TEST_TYPES.UNIT && !testType.includes('edge')) {
+    return null; // No server needed for unit tests except edge tests
   }
 
   console.log('Starting test server...');
 
-  const server = spawn('node', ['./backend/dev-server.js'], {
+  // Start backend server
+  const backendServer = spawn('node', ['./backend/dev-server.js'], {
     stdio: 'pipe',
     shell: true,
     env: { ...process.env, PORT: '3005' }
   });
 
+  // Start edge server if needed
+  let edgeServer = null;
+  if (testType === TEST_TYPES.EDGE || testType === TEST_TYPES.E2E || testType === TEST_TYPES.ALL) {
+    console.log('Starting edge server...');
+    edgeServer = spawn('node', ['./edge/app/server.js'], {
+      stdio: 'pipe',
+      shell: true,
+      env: { ...process.env, PORT: '3006' }
+    });
+  }
+
   // Wait for server to start
   return new Promise((resolve, reject) => {
-    let output = '';
+    let backendOutput = '';
+    let edgeOutput = '';
+    let backendStarted = false;
+    let edgeStarted = edgeServer ? false : true; // If no edge server, consider it started
 
-    server.stdout.on('data', (data) => {
-      output += data.toString();
-      console.log(`[Server] ${data.toString().trim()}`);
+    backendServer.stdout.on('data', (data) => {
+      backendOutput += data.toString();
+      console.log(`[Backend] ${data.toString().trim()}`);
 
-      if (output.includes('Server running on port') || output.includes('development server running on port')) {
-        console.log('Server started successfully.');
-        resolve(server);
+      if (backendOutput.includes('Server running on port') || backendOutput.includes('development server running on port')) {
+        console.log('Backend server started successfully.');
+        backendStarted = true;
+
+        if (backendStarted && edgeStarted) {
+          resolve({ backendServer, edgeServer });
+        }
       }
     });
 
-    server.stderr.on('data', (data) => {
-      console.error(`[Server Error] ${data.toString().trim()}`);
+    backendServer.stderr.on('data', (data) => {
+      console.error(`[Backend Error] ${data.toString().trim()}`);
     });
 
-    server.on('error', (error) => {
-      console.error('Failed to start server:', error);
+    backendServer.on('error', (error) => {
+      console.error('Failed to start backend server:', error);
       reject(error);
     });
 
-    // Timeout after 10 seconds
+    if (edgeServer) {
+      edgeServer.stdout.on('data', (data) => {
+        edgeOutput += data.toString();
+        console.log(`[Edge] ${data.toString().trim()}`);
+
+        if (edgeOutput.includes('Server running on port') || edgeOutput.includes('Edge server running on port')) {
+          console.log('Edge server started successfully.');
+          edgeStarted = true;
+
+          if (backendStarted && edgeStarted) {
+            resolve({ backendServer, edgeServer });
+          }
+        }
+      });
+
+      edgeServer.stderr.on('data', (data) => {
+        console.error(`[Edge Error] ${data.toString().trim()}`);
+      });
+
+      edgeServer.on('error', (error) => {
+        console.error('Failed to start edge server:', error);
+        reject(error);
+      });
+    }
+
+    // Timeout after 15 seconds
     setTimeout(() => {
-      if (!output.includes('Server running on port')) {
-        reject(new Error('Server startup timeout'));
+      if (!backendStarted || !edgeStarted) {
+        let errorMessage = '';
+        if (!backendStarted) errorMessage += 'Backend server startup timeout. ';
+        if (!edgeStarted && edgeServer) errorMessage += 'Edge server startup timeout.';
+        reject(new Error(errorMessage));
       }
-    }, 10000);
+    }, 15000);
   });
 };
 
 // Main function
 const main = async () => {
-  let server = null;
+  let servers = null;
 
   try {
-    // Start server if needed
-    server = await startServer();
+    // Start servers if needed
+    servers = await startServer();
+
+    // Set environment variables for tests
+    if (servers) {
+      process.env.BACKEND_URL = 'http://localhost:3005';
+      process.env.EDGE_URL = 'http://localhost:3006';
+      process.env.WS_URL = 'ws://localhost:3005/ws';
+    }
 
     // Run tests
     await runTests();
@@ -161,10 +251,19 @@ const main = async () => {
     console.error('Error running tests:', error);
     process.exit(1);
   } finally {
-    // Clean up server
-    if (server) {
-      console.log('Stopping server...');
-      server.kill();
+    // Clean up servers
+    if (servers) {
+      console.log('Stopping servers...');
+
+      if (servers.backendServer) {
+        servers.backendServer.kill();
+        console.log('Backend server stopped.');
+      }
+
+      if (servers.edgeServer) {
+        servers.edgeServer.kill();
+        console.log('Edge server stopped.');
+      }
     }
   }
 };

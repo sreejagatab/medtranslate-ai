@@ -1,6 +1,6 @@
 /**
  * MedTranslate AI System Starter
- * 
+ *
  * This script starts all components of the MedTranslate AI system:
  * - Backend server
  * - Edge application
@@ -25,7 +25,7 @@ const colors = {
   blink: '\x1b[5m',
   reverse: '\x1b[7m',
   hidden: '\x1b[8m',
-  
+
   black: '\x1b[30m',
   red: '\x1b[31m',
   green: '\x1b[32m',
@@ -45,7 +45,7 @@ const services = [
     args: ['dev-server.js'],
     cwd: path.join(__dirname, 'backend'),
     env: {
-      PORT: '3001',
+      PORT: '4001',
       NODE_ENV: 'development',
       ...process.env
     }
@@ -57,7 +57,7 @@ const services = [
     args: ['app/server.js'],
     cwd: path.join(__dirname, 'edge'),
     env: {
-      PORT: '3000',
+      PORT: '4000',
       NODE_ENV: 'development',
       ...process.env
     }
@@ -69,9 +69,9 @@ const services = [
     args: ['web-server.js'],
     cwd: path.join(__dirname, 'frontend/provider-app'),
     env: {
-      PORT: '3003',
-      REACT_APP_API_URL: 'http://localhost:3001',
-      REACT_APP_EDGE_URL: 'http://localhost:3000',
+      PORT: '4003',
+      REACT_APP_API_URL: 'http://localhost:4001',
+      REACT_APP_EDGE_URL: 'http://localhost:4000',
       ...process.env
     }
   },
@@ -82,9 +82,9 @@ const services = [
     args: ['web-server.js'],
     cwd: path.join(__dirname, 'frontend/patient-app'),
     env: {
-      PORT: '3004',
-      REACT_APP_API_URL: 'http://localhost:3001',
-      REACT_APP_EDGE_URL: 'http://localhost:3000',
+      PORT: '4004',
+      REACT_APP_API_URL: 'http://localhost:4001',
+      REACT_APP_EDGE_URL: 'http://localhost:4000',
       ...process.env
     }
   }
@@ -149,12 +149,12 @@ function startService(service) {
 // Main function
 async function main() {
   console.log(`${colors.bright}${colors.blue}
-  __  __          _ _____                    _       _         _    ___ 
+  __  __          _ _____                    _       _         _    ___
  |  \\/  | ___  __| |_   _| __ __ _ _ __  ___| | __ _| |_ ___  / \\  |_ _|
- | |\\/| |/ _ \\/ _\` | | || '__/ _\` | '_ \\/ __| |/ _\` | __/ _ \\/ _ \\  | | 
- | |  | |  __/ (_| | | || | | (_| | | | \\__ \\ | (_| | ||  __/ ___ \\ | | 
+ | |\\/| |/ _ \\/ _\` | | || '__/ _\` | '_ \\/ __| |/ _\` | __/ _ \\/ _ \\  | |
+ | |  | |  __/ (_| | | || | | (_| | | | \\__ \\ | (_| | ||  __/ ___ \\ | |
  |_|  |_|\\___|\\__,_| |_||_|  \\__,_|_| |_|___/_|\\__,_|\\__\\___|_/   \\_\\___|
-                                                                         
+
   ${colors.reset}`);
   console.log(`${colors.bright}${colors.blue}Starting MedTranslate AI System...${colors.reset}`);
   console.log(`${colors.dim}---------------------------------------${colors.reset}`);
@@ -170,7 +170,7 @@ async function main() {
   for (const service of services) {
     const proc = startService(service);
     processes.push(proc);
-    
+
     // Add a small delay between starting services
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
@@ -178,10 +178,10 @@ async function main() {
   console.log(`${colors.bright}${colors.green}All services started successfully!${colors.reset}`);
   console.log(`
 ${colors.bright}Access the applications at:${colors.reset}
-- ${colors.cyan}Backend API:     ${colors.bright}http://localhost:3001${colors.reset}
-- ${colors.green}Edge API:       ${colors.bright}http://localhost:3000${colors.reset}
-- ${colors.magenta}Provider App:   ${colors.bright}http://localhost:3003${colors.reset}
-- ${colors.yellow}Patient App:    ${colors.bright}http://localhost:3004${colors.reset}
+- ${colors.cyan}Backend API:     ${colors.bright}http://localhost:4001${colors.reset}
+- ${colors.green}Edge API:       ${colors.bright}http://localhost:4000${colors.reset}
+- ${colors.magenta}Provider App:   ${colors.bright}http://localhost:4003${colors.reset}
+- ${colors.yellow}Patient App:    ${colors.bright}http://localhost:4004${colors.reset}
   `);
 
   // Handle process termination

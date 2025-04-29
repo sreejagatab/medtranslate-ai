@@ -1,0 +1,40 @@
+{
+  "provider-001": {
+    "id": "provider-001",
+    "name": "Dr. John Smith",
+    "email": "john.smith@example.com",
+    "role": "provider",
+    "passwordHash": "80655abc9b8660bd04a894a5efe9d281ed6c98b5a602dee2d5a33d6d2f1f6b0c2a7625661656243df98584b668fa6c594498689df452817bb1379c75fb088df9",
+    "createdAt": "2025-04-29T11:00:00.000Z",
+    "passwordSalt": "2309bddffef8a87fc3384766273119eb",
+    "updatedAt": "2025-04-29T13:18:34.227Z"
+  },
+  "provider-002": {
+    "id": "provider-002",
+    "name": "Dr. Maria Garcia",
+    "email": "maria.garcia@example.com",
+    "role": "provider",
+    "passwordHash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+    "createdAt": "2025-04-29T11:00:00.000Z"
+  },
+  "admin-001": {
+    "id": "admin-001",
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "role": "admin",
+    "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "createdAt": "2025-04-29T11:00:00.000Z"
+  },
+  "user-1745930882911": {
+    "id": "user-1745930882911",
+    "name": "Test Provider",
+    "email": "test-provider@example.com",
+    "role": "doctor",
+    "specialty": "general",
+    "passwordHash": "ed5e936fdde7bfdbe84194c030cc57aff9b5ce0c3ed1971fb11a5e663a248161d45c6e346e8bfd6d16b841cafe9805abafa249f7cbe87f51a700d404ce0f27c6",
+    "passwordSalt": "01929efe1d26245ca164b3393e3a5fc2",
+    "active": true,
+    "createdAt": "2025-04-29T12:48:02.918Z",
+    "updatedAt": "2025-04-29T12:48:02.918Z"
+  }
+}

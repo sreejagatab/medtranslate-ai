@@ -17,6 +17,9 @@ const authHandler = require('./lambda/auth/handler');
 const translationHandler = require('./lambda/translation/handler');
 const storageHandler = require('./lambda/storage/handler');
 
+// Import routes
+const monitoringRoutes = require('./routes/monitoring-routes');
+
 // Create Express app
 const app = express();
 const port = process.env.PORT || 3001;
@@ -65,6 +68,14 @@ const lambdaToExpress = (handler) => async (req, res) => {
 
 // Auth routes
 app.post('/auth/login', lambdaToExpress(authHandler.login));
+app.post('/auth/register', lambdaToExpress(authHandler.register));
+app.post('/auth/verify', lambdaToExpress(authHandler.verifyToken));
+
+// User management routes
+app.get('/users', lambdaToExpress(authHandler.getUsers));
+app.put('/users/:userId', lambdaToExpress(authHandler.updateUser));
+
+// Session routes
 app.post('/sessions', lambdaToExpress(authHandler.createSession));
 app.post('/sessions/join', lambdaToExpress(authHandler.joinSession));
 app.post('/sessions/patient-token', lambdaToExpress(authHandler.generatePatientToken));
@@ -78,23 +89,48 @@ app.post('/translate/audio', lambdaToExpress(translationHandler.translateAudio))
 app.post('/storage/transcript', lambdaToExpress(storageHandler.storeTranscript));
 app.get('/storage/sessions/:sessionId', lambdaToExpress(storageHandler.getSessionData));
 
+// Monitoring routes
+app.use('/monitoring', monitoringRoutes);
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     message: 'MedTranslate AI API Server',
     version: '1.0.0',
-    endpoints: [
-      '/auth/login',
-      '/sessions',
-      '/sessions/join',
-      '/sessions/patient-token',
-      '/sessions/:sessionId/end',
-      '/translate/text',
-      '/translate/audio',
-      '/storage/transcript',
-      '/storage/sessions/:sessionId',
-      '/health'
-    ]
+    endpoints: {
+      auth: [
+        '/auth/login',
+        '/auth/register',
+        '/auth/verify'
+      ],
+      users: [
+        '/users',
+        '/users/:userId'
+      ],
+      sessions: [
+        '/sessions',
+        '/sessions/join',
+        '/sessions/patient-token',
+        '/sessions/:sessionId/end'
+      ],
+      translation: [
+        '/translate/text',
+        '/translate/audio'
+      ],
+      storage: [
+        '/storage/transcript',
+        '/storage/sessions/:sessionId'
+      ],
+      monitoring: [
+        '/monitoring/health',
+        '/monitoring/performance',
+        '/monitoring/resources',
+        '/monitoring/alerts'
+      ],
+      system: [
+        '/health'
+      ]
+    }
   });
 });
 

@@ -1,9 +1,24 @@
 {
   "heart attack": "crise cardiaque",
   "blood pressure": "tension artérielle",
-  "diabetes": "diabète",
-  "stroke": "accident vasculaire cérébral",
-  "cancer": "cancer",
   "hypertension": "hypertension",
-  "asthma": "asthme"
+  "arrhythmia": "arythmie",
+  "coronary artery disease": "maladie coronarienne",
+  "stroke": "accident vasculaire cérébral",
+  "seizure": "crise d'épilepsie",
+  "migraine": "migraine",
+  "multiple sclerosis": "sclérose en plaques",
+  "ear infection": "infection de l'oreille",
+  "chickenpox": "varicelle",
+  "measles": "rougeole",
+  "cancer": "cancer",
+  "chemotherapy": "chimiothérapie",
+  "radiation therapy": "radiothérapie",
+  "cardiac arrest": "arrêt cardiaque",
+  "anaphylaxis": "anaphylaxie",
+  "trauma": "traumatisme",
+  "fever": "fièvre",
+  "headache": "mal de tête",
+  "nausea": "nausée",
+  "diabetes": "diabète"
 }

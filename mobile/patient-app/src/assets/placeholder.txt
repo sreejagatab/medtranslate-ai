@@ -1,0 +1,10 @@
+This directory contains image assets for the MedTranslate AI Patient App.
+
+The following images need to be added:
+- logo.png: App logo
+- welcome-1.png: Welcome screen image 1
+- welcome-2.png: Welcome screen image 2
+- welcome-3.png: Welcome screen image 3
+- welcome-4.png: Welcome screen image 4
+
+These images should be created by a designer and placed in this directory.

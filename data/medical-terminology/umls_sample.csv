@@ -1,0 +1,23 @@
+source_term,source_language,target_term,target_language,domain,definition
+heart attack,en,ataque cardíaco,es,cardiology,A sudden blockage of blood flow to the heart muscle
+blood pressure,en,presión arterial,es,cardiology,The pressure of circulating blood against the walls of blood vessels
+hypertension,en,hipertensión,es,cardiology,Abnormally high blood pressure
+arrhythmia,en,arritmia,es,cardiology,Irregular heartbeat or abnormal heart rhythm
+coronary artery disease,en,enfermedad de las arterias coronarias,es,cardiology,Disease of the blood vessels supplying the heart muscle
+stroke,en,accidente cerebrovascular,es,neurology,Sudden interruption of blood supply to the brain
+seizure,en,convulsión,es,neurology,Sudden uncontrolled electrical disturbance in the brain
+migraine,en,migraña,es,neurology,Recurring headache that causes moderate to severe pain
+multiple sclerosis,en,esclerosis múltiple,es,neurology,Disease that affects the central nervous system
+ear infection,en,infección de oído,es,pediatrics,Infection of the middle ear
+chickenpox,en,varicela,es,pediatrics,Highly contagious viral infection causing an itchy rash with blisters
+measles,en,sarampión,es,pediatrics,Highly contagious viral disease causing fever and red rash
+cancer,en,cáncer,es,oncology,Disease caused by an uncontrolled division of abnormal cells
+chemotherapy,en,quimioterapia,es,oncology,Treatment that uses drugs to kill cancer cells
+radiation therapy,en,radioterapia,es,oncology,Treatment that uses high doses of radiation to kill cancer cells
+cardiac arrest,en,paro cardíaco,es,emergency,Sudden unexpected loss of heart function
+anaphylaxis,en,anafilaxia,es,emergency,Severe potentially life-threatening allergic reaction
+trauma,en,trauma,es,emergency,Physical injury or wound caused by external force or violence
+fever,en,fiebre,es,general,Temporary increase in body temperature often due to illness
+headache,en,dolor de cabeza,es,general,Pain in any region of the head
+nausea,en,náusea,es,general,Feeling of sickness with an inclination to vomit
+diabetes,en,diabetes,es,general,Disease that affects how your body uses blood sugar

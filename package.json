@@ -5,15 +5,23 @@
   "main": "index.js",
   "scripts": {
     "test": "node tests/run-tests.js all",
-    "test:edge": "node tests/run-tests.js unit edge",
+    "test:edge": "node tests/run-tests.js edge",
     "test:edge:unit": "jest tests/unit/edge-*.test.js",
     "test:edge:integration": "node tests/run-tests.js integration edge",
     "test:edge:performance": "node tests/run-tests.js performance edge",
+    "test:edge:offline": "node tests/integration/edge-offline-sync.test.js",
     "test:unit": "node tests/run-tests.js unit",
     "test:integration": "node tests/run-tests.js integration",
     "test:performance": "node tests/run-tests.js performance",
     "test:translation": "node tests/run-tests.js all translation",
-    "test:e2e": "node tests/run-tests.js integration",
+    "test:e2e": "node tests/run-tests.js e2e",
+    "test:websocket": "node tests/run-tests.js websocket",
+    "test:complete-flow": "node tests/integration/complete-translation-flow.test.js",
+    "test:backend:unit": "jest tests/unit/translation-service.test.js tests/unit/websocket-server.test.js tests/unit/storage-handler.test.js",
+    "test:backend:integration": "jest tests/integration/backend-frontend-auth.test.js tests/integration/translation-error-handling.test.js",
+    "test:websocket:reconnection": "jest tests/integration/websocket-reconnection.test.js",
+    "test:error-handling": "jest tests/integration/translation-error-handling.test.js",
+    "test:performance:translation": "node tests/performance/backend-translation.perf.js",
     "lint": "eslint .",
     "deploy:backend": "cd backend && npm run deploy",
     "deploy:infrastructure": "cd infrastructure && ./deploy.sh",
@@ -44,14 +52,17 @@
   },
   "homepage": "https://github.com/your-org/medtranslate-ai#readme",
   "devDependencies": {
+    "axios": "^1.9.0",
     "eslint": "^8.38.0",
-    "jest": "^29.5.0",
+    "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.5.0",
     "jest-fetch-mock": "^3.0.3",
     "jest-websocket-mock": "^2.4.0",
     "mock-socket": "^9.2.1",
     "nock": "^13.3.1",
-    "supertest": "^7.1.0"
+    "supertest": "^7.1.0",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.1"
   },
   "workspaces": [
     "backend",
@@ -66,8 +77,6 @@
     "dotenv": "^16.5.0",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
-    "node-fetch": "^2.7.0",
-    "uuid": "^9.0.1",
-    "ws": "^8.18.1"
+    "node-fetch": "^2.7.0"
   }
 }

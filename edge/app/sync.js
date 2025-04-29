@@ -603,11 +603,60 @@ function getSyncStatus() {
   };
 }
 
+/**
+ * Queues an audio translation for synchronization with the cloud
+ *
+ * @param {string} audioHash - Hash of the audio data
+ * @param {string} sourceLanguage - The source language code
+ * @param {string} targetLanguage - The target language code
+ * @param {string} context - The medical context
+ * @param {Object} result - The translation result
+ * @returns {string} - The ID of the queued item
+ */
+function queueAudioTranslation(audioHash, sourceLanguage, targetLanguage, context, result) {
+  // Ensure module is initialized
+  if (!isInitialized) {
+    initialize();
+  }
+
+  // Generate a unique ID for this translation
+  const id = crypto.createHash('md5')
+    .update(`audio:${audioHash}:${sourceLanguage}:${targetLanguage}:${context}:${Date.now()}`)
+    .digest('hex');
+
+  // Add to queue
+  syncQueue.push({
+    id,
+    type: 'audio_translation',
+    data: {
+      audioHash,
+      originalText: result.originalText,
+      translatedText: result.translatedText,
+      confidence: result.confidence,
+      sourceLanguage,
+      targetLanguage,
+      context,
+      processingTime: result.processingTime
+    },
+    deviceId: DEVICE_ID,
+    timestamp: Date.now(),
+    retries: 0
+  });
+
+  // Save queue to disk periodically
+  if (syncQueue.length % 10 === 0) {
+    saveQueueToDisk();
+  }
+
+  return id;
+}
+
 // Export sync functions
 const syncWithCloud = {
   initialize,
   testConnection,
   queueTranslation,
+  queueAudioTranslation,
   syncCachedData,
   checkForModelUpdates,
   getSyncStatus

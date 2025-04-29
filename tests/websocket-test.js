@@ -1,6 +1,6 @@
 /**
  * WebSocket Communication Test for MedTranslate AI
- * 
+ *
  * This script tests the WebSocket communication between provider and patient applications.
  * It simulates both a provider and a patient connecting to a session and exchanging messages.
  */
@@ -12,7 +12,7 @@ const { v4: uuidv4 } = require('uuid');
 // Configuration
 const config = {
   wsEndpoint: 'ws://localhost:3001/ws',
-  jwtSecret: 'dev-jwt-secret-key-for-medtranslate-ai',
+  jwtSecret: 'medtranslate-dev-secret-key',
   sessionId: uuidv4(),
   providerName: 'Dr. Test Provider',
   patientLanguage: 'es',
@@ -49,15 +49,15 @@ function createPatientToken() {
 function connectProvider() {
   const token = createProviderToken();
   const ws = new WebSocket(`${config.wsEndpoint}/${config.sessionId}?token=${token}`);
-  
+
   ws.on('open', () => {
     console.log('Provider connected to session:', config.sessionId);
   });
-  
+
   ws.on('message', (data) => {
     const message = JSON.parse(data);
     console.log('Provider received message:', message);
-    
+
     // Respond to patient messages
     if (message.type === 'translation' && message.sender && message.sender.type === 'patient') {
       setTimeout(() => {
@@ -74,15 +74,15 @@ function connectProvider() {
       }, 2000);
     }
   });
-  
+
   ws.on('close', (code, reason) => {
     console.log('Provider disconnected:', code, reason);
   });
-  
+
   ws.on('error', (error) => {
     console.error('Provider WebSocket error:', error);
   });
-  
+
   return ws;
 }
 
@@ -90,10 +90,10 @@ function connectProvider() {
 function connectPatient() {
   const token = createPatientToken();
   const ws = new WebSocket(`${config.wsEndpoint}/${config.sessionId}?token=${token}`);
-  
+
   ws.on('open', () => {
     console.log('Patient connected to session:', config.sessionId);
-    
+
     // Send a message after connecting
     setTimeout(() => {
       ws.send(JSON.stringify({
@@ -108,20 +108,20 @@ function connectPatient() {
       }));
     }, 3000);
   });
-  
+
   ws.on('message', (data) => {
     const message = JSON.parse(data);
     console.log('Patient received message:', message);
   });
-  
+
   ws.on('close', (code, reason) => {
     console.log('Patient disconnected:', code, reason);
   });
-  
+
   ws.on('error', (error) => {
     console.error('Patient WebSocket error:', error);
   });
-  
+
   return ws;
 }
 
@@ -129,14 +129,14 @@ function connectPatient() {
 async function runTest() {
   console.log('Starting WebSocket communication test...');
   console.log('Session ID:', config.sessionId);
-  
+
   // Connect provider first
   const providerWs = connectProvider();
-  
+
   // Wait a bit before connecting patient
   setTimeout(() => {
     const patientWs = connectPatient();
-    
+
     // Close connections after test
     setTimeout(() => {
       console.log('Test completed, closing connections...');

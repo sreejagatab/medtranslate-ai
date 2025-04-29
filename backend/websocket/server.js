@@ -8,8 +8,8 @@
 const WebSocket = require('ws');
 const http = require('http');
 const url = require('url');
-const { verifyToken } = require('../lambda/auth/auth-service');
-const { translateText } = require('../lambda/translation/translation-service');
+const authService = require('../auth/auth-service');
+const translationService = require('../translation/translation-service');
 const { v4: uuidv4 } = require('uuid');
 
 // Session connections map
@@ -27,7 +27,21 @@ function initializeWebSocketServer(server) {
     path: '/ws'
   });
 
-  wss.on('connection', handleConnection);
+  console.log('WebSocket server created with path /ws');
+
+  wss.on('connection', (ws, req) => {
+    console.log('WebSocket connection received:', req.url);
+    handleConnection(ws, req);
+  });
+
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
+  });
+
+  wss.on('headers', (headers, request) => {
+    console.log('WebSocket headers:', headers);
+    console.log('WebSocket request URL:', request.url);
+  });
 
   // Set up heartbeat interval to detect dead connections
   setInterval(() => {
@@ -55,9 +69,13 @@ async function handleConnection(ws, req) {
   try {
     // Parse URL and query parameters
     const parsedUrl = url.parse(req.url, true);
+    console.log('Parsed URL:', parsedUrl);
     const pathParts = parsedUrl.pathname.split('/');
+    console.log('Path parts:', pathParts);
     const sessionId = pathParts[2]; // /ws/:sessionId
+    console.log('Session ID:', sessionId);
     const token = parsedUrl.query.token;
+    console.log('Token:', token ? token.substring(0, 20) + '...' : 'undefined');
 
     // Validate session ID and token
     if (!sessionId || !token) {
@@ -66,7 +84,7 @@ async function handleConnection(ws, req) {
     }
 
     // Verify token
-    const decodedToken = await verifyToken(token);
+    const decodedToken = authService.verifyToken(token);
     if (!decodedToken) {
       ws.close(4001, 'Invalid or expired token');
       return;
@@ -208,10 +226,10 @@ async function handleTranslationMessage(data, sessionId, userId, userType, userN
     } = data;
 
     // Perform translation
-    const translationResult = await translateText(
+    const translationResult = await translationService.translateText(
+      originalText,
       sourceLanguage,
       targetLanguage,
-      originalText,
       context
     );
 

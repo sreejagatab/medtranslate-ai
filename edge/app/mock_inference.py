@@ -19,12 +19,39 @@ MEDICAL_TERMS = {
         'cardiology': {
             'heart attack': {'es': 'ataque cardíaco', 'fr': 'crise cardiaque', 'de': 'Herzinfarkt'},
             'blood pressure': {'es': 'presión arterial', 'fr': 'pression artérielle', 'de': 'Blutdruck'},
-            'arrhythmia': {'es': 'arritmia', 'fr': 'arythmie', 'de': 'Arrhythmie'}
+            'arrhythmia': {'es': 'arritmia', 'fr': 'arythmie', 'de': 'Arrhythmie'},
+            'myocardial infarction': {'es': 'infarto de miocardio', 'fr': 'infarctus du myocarde', 'de': 'Myokardinfarkt'},
+            'coronary artery disease': {'es': 'enfermedad de las arterias coronarias', 'fr': 'maladie coronarienne', 'de': 'Koronare Herzkrankheit'},
+            'heart failure': {'es': 'insuficiencia cardíaca', 'fr': 'insuffisance cardiaque', 'de': 'Herzinsuffizienz'},
+            'hypertension': {'es': 'hipertensión', 'fr': 'hypertension', 'de': 'Hypertonie'}
         },
         'general': {
             'fever': {'es': 'fiebre', 'fr': 'fièvre', 'de': 'Fieber'},
             'headache': {'es': 'dolor de cabeza', 'fr': 'mal de tête', 'de': 'Kopfschmerzen'},
-            'nausea': {'es': 'náusea', 'fr': 'nausée', 'de': 'Übelkeit'}
+            'nausea': {'es': 'náusea', 'fr': 'nausée', 'de': 'Übelkeit'},
+            'pain': {'es': 'dolor', 'fr': 'douleur', 'de': 'Schmerz'},
+            'allergy': {'es': 'alergia', 'fr': 'allergie', 'de': 'Allergie'},
+            'infection': {'es': 'infección', 'fr': 'infection', 'de': 'Infektion'},
+            'inflammation': {'es': 'inflamación', 'fr': 'inflammation', 'de': 'Entzündung'}
+        },
+        'neurology': {
+            'stroke': {'es': 'accidente cerebrovascular', 'fr': 'accident vasculaire cérébral', 'de': 'Schlaganfall'},
+            'seizure': {'es': 'convulsión', 'fr': 'crise d\'épilepsie', 'de': 'Anfall'},
+            'migraine': {'es': 'migraña', 'fr': 'migraine', 'de': 'Migräne'},
+            'multiple sclerosis': {'es': 'esclerosis múltiple', 'fr': 'sclérose en plaques', 'de': 'Multiple Sklerose'},
+            'parkinson\'s disease': {'es': 'enfermedad de Parkinson', 'fr': 'maladie de Parkinson', 'de': 'Parkinson-Krankheit'}
+        },
+        'gastroenterology': {
+            'ulcer': {'es': 'úlcera', 'fr': 'ulcère', 'de': 'Geschwür'},
+            'gastritis': {'es': 'gastritis', 'fr': 'gastrite', 'de': 'Gastritis'},
+            'appendicitis': {'es': 'apendicitis', 'fr': 'appendicite', 'de': 'Blinddarmentzündung'},
+            'irritable bowel syndrome': {'es': 'síndrome del intestino irritable', 'fr': 'syndrome du côlon irritable', 'de': 'Reizdarmsyndrom'}
+        },
+        'pulmonology': {
+            'asthma': {'es': 'asma', 'fr': 'asthme', 'de': 'Asthma'},
+            'pneumonia': {'es': 'neumonía', 'fr': 'pneumonie', 'de': 'Lungenentzündung'},
+            'chronic obstructive pulmonary disease': {'es': 'enfermedad pulmonar obstructiva crónica', 'fr': 'bronchopneumopathie chronique obstructive', 'de': 'Chronisch obstruktive Lungenerkrankung'},
+            'tuberculosis': {'es': 'tuberculosis', 'fr': 'tuberculose', 'de': 'Tuberkulose'}
         }
     }
 }
@@ -34,32 +61,98 @@ TRANSLATIONS = {
     'en-es': {
         'hello': 'hola',
         'good morning': 'buenos días',
+        'good afternoon': 'buenas tardes',
+        'good evening': 'buenas noches',
         'how are you': 'cómo estás',
         'thank you': 'gracias',
+        'you\'re welcome': 'de nada',
         'yes': 'sí',
         'no': 'no',
         'doctor': 'médico',
+        'nurse': 'enfermera',
         'hospital': 'hospital',
         'patient': 'paciente',
         'medicine': 'medicina',
         'pain': 'dolor',
         'I need help': 'necesito ayuda',
-        'emergency': 'emergencia'
+        'emergency': 'emergencia',
+        'prescription': 'receta',
+        'pharmacy': 'farmacia',
+        'symptoms': 'síntomas',
+        'treatment': 'tratamiento',
+        'diagnosis': 'diagnóstico',
+        'appointment': 'cita',
+        'insurance': 'seguro',
+        'medical history': 'historial médico',
+        'allergies': 'alergias',
+        'vaccination': 'vacunación',
+        'surgery': 'cirugía',
+        'recovery': 'recuperación',
+        'follow-up': 'seguimiento'
     },
     'en-fr': {
         'hello': 'bonjour',
         'good morning': 'bonjour',
+        'good afternoon': 'bon après-midi',
+        'good evening': 'bonsoir',
         'how are you': 'comment allez-vous',
         'thank you': 'merci',
+        'you\'re welcome': 'de rien',
         'yes': 'oui',
         'no': 'non',
         'doctor': 'médecin',
+        'nurse': 'infirmière',
         'hospital': 'hôpital',
         'patient': 'patient',
         'medicine': 'médicament',
         'pain': 'douleur',
         'I need help': "j'ai besoin d'aide",
-        'emergency': 'urgence'
+        'emergency': 'urgence',
+        'prescription': 'ordonnance',
+        'pharmacy': 'pharmacie',
+        'symptoms': 'symptômes',
+        'treatment': 'traitement',
+        'diagnosis': 'diagnostic',
+        'appointment': 'rendez-vous',
+        'insurance': 'assurance',
+        'medical history': 'antécédents médicaux',
+        'allergies': 'allergies',
+        'vaccination': 'vaccination',
+        'surgery': 'chirurgie',
+        'recovery': 'rétablissement',
+        'follow-up': 'suivi'
+    },
+    'es-en': {
+        'hola': 'hello',
+        'buenos días': 'good morning',
+        'buenas tardes': 'good afternoon',
+        'buenas noches': 'good evening',
+        'cómo estás': 'how are you',
+        'gracias': 'thank you',
+        'de nada': 'you\'re welcome',
+        'sí': 'yes',
+        'no': 'no',
+        'médico': 'doctor',
+        'enfermera': 'nurse',
+        'hospital': 'hospital',
+        'paciente': 'patient',
+        'medicina': 'medicine',
+        'dolor': 'pain',
+        'necesito ayuda': 'I need help',
+        'emergencia': 'emergency',
+        'receta': 'prescription',
+        'farmacia': 'pharmacy',
+        'síntomas': 'symptoms',
+        'tratamiento': 'treatment',
+        'diagnóstico': 'diagnosis',
+        'cita': 'appointment',
+        'seguro': 'insurance',
+        'historial médico': 'medical history',
+        'alergias': 'allergies',
+        'vacunación': 'vaccination',
+        'cirugía': 'surgery',
+        'recuperación': 'recovery',
+        'seguimiento': 'follow-up'
     }
 }
 

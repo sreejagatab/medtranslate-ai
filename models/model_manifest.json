@@ -1,4 +1,26 @@
 {
-  "models": {},
-  "lastSync": 1745850417136
+  "models": {
+    "en-es.bin": {
+      "filename": "en-es.bin",
+      "size": 109,
+      "modified": 1745837684118,
+      "sourceLanguage": "en",
+      "targetLanguage": "es"
+    },
+    "en-fr.bin": {
+      "filename": "en-fr.bin",
+      "size": 61,
+      "modified": 1745921160286,
+      "sourceLanguage": "en",
+      "targetLanguage": "fr"
+    },
+    "es-en.bin": {
+      "filename": "es-en.bin",
+      "size": 62,
+      "modified": 1745921171528,
+      "sourceLanguage": "es",
+      "targetLanguage": "en"
+    }
+  },
+  "lastSync": 1745930674910
 }

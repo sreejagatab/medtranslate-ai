@@ -1,117 +1,56 @@
 /**
  * MedTranslate AI Patient Application
- * 
- * This is the main application component for the patient-facing mobile app.
+ *
+ * This is the main application component for the patient-facing web app.
  */
 
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import { StatusBar } from 'expo-status-bar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 
-// Import screens
-import LanguageSelectionScreen from './screens/LanguageSelectionScreen';
-import TranslationSessionScreen from './screens/TranslationSessionScreen';
-import SessionSummaryScreen from './screens/SessionSummaryScreen';
-import WelcomeScreen from './screens/WelcomeScreen';
+// Import pages
+import JoinSession from './pages/JoinSession';
+import Session from './pages/Session';
 
-// Import context
-import { TranslationContext } from './context/TranslationContext';
-import { EdgeConnectionProvider } from './context/EdgeConnectionContext';
+// Create theme
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#0077CC',
+    },
+    secondary: {
+      main: '#FF5722',
+    },
+  },
+});
 
-const Stack = createStackNavigator();
-
-export default function App() {
-  const [selectedLanguage, setSelectedLanguage] = useState(null);
-  const [sessionHistory, setSessionHistory] = useState([]);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(true);
-
-  // Check if first launch
-  useEffect(() => {
-    async function checkFirstLaunch() {
-      try {
-        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
-        if (hasLaunched === null) {
-          setIsFirstLaunch(true);
-          await AsyncStorage.setItem('hasLaunched', 'true');
-        } else {
-          setIsFirstLaunch(false);
-        }
-      } catch (error) {
-        console.error('Error checking first launch:', error);
-      }
-    }
-    
-    checkFirstLaunch();
-    loadSavedLanguage();
-  }, []);
-
-  // Load saved language preference
-  const loadSavedLanguage = async () => {
-    try {
-      const language = await AsyncStorage.getItem('selectedLanguage');
-      if (language !== null) {
-        setSelectedLanguage(JSON.parse(language));
-      }
-    } catch (error) {
-      console.error('Error loading saved language:', error);
-    }
-  };
-
-  // Save language preference
-  const saveLanguagePreference = async (language) => {
-    try {
-      await AsyncStorage.setItem('selectedLanguage', JSON.stringify(language));
-      setSelectedLanguage(language);
-    } catch (error) {
-      console.error('Error saving language preference:', error);
-    }
-  };
-
-  // Add new session to history
-  const addSessionToHistory = (session) => {
-    setSessionHistory(prevHistory => [...prevHistory, session]);
+// App routes
+const AppRoutes = () => {
+  // Check if user is in a session
+  const isInSession = () => {
+    return localStorage.getItem('sessionId') && localStorage.getItem('patientToken');
   };
 
   return (
-    <EdgeConnectionProvider>
-      <TranslationContext.Provider 
-        value={{ 
-          selectedLanguage, 
-          setSelectedLanguage: saveLanguagePreference,
-          sessionHistory, 
-          addSessionToHistory 
-        }}
-      >
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <Stack.Navigator>
-            {isFirstLaunch ? (
-              <Stack.Screen 
-                name="Welcome" 
-                component={WelcomeScreen} 
-                options={{ headerShown: false }}
-              />
-            ) : null}
-            <Stack.Screen 
-              name="LanguageSelection" 
-              component={LanguageSelectionScreen} 
-              options={{ title: 'Select Your Language' }}
-            />
-            <Stack.Screen 
-              name="TranslationSession" 
-              component={TranslationSessionScreen}
-              options={{ title: 'Medical Translation', headerShown: false }}
-            />
-            <Stack.Screen 
-              name="SessionSummary" 
-              component={SessionSummaryScreen}
-              options={{ title: 'Session Summary' }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </TranslationContext.Provider>
-    </EdgeConnectionProvider>
+    <Routes>
+      <Route path="/join" element={<JoinSession />} />
+      <Route path="/session/:sessionId" element={
+        isInSession() ? <Session /> : <Navigate to="/join" />
+      } />
+      <Route path="/" element={<Navigate to="/join" />} />
+    </Routes>
+  );
+};
+
+// Main app component
+export default function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <AppRoutes />
+      </Router>
+    </ThemeProvider>
   );
 }

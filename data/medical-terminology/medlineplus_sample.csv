@@ -1,0 +1,23 @@
+source_term,source_language,target_term,target_language,domain,definition
+heart attack,en,crise cardiaque,fr,cardiology,A sudden blockage of blood flow to the heart muscle
+blood pressure,en,tension artérielle,fr,cardiology,The pressure of circulating blood against the walls of blood vessels
+hypertension,en,hypertension,fr,cardiology,Abnormally high blood pressure
+arrhythmia,en,arythmie,fr,cardiology,Irregular heartbeat or abnormal heart rhythm
+coronary artery disease,en,maladie coronarienne,fr,cardiology,Disease of the blood vessels supplying the heart muscle
+stroke,en,accident vasculaire cérébral,fr,neurology,Sudden interruption of blood supply to the brain
+seizure,en,crise d'épilepsie,fr,neurology,Sudden uncontrolled electrical disturbance in the brain
+migraine,en,migraine,fr,neurology,Recurring headache that causes moderate to severe pain
+multiple sclerosis,en,sclérose en plaques,fr,neurology,Disease that affects the central nervous system
+ear infection,en,infection de l'oreille,fr,pediatrics,Infection of the middle ear
+chickenpox,en,varicelle,fr,pediatrics,Highly contagious viral infection causing an itchy rash with blisters
+measles,en,rougeole,fr,pediatrics,Highly contagious viral disease causing fever and red rash
+cancer,en,cancer,fr,oncology,Disease caused by an uncontrolled division of abnormal cells
+chemotherapy,en,chimiothérapie,fr,oncology,Treatment that uses drugs to kill cancer cells
+radiation therapy,en,radiothérapie,fr,oncology,Treatment that uses high doses of radiation to kill cancer cells
+cardiac arrest,en,arrêt cardiaque,fr,emergency,Sudden unexpected loss of heart function
+anaphylaxis,en,anaphylaxie,fr,emergency,Severe potentially life-threatening allergic reaction
+trauma,en,traumatisme,fr,emergency,Physical injury or wound caused by external force or violence
+fever,en,fièvre,fr,general,Temporary increase in body temperature often due to illness
+headache,en,mal de tête,fr,general,Pain in any region of the head
+nausea,en,nausée,fr,general,Feeling of sickness with an inclination to vomit
+diabetes,en,diabète,fr,general,Disease that affects how your body uses blood sugar

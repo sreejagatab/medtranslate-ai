@@ -1,0 +1,23 @@
+source_term,source_language,target_term,target_language,domain,definition
+heart attack,en,Herzinfarkt,de,cardiology,A sudden blockage of blood flow to the heart muscle
+blood pressure,en,Blutdruck,de,cardiology,The pressure of circulating blood against the walls of blood vessels
+hypertension,en,Hypertonie,de,cardiology,Abnormally high blood pressure
+arrhythmia,en,Arrhythmie,de,cardiology,Irregular heartbeat or abnormal heart rhythm
+coronary artery disease,en,koronare Herzkrankheit,de,cardiology,Disease of the blood vessels supplying the heart muscle
+stroke,en,Schlaganfall,de,neurology,Sudden interruption of blood supply to the brain
+seizure,en,Anfall,de,neurology,Sudden uncontrolled electrical disturbance in the brain
+migraine,en,Migräne,de,neurology,Recurring headache that causes moderate to severe pain
+multiple sclerosis,en,Multiple Sklerose,de,neurology,Disease that affects the central nervous system
+ear infection,en,Ohrinfektion,de,pediatrics,Infection of the middle ear
+chickenpox,en,Windpocken,de,pediatrics,Highly contagious viral infection causing an itchy rash with blisters
+measles,en,Masern,de,pediatrics,Highly contagious viral disease causing fever and red rash
+cancer,en,Krebs,de,oncology,Disease caused by an uncontrolled division of abnormal cells
+chemotherapy,en,Chemotherapie,de,oncology,Treatment that uses drugs to kill cancer cells
+radiation therapy,en,Strahlentherapie,de,oncology,Treatment that uses high doses of radiation to kill cancer cells
+cardiac arrest,en,Herzstillstand,de,emergency,Sudden unexpected loss of heart function
+anaphylaxis,en,Anaphylaxie,de,emergency,Severe potentially life-threatening allergic reaction
+trauma,en,Trauma,de,emergency,Physical injury or wound caused by external force or violence
+fever,en,Fieber,de,general,Temporary increase in body temperature often due to illness
+headache,en,Kopfschmerzen,de,general,Pain in any region of the head
+nausea,en,Übelkeit,de,general,Feeling of sickness with an inclination to vomit
+diabetes,en,Diabetes,de,general,Disease that affects how your body uses blood sugar

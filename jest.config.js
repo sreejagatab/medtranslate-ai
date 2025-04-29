@@ -41,7 +41,7 @@ module.exports = {
   verbose: true,
 
   // Setup files to run before each test
-  setupFiles: [
+  setupFilesAfterEnv: [
     '<rootDir>/tests/setup.js'
   ],
 

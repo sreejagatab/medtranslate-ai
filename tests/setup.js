@@ -1,6 +1,6 @@
 /**
  * Jest setup file for MedTranslate AI
- * 
+ *
  * This file is run before each test file.
  */
 
@@ -39,12 +39,65 @@ jest.mock('aws-sdk', () => {
     })
   };
 
+  const mockTranslate = {
+    translateText: jest.fn().mockReturnThis(),
+    promise: jest.fn().mockResolvedValue({
+      TranslatedText: 'Translated text',
+      SourceLanguageCode: 'en',
+      TargetLanguageCode: 'es'
+    })
+  };
+
+  const mockKMS = {
+    encrypt: jest.fn().mockReturnThis(),
+    decrypt: jest.fn().mockReturnThis(),
+    promise: jest.fn().mockResolvedValue({
+      Plaintext: Buffer.from('decrypted data'),
+      CiphertextBlob: Buffer.from('encrypted data')
+    })
+  };
+
+  const mockTranscribeService = {
+    startTranscriptionJob: jest.fn().mockReturnThis(),
+    getTranscriptionJob: jest.fn().mockReturnThis(),
+    promise: jest.fn().mockResolvedValue({
+      TranscriptionJob: {
+        TranscriptionJobStatus: 'COMPLETED',
+        Transcript: {
+          TranscriptFileUri: 'https://example.com/transcript.json'
+        }
+      }
+    })
+  };
+
+  const mockPolly = {
+    synthesizeSpeech: jest.fn().mockReturnThis(),
+    promise: jest.fn().mockResolvedValue({
+      AudioStream: Buffer.from('mock audio data')
+    })
+  };
+
+  const mockSecretsManager = {
+    getSecretValue: jest.fn().mockReturnThis(),
+    promise: jest.fn().mockResolvedValue({
+      SecretString: JSON.stringify({
+        username: 'test-user',
+        password: 'test-password'
+      })
+    })
+  };
+
   return {
     DynamoDB: {
       DocumentClient: jest.fn(() => mockDynamoDB)
     },
     S3: jest.fn(() => mockS3),
-    BedrockRuntime: jest.fn(() => mockBedrockRuntime)
+    BedrockRuntime: jest.fn(() => mockBedrockRuntime),
+    Translate: jest.fn(() => mockTranslate),
+    KMS: jest.fn(() => mockKMS),
+    TranscribeService: jest.fn(() => mockTranscribeService),
+    Polly: jest.fn(() => mockPolly),
+    SecretsManager: jest.fn(() => mockSecretsManager)
   };
 });
 

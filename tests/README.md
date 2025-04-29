@@ -1,6 +1,16 @@
-# MedTranslate AI Tests
+# MedTranslate AI Testing Framework
 
-This directory contains tests for the MedTranslate AI application.
+This directory contains the comprehensive testing framework for the MedTranslate AI system, ensuring all components work correctly individually and together.
+
+## Testing Philosophy
+
+Our testing approach follows these principles:
+
+1. **Comprehensive Coverage**: Test all components and their integrations
+2. **Realistic Scenarios**: Test real-world use cases and edge cases
+3. **Automation**: Automate tests for consistent, repeatable results
+4. **Continuous Testing**: Run tests frequently during development
+5. **Performance Monitoring**: Track performance metrics over time
 
 ## Test Structure
 
@@ -10,9 +20,29 @@ The tests are organized into the following directories:
 - `integration/`: Integration tests for testing interactions between components
 - `performance/`: Performance tests for measuring system performance
 
-## Edge Component Tests
+## Test Categories
 
 ### Unit Tests
+
+Unit tests verify that individual components work correctly in isolation. These tests mock external dependencies to focus on the component being tested.
+
+### Integration Tests
+
+Integration tests verify that different components work together correctly. These tests focus on the interactions between components.
+
+### End-to-End Tests
+
+End-to-End tests verify complete user flows from start to finish, simulating real user interactions with the system.
+
+### Performance Tests
+
+Performance tests measure system performance under various conditions and loads, ensuring the system meets performance requirements.
+
+## Component Tests
+
+### Edge Component Tests
+
+#### Unit Tests
 
 The edge component unit tests are located in the following files:
 
@@ -21,7 +51,7 @@ The edge component unit tests are located in the following files:
 - `unit/edge-sync.test.js`: Tests for the edge sync module
 - `unit/edge-server.test.js`: Tests for the edge server module
 
-### Integration Tests
+#### Integration Tests
 
 The edge component integration tests are located in the following files:
 
@@ -29,8 +59,9 @@ The edge component integration tests are located in the following files:
 - `integration/edge-server-cache.test.js`: Tests for the edge server and cache module integration
 - `integration/edge-server-sync.test.js`: Tests for the edge server and sync module integration
 - `integration/edge-application.test.js`: Tests for the complete edge application
+- `integration/edge-offline-sync.test.js`: Tests for edge offline operation and synchronization
 
-### Performance Tests
+#### Performance Tests
 
 The edge component performance tests are located in the following files:
 
@@ -45,6 +76,34 @@ The performance tests measure the following metrics:
 - Sync performance with different network conditions and batch sizes
 - Application performance with concurrent requests and WebSocket connections
 
+### WebSocket Communication Tests
+
+The WebSocket communication tests are located in the following files:
+
+- `integration/websocket-communication.test.js`: Tests for WebSocket communication between backend and frontend
+
+These tests verify:
+- Connection establishment
+- Message broadcasting
+- Reconnection handling
+- Session termination
+
+### End-to-End Tests
+
+The end-to-end tests are located in the following files:
+
+- `integration/complete-translation-flow.test.js`: Tests for the complete translation flow
+
+These tests verify the entire system workflow:
+- Provider login
+- Session creation
+- Patient token generation
+- WebSocket connections
+- Text translation
+- Edge translation
+- Session storage and retrieval
+- Session termination
+
 ## Running Tests
 
 You can run the tests using the following npm scripts:
@@ -53,26 +112,25 @@ You can run the tests using the following npm scripts:
 # Run all tests
 npm test
 
-# Run all edge component tests
-npm run test:edge
+# Run specific test categories
+npm run test:unit            # Run all unit tests
+npm run test:integration     # Run all integration tests
+npm run test:performance     # Run all performance tests
+npm run test:e2e             # Run end-to-end tests
 
-# Run only edge unit tests
-npm run test:edge:unit
+# Run edge component tests
+npm run test:edge            # Run all edge component tests
+npm run test:edge:unit       # Run edge unit tests
+npm run test:edge:integration # Run edge integration tests
+npm run test:edge:performance # Run edge performance tests
+npm run test:edge:offline    # Run edge offline operation test
 
-# Run only edge integration tests
-npm run test:edge:integration
+# Run WebSocket tests
+npm run test:websocket       # Run WebSocket communication tests
 
-# Run only edge performance tests
-npm run test:edge:performance
-
-# Run all unit tests
-npm run test:unit
-
-# Run all integration tests
-npm run test:integration
-
-# Run all performance tests
-npm run test:performance
+# Run specific tests
+npm run test:complete-flow   # Run complete translation flow test
+npm run test:translation     # Run translation-related tests
 ```
 
 ## Adding New Tests
@@ -85,7 +143,40 @@ When adding new tests, follow these guidelines:
 4. Name test files with the pattern `[component]-[module].test.js`
 5. Use Jest's `describe` and `it` functions to organize tests
 6. Mock external dependencies using Jest's mocking capabilities
+7. Test both success and error cases
+8. Include comments explaining the purpose of each test
 
 ## Test Coverage
 
 Test coverage reports are generated in the `coverage/` directory when running tests. You can view the coverage report by opening `coverage/lcov-report/index.html` in a web browser.
+
+## Test Environment
+
+Tests run in a controlled environment with:
+
+1. Backend server running on port 3005
+2. Edge server running on port 3006 (for relevant tests)
+3. Mock DynamoDB and S3 for local testing
+4. Test user accounts and sessions
+
+Environment variables are set automatically by the test runner.
+
+## Continuous Integration
+
+Tests are run automatically on:
+
+1. Pull requests to main branch
+2. Merges to main branch
+3. Nightly builds
+
+Test failures block merges to ensure code quality.
+
+## Comprehensive Test Plan
+
+For a detailed testing strategy, see the [Comprehensive Test Plan](./comprehensive-test-plan.md) document, which outlines:
+
+1. Test categories and coverage matrix
+2. Test implementation plan for all components
+3. Test execution strategy
+4. Test monitoring and reporting
+5. Test maintenance guidelines
