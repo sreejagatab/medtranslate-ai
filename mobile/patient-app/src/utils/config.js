@@ -14,7 +14,14 @@ export const STORAGE_KEYS = {
   OFFLINE_QUEUE: 'offline_queue',
   TRANSLATION_CACHE: 'translation_cache',
   NOTIFICATION_TOKEN: 'notification_token',
-  USER_PREFERENCES: 'user_preferences'
+  NOTIFICATION_HISTORY: 'notification_history',
+  NOTIFICATION_SETTINGS: 'notification_settings',
+  USER_PREFERENCES: 'user_preferences',
+  SETTINGS: 'app_settings',
+  FIRST_LAUNCH: 'first_launch',
+  OFFLINE_MODELS: 'offline_models',
+  TRANSLATION_HISTORY: 'translation_history',
+  SYNC_HISTORY: 'sync_history'
 };
 
 // Supported Languages
