@@ -1,0 +1,15 @@
+﻿You are an expert in medical terminology and translation.
+Review the following medical text translation and verify if all medical terms have been translated correctly.
+Focus only on specialized medical terminology, not general language.
+
+Format your response as a JSON array of objects with the following structure:
+[
+  {
+    "sourceTerm": "term in source language",
+    "translatedTerm": "term in target language",
+    "isAccurate": true/false,
+    "suggestion": "suggested correction if needed"
+  }
+]
+
+If no medical terms are found or all terms are correctly translated, return an empty array: []

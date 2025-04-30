@@ -19,6 +19,7 @@ const storageHandler = require('./lambda/storage/handler');
 
 // Import routes
 const monitoringRoutes = require('./routes/monitoring-routes');
+const medicalTerminologyRoutes = require('./routes/medicalTerminologyRoutes');
 
 // Create Express app
 const app = express();
@@ -92,6 +93,9 @@ app.get('/storage/sessions/:sessionId', lambdaToExpress(storageHandler.getSessio
 // Monitoring routes
 app.use('/monitoring', monitoringRoutes);
 
+// Medical terminology routes
+app.use('/api/medical-terminology', medicalTerminologyRoutes);
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
@@ -126,6 +130,13 @@ app.get('/', (req, res) => {
         '/monitoring/performance',
         '/monitoring/resources',
         '/monitoring/alerts'
+      ],
+      medicalTerminology: [
+        '/api/medical-terminology',
+        '/api/medical-terminology/:id',
+        '/api/medical-terminology/:id/translations',
+        '/api/medical-terminology/specialty/:specialty',
+        '/api/medical-terminology/category/:category'
       ],
       system: [
         '/health'

@@ -1,0 +1,125 @@
+{
+  "modelFamilies": ["claude", "titan", "llama", "mistral"],
+  "models": {
+    "claude": [
+      "anthropic.claude-3-sonnet-20240229-v1:0",
+      "anthropic.claude-3-haiku-20240307-v1:0",
+      "anthropic.claude-instant-v1"
+    ],
+    "titan": [
+      "amazon.titan-text-express-v1",
+      "amazon.titan-text-lite-v1"
+    ],
+    "llama": [
+      "meta.llama2-13b-chat-v1",
+      "meta.llama2-70b-chat-v1"
+    ],
+    "mistral": [
+      "mistral.mistral-7b-instruct-v0:2",
+      "mistral.mixtral-8x7b-instruct-v0:1"
+    ]
+  },
+  "defaultModel": "anthropic.claude-3-sonnet-20240229-v1:0",
+  "specialtyModelMapping": {
+    "cardiology": {
+      "default": "claude",
+      "languages": {
+        "en-es": "claude",
+        "en-fr": "claude",
+        "en-de": "claude",
+        "en-zh": "titan",
+        "en-ja": "titan",
+        "en-ar": "mistral"
+      }
+    },
+    "neurology": {
+      "default": "claude",
+      "languages": {
+        "en-es": "claude",
+        "en-fr": "claude",
+        "en-de": "claude",
+        "en-zh": "titan",
+        "en-ja": "titan",
+        "en-ar": "mistral"
+      }
+    },
+    "gastroenterology": {
+      "default": "claude",
+      "languages": {
+        "en-es": "llama",
+        "en-fr": "llama",
+        "en-de": "llama",
+        "en-zh": "titan",
+        "en-ja": "titan",
+        "en-ar": "mistral"
+      }
+    },
+    "pulmonology": {
+      "default": "claude",
+      "languages": {
+        "en-es": "llama",
+        "en-fr": "llama",
+        "en-de": "llama",
+        "en-zh": "titan",
+        "en-ja": "titan",
+        "en-ar": "mistral"
+      }
+    },
+    "orthopedics": {
+      "default": "claude",
+      "languages": {
+        "en-es": "llama",
+        "en-fr": "llama",
+        "en-de": "llama",
+        "en-zh": "titan",
+        "en-ja": "titan",
+        "en-ar": "mistral"
+      }
+    },
+    "oncology": {
+      "default": "claude",
+      "languages": {
+        "en-es": "claude",
+        "en-fr": "claude",
+        "en-de": "claude",
+        "en-zh": "claude",
+        "en-ja": "claude",
+        "en-ar": "claude"
+      }
+    },
+    "pediatrics": {
+      "default": "claude",
+      "languages": {
+        "en-es": "llama",
+        "en-fr": "llama",
+        "en-de": "llama",
+        "en-zh": "titan",
+        "en-ja": "titan",
+        "en-ar": "mistral"
+      }
+    },
+    "general": {
+      "default": "claude",
+      "languages": {
+        "en-es": "llama",
+        "en-fr": "llama",
+        "en-de": "llama",
+        "en-zh": "titan",
+        "en-ja": "titan",
+        "en-ar": "mistral",
+        "en-ru": "mistral",
+        "en-hi": "titan"
+      }
+    }
+  },
+  "confidenceThresholds": {
+    "high": 0.9,
+    "medium": 0.75,
+    "low": 0.6
+  },
+  "fallbackStrategy": {
+    "enabled": true,
+    "maxAttempts": 3,
+    "order": ["claude", "titan", "llama", "mistral", "aws.translate"]
+  }
+}

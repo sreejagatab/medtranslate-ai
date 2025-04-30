@@ -16,11 +16,115 @@ const exec = promisify(require('child_process').exec);
 const MODEL_DIR = process.env.MODEL_DIR || path.join(__dirname, '../../models');
 const CONFIG_DIR = process.env.CONFIG_DIR || path.join(__dirname, '../../config');
 const MODEL_MANIFEST_FILE = path.join(MODEL_DIR, 'manifest.json');
+const DEVICE_CONFIG_FILE = path.join(CONFIG_DIR, 'device_capabilities.json');
 
 // Model registry
 let modelRegistry = {};
 let medicalTerminology = {};
+let deviceCapabilities = {};
 let isInitialized = false;
+
+/**
+ * Detect device capabilities for optimal model selection and inference
+ *
+ * @returns {Promise<Object>} - Device capabilities
+ */
+async function detectDeviceCapabilities() {
+  try {
+    console.log('Detecting device capabilities...');
+
+    // Check if we have cached capabilities
+    if (fs.existsSync(DEVICE_CONFIG_FILE)) {
+      try {
+        const cachedCapabilities = JSON.parse(fs.readFileSync(DEVICE_CONFIG_FILE, 'utf8'));
+        console.log('Loaded device capabilities from cache');
+        return cachedCapabilities;
+      } catch (error) {
+        console.error('Error parsing device capabilities file:', error);
+      }
+    }
+
+    // Detect CPU capabilities
+    const cpuCount = os.cpus().length;
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const memoryGB = Math.round(totalMemory / (1024 * 1024 * 1024) * 10) / 10;
+
+    // Detect GPU capabilities (if available)
+    let hasGPU = false;
+    let gpuInfo = null;
+
+    try {
+      // Try to detect NVIDIA GPU using nvidia-smi
+      const { stdout } = await exec('nvidia-smi --query-gpu=name,memory.total --format=csv,noheader');
+      if (stdout) {
+        hasGPU = true;
+        gpuInfo = stdout.trim().split('\n').map(line => {
+          const [name, memory] = line.split(',').map(s => s.trim());
+          return { name, memory };
+        });
+      }
+    } catch (error) {
+      // No NVIDIA GPU or nvidia-smi not available
+      console.log('No NVIDIA GPU detected or nvidia-smi not available');
+    }
+
+    // Determine optimal settings based on hardware
+    const capabilities = {
+      cpu: {
+        count: cpuCount,
+        model: os.cpus()[0]?.model || 'Unknown',
+        architecture: os.arch()
+      },
+      memory: {
+        total: totalMemory,
+        free: freeMemory,
+        totalGB: memoryGB
+      },
+      gpu: {
+        available: hasGPU,
+        info: gpuInfo
+      },
+      os: {
+        platform: os.platform(),
+        release: os.release(),
+        type: os.type()
+      },
+      inference: {
+        recommendedEngine: hasGPU ? 'gpu' : 'cpu',
+        recommendedComputeType: hasGPU ? 'fp16' : (memoryGB >= 4 ? 'fp32' : 'int8'),
+        maxBatchSize: hasGPU ? 8 : (memoryGB >= 8 ? 4 : (memoryGB >= 4 ? 2 : 1)),
+        useQuantization: memoryGB < 4,
+        useOptimizedModels: true
+      },
+      timestamp: Date.now()
+    };
+
+    // Save capabilities to file
+    fs.writeFileSync(DEVICE_CONFIG_FILE, JSON.stringify(capabilities, null, 2), 'utf8');
+    console.log('Device capabilities detected and saved');
+
+    return capabilities;
+  } catch (error) {
+    console.error('Error detecting device capabilities:', error);
+
+    // Return default capabilities
+    return {
+      cpu: { count: 2, architecture: os.arch() },
+      memory: { totalGB: 4 },
+      gpu: { available: false },
+      os: { platform: os.platform() },
+      inference: {
+        recommendedEngine: 'cpu',
+        recommendedComputeType: 'int8',
+        maxBatchSize: 1,
+        useQuantization: true,
+        useOptimizedModels: true
+      },
+      timestamp: Date.now()
+    };
+  }
+}
 
 /**
  * Initialize the model manager
@@ -31,10 +135,27 @@ async function initialize() {
   try {
     console.log('Initializing model manager...');
 
-    // Create model directory if it doesn't exist
+    // Create directories if they don't exist
     if (!fs.existsSync(MODEL_DIR)) {
       fs.mkdirSync(MODEL_DIR, { recursive: true });
     }
+
+    if (!fs.existsSync(CONFIG_DIR)) {
+      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+
+    // Detect device capabilities
+    deviceCapabilities = await detectDeviceCapabilities();
+    console.log('Device capabilities detected:',
+      `CPU: ${deviceCapabilities.cpu.count} cores, ` +
+      `Memory: ${deviceCapabilities.memory.totalGB}GB, ` +
+      `GPU: ${deviceCapabilities.gpu.available ? 'Available' : 'Not available'}`
+    );
+
+    // Set environment variables based on capabilities
+    process.env.USE_OPTIMIZED_INFERENCE = deviceCapabilities.inference.useOptimizedModels.toString();
+    process.env.INFERENCE_COMPUTE_TYPE = deviceCapabilities.inference.recommendedComputeType;
+    process.env.INFERENCE_DEVICE = deviceCapabilities.inference.recommendedEngine;
 
     // Load model manifest if it exists
     let manifest = {};
@@ -370,13 +491,24 @@ async function translateText(text, sourceLanguage, targetLanguage, context = 'ge
   if (model.isPivot) {
     console.log(`Performing pivot translation via ${model.pivotLanguage}`);
 
+    // Prepare inference options based on device capabilities
+    const inferenceOptions = {
+      device: deviceCapabilities?.inference?.recommendedEngine || 'cpu',
+      computeType: deviceCapabilities?.inference?.recommendedComputeType || 'int8',
+      maxLength: 512
+    };
+
+    // Use optimized paths if available
+    const sourceModelPath = model.sourceModel.optimizedPath || model.sourceModel.path;
+
     // First translate to pivot language
     const pivotResult = await callPythonInference(
-      model.sourceModel.path,
+      sourceModelPath,
       text,
       sourceLanguage,
       model.pivotLanguage,
-      context
+      context,
+      inferenceOptions
     );
 
     // Apply medical terminology to pivot result if available
@@ -395,13 +527,17 @@ async function translateText(text, sourceLanguage, targetLanguage, context = 'ge
       pivotTerminologyMatches = pivotTerminologyResult.terminologyMatches;
     }
 
+    // Use optimized path for target model if available
+    const targetModelPath = model.targetModel.optimizedPath || model.targetModel.path;
+
     // Then translate from pivot to target
     const finalResult = await callPythonInference(
-      model.targetModel.path,
+      targetModelPath,
       pivotTranslatedText,
       model.pivotLanguage,
       targetLanguage,
-      context
+      context,
+      inferenceOptions
     );
 
     // Apply medical terminology to final result if available
@@ -441,12 +577,24 @@ async function translateText(text, sourceLanguage, targetLanguage, context = 'ge
   }
 
   // Direct translation with model
+  // Prepare inference options based on device capabilities
+  const inferenceOptions = {
+    device: deviceCapabilities?.inference?.recommendedEngine || 'cpu',
+    computeType: deviceCapabilities?.inference?.recommendedComputeType || 'int8',
+    maxLength: 512
+  };
+
+  // Use optimized path if available
+  const modelPath = model.optimizedPath || model.path;
+  console.log(`Using ${model.optimizedPath ? 'optimized' : 'standard'} model path: ${modelPath}`);
+
   const result = await callPythonInference(
-    model.path,
+    modelPath,
     text,
     sourceLanguage,
     targetLanguage,
-    context
+    context,
+    inferenceOptions
   );
 
   // Apply medical terminology if available and requested
@@ -660,18 +808,52 @@ function applyMedicalTerminology(text, sourceLanguage, targetLanguage, context =
  * @param {string} sourceLanguage - Source language code
  * @param {string} targetLanguage - Target language code
  * @param {string} context - Medical context
+ * @param {Object} options - Additional options for inference
  * @returns {Promise<Object>} - Translation result
  */
-async function callPythonInference(modelPath, text, sourceLanguage, targetLanguage, context) {
+async function callPythonInference(modelPath, text, sourceLanguage, targetLanguage, context, options = {}) {
+  // Determine which inference script to use
+  const useOptimized = process.env.USE_OPTIMIZED_INFERENCE !== 'false';
+  const inferenceScript = useOptimized ?
+    path.join(__dirname, 'translation', 'optimized_inference.py') :
+    path.join(__dirname, 'inference.py');
+
+  console.log(`Using ${useOptimized ? 'optimized' : 'standard'} inference engine`);
+
+  // Prepare command arguments
+  const args = [
+    inferenceScript,
+    modelPath,
+    text,
+    sourceLanguage,
+    targetLanguage,
+    '--context', context
+  ];
+
+  // Add optional arguments
+  if (options.device) {
+    args.push('--device', options.device);
+  }
+
+  if (options.computeType) {
+    args.push('--compute_type', options.computeType);
+  }
+
+  if (options.maxLength) {
+    args.push('--max_length', options.maxLength.toString());
+  }
+
+  // Add verbose flag if in development mode
+  if (process.env.NODE_ENV === 'development') {
+    args.push('--verbose');
+  }
+
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', [
-      path.join(__dirname, 'inference.py'),
-      modelPath,
-      text,
-      sourceLanguage,
-      targetLanguage,
-      '--context', context
-    ]);
+    // Determine Python executable
+    const pythonExecutable = process.platform === 'win32' ? 'python' : 'python3';
+
+    console.log(`Executing: ${pythonExecutable} ${args.join(' ')}`);
+    const pythonProcess = spawn(pythonExecutable, args);
 
     let result = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -681,19 +863,41 @@ async function callPythonInference(modelPath, text, sourceLanguage, targetLangua
     let errorOutput = '';
     pythonProcess.stderr.on('data', (data) => {
       errorOutput += data.toString();
+      // Log error output in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`Inference stderr: ${data.toString()}`);
+      }
     });
 
+    // Set timeout for inference (30 seconds)
+    const timeout = setTimeout(() => {
+      pythonProcess.kill();
+      reject(new Error('Inference timed out after 30 seconds'));
+    }, 30000);
+
     pythonProcess.on('close', (code) => {
+      clearTimeout(timeout);
+
       if (code === 0) {
         try {
           const parsedResult = JSON.parse(result);
           resolve(parsedResult);
         } catch (error) {
+          console.error('Failed to parse inference result:', error);
+          console.error('Raw result:', result);
           reject(new Error(`Failed to parse inference result: ${error.message}`));
         }
       } else {
+        console.error(`Inference failed with code ${code}:`, errorOutput);
         reject(new Error(`Inference failed with code ${code}: ${errorOutput}`));
       }
+    });
+
+    // Handle process errors
+    pythonProcess.on('error', (error) => {
+      clearTimeout(timeout);
+      console.error('Error spawning inference process:', error);
+      reject(new Error(`Error spawning inference process: ${error.message}`));
     });
   });
 }

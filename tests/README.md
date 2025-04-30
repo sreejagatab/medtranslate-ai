@@ -38,6 +38,18 @@ End-to-End tests verify complete user flows from start to finish, simulating rea
 
 Performance tests measure system performance under various conditions and loads, ensuring the system meets performance requirements.
 
+### Security Tests
+
+Security tests verify that the application meets security requirements and follows best practices. These tests identify and address security vulnerabilities.
+
+### Localization Tests
+
+Localization tests verify that the application is properly localized for all supported languages. These tests ensure that the UI adapts to different languages and that all text is properly translated.
+
+### App Store Submission Tests
+
+App store submission tests verify that the application meets the requirements for submission to app stores. These tests ensure that all required assets are prepared and that the submission process is smooth.
+
 ## Component Tests
 
 ### Edge Component Tests
@@ -104,6 +116,53 @@ These tests verify the entire system workflow:
 - Session storage and retrieval
 - Session termination
 
+## New Test Components
+
+### Security Testing
+
+The security testing components are located in the following files:
+
+- `security/security-audit-tool.js`: Tool for conducting security audits based on the security audit checklist
+
+These tests verify:
+- Authentication and authorization mechanisms
+- Data protection measures
+- Network security configuration
+- Mobile application security
+- Edge device security
+- Logging and monitoring
+- Compliance with security standards
+
+### Localization Testing
+
+The localization testing components are located in the following files:
+
+- `localization/localization-test.js`: Tool for testing localization across all supported languages
+
+These tests verify:
+- Translation completeness for all supported languages
+- UI adaptation to different languages
+- RTL language support
+- Language selection and persistence
+
+### App Store Submission Testing
+
+The app store submission testing components are located in the following files:
+
+- `app-store/app-store-submission-tool.js`: Tool for preparing app store submissions
+
+These tests verify:
+- App metadata completeness and accuracy
+- App asset preparation
+- App binary validation
+- Submission process documentation
+
+### Test Runner
+
+The test runner is located in the following file:
+
+- `run-all-tests.js`: Script to run all tests and generate comprehensive reports
+
 ## Running Tests
 
 You can run the tests using the following npm scripts:
@@ -111,12 +170,16 @@ You can run the tests using the following npm scripts:
 ```bash
 # Run all tests
 npm test
+node tests/run-all-tests.js
 
 # Run specific test categories
 npm run test:unit            # Run all unit tests
 npm run test:integration     # Run all integration tests
 npm run test:performance     # Run all performance tests
 npm run test:e2e             # Run end-to-end tests
+npm run test:security        # Run security tests
+npm run test:localization    # Run localization tests
+npm run test:app-store       # Run app store submission tests
 
 # Run edge component tests
 npm run test:edge            # Run all edge component tests
@@ -131,6 +194,9 @@ npm run test:websocket       # Run WebSocket communication tests
 # Run specific tests
 npm run test:complete-flow   # Run complete translation flow test
 npm run test:translation     # Run translation-related tests
+node tests/security/security-audit-tool.js  # Run security audit
+node tests/localization/localization-test.js  # Run localization tests
+node tests/app-store/app-store-submission-tool.js  # Run app store submission preparation
 ```
 
 ## Adding New Tests

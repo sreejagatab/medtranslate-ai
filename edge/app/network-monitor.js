@@ -51,7 +51,7 @@ async function initialize() {
     // Check initial connectivity
     const initialStatus = await checkConnectivity();
     isOnline = initialStatus.online;
-    
+
     if (isOnline) {
       lastOnlineTime = Date.now();
       console.log('Initial network status: Online');
@@ -66,10 +66,10 @@ async function initialize() {
     if (checkInterval) {
       clearInterval(checkInterval);
     }
-    
+
     checkInterval = setInterval(async () => {
       const status = await checkConnectivity();
-      
+
       // If status changed, emit event
       if (status.online !== isOnline) {
         if (status.online) {
@@ -79,7 +79,7 @@ async function initialize() {
           connectionAttempts = 0;
           console.log('Network status changed: Online');
           networkEvents.emit('online', { timestamp: lastOnlineTime });
-          
+
           // Clear reconnect interval if it exists
           if (reconnectInterval) {
             clearInterval(reconnectInterval);
@@ -91,7 +91,7 @@ async function initialize() {
           lastOfflineTime = Date.now();
           console.log(`Network status changed: Offline (${status.reason})`);
           networkEvents.emit('offline', { timestamp: lastOfflineTime, reason: status.reason });
-          
+
           // Start reconnect interval
           startReconnectInterval();
         }
@@ -112,7 +112,7 @@ function startReconnectInterval() {
   if (reconnectInterval) {
     clearInterval(reconnectInterval);
   }
-  
+
   reconnectInterval = setInterval(async () => {
     if (isOnline) {
       // If we're already online, clear the interval
@@ -120,10 +120,10 @@ function startReconnectInterval() {
       reconnectInterval = null;
       return;
     }
-    
+
     connectionAttempts++;
     console.log(`Attempting to reconnect (${connectionAttempts}/${maxConnectionAttempts})...`);
-    
+
     const status = await checkConnectivity();
     if (status.online) {
       isOnline = true;
@@ -131,7 +131,7 @@ function startReconnectInterval() {
       connectionAttempts = 0;
       console.log('Successfully reconnected to network');
       networkEvents.emit('online', { timestamp: lastOnlineTime });
-      
+
       // Clear reconnect interval
       clearInterval(reconnectInterval);
       reconnectInterval = null;
@@ -147,7 +147,7 @@ function startReconnectInterval() {
           connectionAttempts = 0;
           console.log('Successfully reconnected to network');
           networkEvents.emit('online', { timestamp: lastOnlineTime });
-          
+
           // Clear reconnect interval
           clearInterval(reconnectInterval);
           reconnectInterval = null;
@@ -168,19 +168,19 @@ async function checkConnectivity() {
     if (networkInterfaces.length === 0) {
       return { online: false, reason: 'no_network_interfaces' };
     }
-    
+
     // Check DNS resolution
     const dnsResult = await checkDnsResolution();
     if (!dnsResult.success) {
       return { online: false, reason: 'dns_resolution_failed' };
     }
-    
+
     // Check cloud API connectivity
     const apiResult = await checkCloudApiConnectivity();
     if (!apiResult.success) {
       return { online: false, reason: 'cloud_api_unreachable' };
     }
-    
+
     return { online: true };
   } catch (error) {
     console.error('Error checking connectivity:', error);
@@ -215,7 +215,7 @@ async function checkCloudApiConnectivity() {
     const response = await axios.get(`${CLOUD_API_URL}/health`, {
       timeout: CONNECTIVITY_TIMEOUT
     });
-    
+
     if (response.status === 200) {
       return { success: true };
     } else {
@@ -234,7 +234,7 @@ async function checkCloudApiConnectivity() {
 function getNetworkInterfaces() {
   const interfaces = [];
   const networkInterfaces = os.networkInterfaces();
-  
+
   for (const [name, netInterface] of Object.entries(networkInterfaces)) {
     for (const iface of netInterface) {
       // Skip internal interfaces
@@ -248,7 +248,7 @@ function getNetworkInterfaces() {
       }
     }
   }
-  
+
   return interfaces;
 }
 
@@ -267,7 +267,7 @@ function getDnsServers() {
   } catch (error) {
     console.warn('Error getting DNS servers:', error);
   }
-  
+
   // Fall back to default DNS servers
   return DNS_SERVERS;
 }
@@ -308,13 +308,47 @@ function off(event, listener) {
   networkEvents.off(event, listener);
 }
 
+/**
+ * Simulate offline/online status (for testing purposes)
+ *
+ * @param {boolean} offline - Whether to simulate offline status
+ * @returns {Object} - Current network status
+ */
+function simulateOffline(offline) {
+  if (offline) {
+    if (isOnline) {
+      isOnline = false;
+      lastOfflineTime = Date.now();
+      connectionAttempts++;
+
+      // Emit offline event
+      networkEvents.emit('offline', { timestamp: lastOfflineTime, reason: 'simulated' });
+
+      console.log('Network monitor: Simulated offline mode');
+    }
+  } else {
+    if (!isOnline) {
+      isOnline = true;
+      lastOnlineTime = Date.now();
+
+      // Emit online event
+      networkEvents.emit('online', { timestamp: lastOnlineTime });
+
+      console.log('Network monitor: Simulated online mode');
+    }
+  }
+
+  return getNetworkStatus();
+}
+
 // Export network monitor
 const networkMonitor = {
   initialize,
   checkConnectivity,
   getNetworkStatus,
   on,
-  off
+  off,
+  simulateOffline
 };
 
 module.exports = networkMonitor;

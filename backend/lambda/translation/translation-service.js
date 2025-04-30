@@ -26,7 +26,9 @@ const { verifyMedicalTerms, addTermToKB } = require('./medical-kb');
  * @param {string} medicalContext - Optional medical context
  * @param {string} preferredModel - Optional preferred model type
  * @param {boolean} useTerminologyVerification - Whether to use terminology verification
- * @returns {Promise<Object>} - The translation result
+ * @param {boolean} includeConfidenceAnalysis - Whether to include detailed confidence analysis
+ * @param {boolean} useCulturalContext - Whether to adapt translation for cultural context
+ * @returns {Promise<Object>} - The translation result with enhanced information
  */
 async function translateText(
   sourceLanguage,
@@ -34,7 +36,9 @@ async function translateText(
   text,
   medicalContext = 'general',
   preferredModel = null,
-  useTerminologyVerification = true
+  useTerminologyVerification = true,
+  includeConfidenceAnalysis = false,
+  useCulturalContext = false
 ) {
   try {
     // Select the best model for this language pair and context if no preference specified
@@ -42,13 +46,24 @@ async function translateText(
 
     console.log(`Using ${recommendedModel} model family for ${sourceLanguage} to ${targetLanguage} translation in ${medicalContext} context`);
 
+    // Prepare cultural context adaptation if requested
+    let adaptedContext = medicalContext;
+    if (useCulturalContext) {
+      // Adapt context based on target language cultural considerations
+      adaptedContext = adaptContextForCulture(medicalContext, targetLanguage);
+      console.log(`Adapted medical context from ${medicalContext} to ${adaptedContext} for cultural context in ${targetLanguage}`);
+    }
+
     // Perform translation using Bedrock with the recommended model
     const translationResult = await bedrockTranslate(
       sourceLanguage,
       targetLanguage,
       text,
-      medicalContext,
-      recommendedModel
+      adaptedContext,
+      recommendedModel,
+      [], // medical terms
+      true, // use fallback
+      includeConfidenceAnalysis // include confidence analysis if requested
     );
 
     // Skip verification if disabled
@@ -214,8 +229,145 @@ function getAvailableModels() {
   return getBedrockModels();
 }
 
+/**
+ * Adapts medical context based on cultural considerations for the target language
+ *
+ * @param {string} medicalContext - The original medical context
+ * @param {string} targetLanguage - The target language code
+ * @returns {string} - The adapted medical context
+ */
+function adaptContextForCulture(medicalContext, targetLanguage) {
+  // Cultural adaptations for specific language regions
+  const culturalAdaptations = {
+    // East Asian languages
+    'zh': { // Chinese
+      'general': 'general_tcm', // Traditional Chinese Medicine context
+      'cardiology': 'cardiology_tcm',
+      'gastroenterology': 'gastroenterology_tcm'
+    },
+    'ja': { // Japanese
+      'general': 'general_kampo', // Kampo medicine context
+      'psychiatry': 'psychiatry_eastern'
+    },
+    'ko': { // Korean
+      'general': 'general_eastern',
+      'psychiatry': 'psychiatry_eastern'
+    },
+
+    // South Asian languages
+    'hi': { // Hindi
+      'general': 'general_ayurveda', // Ayurvedic context
+      'gastroenterology': 'gastroenterology_ayurveda'
+    },
+
+    // Middle Eastern languages
+    'ar': { // Arabic
+      'general': 'general_unani', // Unani medicine context
+      'psychiatry': 'psychiatry_cultural'
+    },
+
+    // Latin American Spanish
+    'es-419': {
+      'general': 'general_latinam',
+      'psychiatry': 'psychiatry_cultural'
+    }
+  };
+
+  // Check if we have cultural adaptations for this language
+  if (culturalAdaptations[targetLanguage]) {
+    // Check if we have a specific adaptation for this medical context
+    if (culturalAdaptations[targetLanguage][medicalContext]) {
+      return culturalAdaptations[targetLanguage][medicalContext];
+    }
+  }
+
+  // If no specific adaptation found, return the original context
+  return medicalContext;
+}
+
+/**
+ * Updates the translation audio function to use enhanced features
+ *
+ * @param {string} audioData - Base64-encoded audio data
+ * @param {string} sourceLanguage - The source language code
+ * @param {string} targetLanguage - The target language code
+ * @param {string} medicalContext - Optional medical context
+ * @param {string} preferredModel - Optional preferred model type
+ * @param {boolean} useTerminologyVerification - Whether to use terminology verification
+ * @param {boolean} includeConfidenceAnalysis - Whether to include detailed confidence analysis
+ * @param {boolean} useCulturalContext - Whether to adapt translation for cultural context
+ * @returns {Promise<Object>} - The translation result with audio
+ */
+async function translateAudioEnhanced(
+  audioData,
+  sourceLanguage,
+  targetLanguage,
+  medicalContext = 'general',
+  preferredModel = null,
+  useTerminologyVerification = true,
+  includeConfidenceAnalysis = false,
+  useCulturalContext = false
+) {
+  try {
+    // Step 1: Transcribe audio to text
+    const transcriptionResult = await transcribeAudio(audioData, sourceLanguage);
+
+    // Log the transcription for debugging
+    console.log(`Transcribed text (${sourceLanguage}): ${transcriptionResult.text}`);
+
+    // Step 2: Translate the transcribed text using our enhanced translation
+    const translationResult = await translateText(
+      sourceLanguage,
+      targetLanguage,
+      transcriptionResult.text,
+      medicalContext,
+      preferredModel,
+      useTerminologyVerification,
+      includeConfidenceAnalysis,
+      useCulturalContext
+    );
+
+    // Step 3: Synthesize the translated text to audio
+    const audioResult = await synthesizeSpeech(
+      translationResult.translatedText,
+      targetLanguage
+    );
+
+    // Return combined result with enhanced information
+    return {
+      originalText: transcriptionResult.text,
+      translatedText: translationResult.translatedText,
+      confidence: translationResult.confidence,
+      audioResponse: audioResult.audioData,
+      audioFormat: audioResult.format,
+      sourceLanguage,
+      targetLanguage,
+      medicalContext: translationResult.medicalContext,
+      transcriptionConfidence: transcriptionResult.confidence,
+      modelUsed: translationResult.modelUsed,
+      modelInfo: translationResult.modelInfo,
+      verificationResult: translationResult.verificationResult,
+      verifiedTerms: translationResult.verifiedTerms,
+      terminologySource: translationResult.terminologySource,
+      confidenceAnalysis: translationResult.confidenceAnalysis,
+      culturallyAdapted: useCulturalContext,
+      processingTime: {
+        transcription: transcriptionResult.processingTime,
+        translation: translationResult.processingTime,
+        synthesis: audioResult.processingTime,
+        total: Date.now() - transcriptionResult.startTime
+      }
+    };
+  } catch (error) {
+    console.error('Error translating audio:', error);
+    throw new Error(`Audio translation failed: ${error.message}`);
+  }
+}
+
 module.exports = {
   translateText,
   translateAudio,
-  getAvailableModels
+  translateAudioEnhanced,
+  getAvailableModels,
+  adaptContextForCulture
 };

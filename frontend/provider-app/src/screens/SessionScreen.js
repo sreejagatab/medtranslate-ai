@@ -27,6 +27,7 @@ import { AuthContext } from '../context/AuthContext';
 import TranslationMessage from '../components/TranslationMessage';
 import VoiceRecordButton from '../components/VoiceRecordButton';
 import ConnectionStatus from '../components/ConnectionStatus';
+import TranslationMonitorPanel from '../components/TranslationMonitorPanel';
 import websocketService from '../services/websocket-service';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
@@ -45,6 +46,8 @@ export default function SessionScreen({ navigation, route }) {
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const [availableLanguages, setAvailableLanguages] = useState([]);
   const [isConnected, setIsConnected] = useState(true);
+  const [translations, setTranslations] = useState([]);
+  const [autoCorrect, setAutoCorrect] = useState(true);
 
   const scrollViewRef = useRef(null);
   const recordingRef = useRef(null);
@@ -179,14 +182,31 @@ export default function SessionScreen({ navigation, route }) {
 
       websocketService.onMessage('translation', (message) => {
         // New translation message
+        const messageId = message.id || `msg-${Date.now()}`;
+
+        // Add to messages list
         addMessage({
-          id: message.id || `msg-${Date.now()}`,
+          id: messageId,
           text: message.translatedText,
           originalText: message.originalText,
           sender: message.sender.type,
           senderName: message.sender.name,
           timestamp: new Date(message.timestamp),
-          confidence: message.confidence
+          confidence: message.confidence,
+          translationId: message.translationId
+        });
+
+        // Add to translations monitoring
+        addTranslation({
+          id: message.translationId || messageId,
+          originalText: message.originalText,
+          translatedText: message.translatedText,
+          confidence: message.confidence || 'medium',
+          timestamp: message.timestamp,
+          latency: message.latency,
+          model: message.model,
+          corrected: message.corrected,
+          originalTranslation: message.originalTranslation
         });
       });
 
@@ -256,6 +276,99 @@ export default function SessionScreen({ navigation, route }) {
   // Add a message to the conversation
   const addMessage = (message) => {
     setMessages(prevMessages => [...prevMessages, message]);
+  };
+
+  // Add translation to the monitoring list
+  const addTranslation = (translation) => {
+    setTranslations(prev => {
+      // Keep only the last 20 translations
+      const updated = [translation, ...prev];
+      return updated.slice(0, 20);
+    });
+  };
+
+  // Handle report error
+  const handleReportError = async (translationId, reason) => {
+    try {
+      await apiRequest(API_ENDPOINTS.TRANSLATIONS.REPORT_ERROR(translationId), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      });
+
+      Alert.alert('Thank You', 'Your error report has been submitted and will help improve our translations.');
+    } catch (error) {
+      console.error('Error reporting translation error:', error);
+      Alert.alert('Error', 'Failed to submit error report. Please try again.');
+    }
+  };
+
+  // Handle request alternative translation
+  const handleRequestAlternative = async (translationId) => {
+    try {
+      setTranslating(true);
+
+      const response = await apiRequest(API_ENDPOINTS.TRANSLATIONS.ALTERNATIVE(translationId), {
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
+
+      // Update messages with alternative translation
+      if (response.translation) {
+        // Find the original message
+        const originalMessage = messages.find(msg => msg.translationId === translationId);
+
+        if (originalMessage) {
+          // Add system message about alternative
+          addMessage({
+            id: `system-alt-${Date.now()}`,
+            text: `Alternative translation provided for: "${originalMessage.text}"`,
+            sender: 'system',
+            timestamp: new Date()
+          });
+
+          // Add alternative translation
+          addMessage({
+            id: `alt-${Date.now()}`,
+            text: response.translation.translatedText,
+            sender: 'provider',
+            isAlternative: true,
+            timestamp: new Date()
+          });
+
+          // Add to translations monitoring
+          addTranslation({
+            id: response.translation.id,
+            originalText: originalMessage.text,
+            translatedText: response.translation.translatedText,
+            confidence: response.translation.confidence,
+            timestamp: new Date().toISOString(),
+            isAlternative: true
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error requesting alternative translation:', error);
+      Alert.alert('Error', 'Failed to get alternative translation. Please try again.');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  // Toggle auto-correct
+  const handleToggleAutoCorrect = (value) => {
+    setAutoCorrect(value);
+
+    // Send preference to server
+    websocketService.sendMessage({
+      type: 'preference',
+      preference: 'autoCorrect',
+      value: value
+    });
   };
 
   // Start recording audio
@@ -596,6 +709,16 @@ export default function SessionScreen({ navigation, route }) {
           ))
         )}
       </ScrollView>
+
+      {/* Translation Monitor Panel */}
+      <TranslationMonitorPanel
+        isActive={isConnected && session?.status === 'active'}
+        translations={translations}
+        sessionLanguage={selectedLanguage || 'Unknown'}
+        onReportError={handleReportError}
+        onRequestAlternative={handleRequestAlternative}
+        onToggleAutoCorrect={handleToggleAutoCorrect}
+      />
 
       {/* Controls */}
       <View style={styles.controls}>

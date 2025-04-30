@@ -1,17 +1,17 @@
 /**
  * Dashboard Screen for MedTranslate AI Provider Application
- * 
+ *
  * This screen displays the provider's dashboard with active sessions,
  * recent patients, and quick actions.
  */
 
 import React, { useState, useEffect, useContext } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
   FlatList
@@ -24,10 +24,13 @@ import { AuthContext } from '../context/AuthContext';
 import SessionCard from '../components/SessionCard';
 import PatientCard from '../components/PatientCard';
 import StatsCard from '../components/StatsCard';
+import SessionManagementPanel from '../components/SessionManagementPanel';
+import PatientHistoryPanel from '../components/PatientHistoryPanel';
+import TranslationMonitorPanel from '../components/TranslationMonitorPanel';
 
 export default function DashboardScreen({ navigation }) {
   const { userToken, providerInfo } = useContext(AuthContext);
-  
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -38,12 +41,12 @@ export default function DashboardScreen({ navigation }) {
     totalPatients: 0,
     averageDuration: 0
   });
-  
+
   // Load dashboard data
   const loadDashboardData = async () => {
     try {
       setError(null);
-      
+
       // Fetch active sessions
       const sessionsResponse = await fetch('https://api.medtranslate.ai/sessions/active', {
         method: 'GET',
@@ -51,14 +54,14 @@ export default function DashboardScreen({ navigation }) {
           'Authorization': `Bearer ${userToken}`
         }
       });
-      
+
       if (!sessionsResponse.ok) {
         throw new Error('Failed to load active sessions');
       }
-      
+
       const sessionsData = await sessionsResponse.json();
       setActiveSessions(sessionsData.sessions || []);
-      
+
       // Fetch recent patients
       const patientsResponse = await fetch('https://api.medtranslate.ai/patients/recent', {
         method: 'GET',
@@ -66,14 +69,14 @@ export default function DashboardScreen({ navigation }) {
           'Authorization': `Bearer ${userToken}`
         }
       });
-      
+
       if (!patientsResponse.ok) {
         throw new Error('Failed to load recent patients');
       }
-      
+
       const patientsData = await patientsResponse.json();
       setRecentPatients(patientsData.patients || []);
-      
+
       // Fetch stats
       const statsResponse = await fetch('https://api.medtranslate.ai/stats', {
         method: 'GET',
@@ -81,11 +84,11 @@ export default function DashboardScreen({ navigation }) {
           'Authorization': `Bearer ${userToken}`
         }
       });
-      
+
       if (!statsResponse.ok) {
         throw new Error('Failed to load statistics');
       }
-      
+
       const statsData = await statsResponse.json();
       setStats(statsData);
     } catch (error) {
@@ -96,51 +99,51 @@ export default function DashboardScreen({ navigation }) {
       setRefreshing(false);
     }
   };
-  
+
   // Load data when screen is focused
   useFocusEffect(
     React.useCallback(() => {
       loadDashboardData();
     }, [userToken])
   );
-  
+
   // Handle refresh
   const handleRefresh = () => {
     setRefreshing(true);
     loadDashboardData();
   };
-  
+
   // Create new session
   const createNewSession = () => {
     navigation.navigate('NewSession');
   };
-  
+
   // Join existing session
   const joinSession = (sessionId) => {
     navigation.navigate('Session', { sessionId });
   };
-  
+
   // View patient details
   const viewPatient = (patientId) => {
     navigation.navigate('PatientDetails', { patientId });
   };
-  
+
   // Render active session item
   const renderSessionItem = ({ item }) => (
-    <SessionCard 
+    <SessionCard
       session={item}
       onPress={() => joinSession(item.sessionId)}
     />
   );
-  
+
   // Render recent patient item
   const renderPatientItem = ({ item }) => (
-    <PatientCard 
+    <PatientCard
       patient={item}
       onPress={() => viewPatient(item.patientId)}
     />
   );
-  
+
   // Show loading indicator
   if (loading && !refreshing) {
     return (
@@ -150,7 +153,7 @@ export default function DashboardScreen({ navigation }) {
       </View>
     );
   }
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -170,16 +173,16 @@ export default function DashboardScreen({ navigation }) {
               Hello, {providerInfo?.name || 'Provider'}
             </Text>
             <Text style={styles.subtitle}>
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
               })}
             </Text>
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.newSessionButton}
             onPress={createNewSession}
           >
@@ -187,13 +190,13 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.newSessionButtonText}>New Session</Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* Error message */}
         {error && (
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle" size={20} color="#F44336" />
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.retryButton}
               onPress={loadDashboardData}
             >
@@ -201,7 +204,7 @@ export default function DashboardScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         )}
-        
+
         {/* Stats */}
         <View style={styles.statsContainer}>
           <StatsCard
@@ -223,7 +226,7 @@ export default function DashboardScreen({ navigation }) {
             color="#FF9800"
           />
         </View>
-        
+
         {/* Active Sessions */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -232,7 +235,7 @@ export default function DashboardScreen({ navigation }) {
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          
+
           {activeSessions.length > 0 ? (
             <FlatList
               data={activeSessions}
@@ -246,7 +249,7 @@ export default function DashboardScreen({ navigation }) {
             <View style={styles.emptyContainer}>
               <Ionicons name="calendar-outline" size={48} color="#BDBDBD" />
               <Text style={styles.emptyText}>No active sessions</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.emptyButton}
                 onPress={createNewSession}
               >
@@ -255,7 +258,7 @@ export default function DashboardScreen({ navigation }) {
             </View>
           )}
         </View>
-        
+
         {/* Recent Patients */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -264,7 +267,7 @@ export default function DashboardScreen({ navigation }) {
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          
+
           {recentPatients.length > 0 ? (
             <FlatList
               data={recentPatients}
@@ -281,13 +284,13 @@ export default function DashboardScreen({ navigation }) {
             </View>
           )}
         </View>
-        
+
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          
+
           <View style={styles.quickActions}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickActionButton}
               onPress={() => navigation.navigate('NewSession')}
             >
@@ -296,8 +299,8 @@ export default function DashboardScreen({ navigation }) {
               </View>
               <Text style={styles.quickActionText}>New Session</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.quickActionButton}
               onPress={() => navigation.navigate('ScanQRCode')}
             >
@@ -306,8 +309,8 @@ export default function DashboardScreen({ navigation }) {
               </View>
               <Text style={styles.quickActionText}>Scan QR Code</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.quickActionButton}
               onPress={() => navigation.navigate('History')}
             >
@@ -316,8 +319,8 @@ export default function DashboardScreen({ navigation }) {
               </View>
               <Text style={styles.quickActionText}>History</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.quickActionButton}
               onPress={() => navigation.navigate('Settings')}
             >

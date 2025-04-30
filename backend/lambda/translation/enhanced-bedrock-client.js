@@ -300,9 +300,10 @@ function mockTranslate(text, sourceLanguage, targetLanguage, medicalContext = 'g
  * @param {string} preferredModel - Optional preferred model type ('claude', 'titan', 'llama', 'mistral')
  * @param {Array} medicalTerms - Optional array of known medical terms and translations
  * @param {boolean} useFallback - Whether to use fallback mechanisms if primary model fails
- * @returns {Promise<Object>} - The translation result with confidence score
+ * @param {boolean} includeConfidenceAnalysis - Whether to include detailed confidence analysis
+ * @returns {Promise<Object>} - The translation result with confidence score and analysis
  */
-async function translateText(sourceLanguage, targetLanguage, text, medicalContext = 'general', preferredModel = null, medicalTerms = [], useFallback = true) {
+async function translateText(sourceLanguage, targetLanguage, text, medicalContext = 'general', preferredModel = null, medicalTerms = [], useFallback = true, includeConfidenceAnalysis = false) {
   // For local development, use mock translations
   if (process.env.NODE_ENV === 'development' || !bedrock) {
     console.log(`[DEV] Translating from ${sourceLanguage} to ${targetLanguage}: ${text}`);
@@ -662,14 +663,33 @@ Text to translate: ${text}`;
     const endTime = Date.now();
     const processingTime = endTime - startTime;
 
+    // Generate confidence analysis if requested
+    let confidenceScore = 'high';
+    let confidenceAnalysis = null;
+
+    if (includeConfidenceAnalysis) {
+      const analysisResult = await analyzeTranslationConfidence(
+        text,
+        responseText,
+        sourceLanguage,
+        targetLanguage,
+        medicalContext,
+        modelId
+      );
+
+      confidenceScore = analysisResult.confidenceLevel;
+      confidenceAnalysis = analysisResult;
+    }
+
     return {
       translatedText: responseText,
-      confidence: 'high',
+      confidence: confidenceScore,
       sourceLanguage,
       targetLanguage,
       medicalContext,
       modelUsed,
-      processingTime
+      processingTime,
+      ...(confidenceAnalysis && { confidenceAnalysis })
     };
   } catch (error) {
     console.error('Error calling Bedrock:', error);
@@ -808,6 +828,7 @@ Medical specialty: {medicalContext}
 
 /**
  * Selects the best model for a specific medical context and language pair
+ * using the specialty-specific model mapping from the configuration
  *
  * @param {string} sourceLanguage - The source language code
  * @param {string} targetLanguage - The target language code
@@ -815,6 +836,27 @@ Medical specialty: {medicalContext}
  * @returns {string} - The recommended model family ('claude', 'titan', 'llama', 'mistral')
  */
 function selectBestModelForContext(sourceLanguage, targetLanguage, medicalContext = 'general') {
+  // First, check if we have a specialty-specific mapping in the configuration
+  if (modelConfig.specialtyModelMapping &&
+      modelConfig.specialtyModelMapping[medicalContext]) {
+
+    const specialtyMapping = modelConfig.specialtyModelMapping[medicalContext];
+
+    // Check if we have a specific mapping for this language pair
+    const languagePair = `${sourceLanguage}-${targetLanguage}`;
+    if (specialtyMapping.languages &&
+        specialtyMapping.languages[languagePair]) {
+      return specialtyMapping.languages[languagePair];
+    }
+
+    // If no specific language pair mapping, use the default for this specialty
+    if (specialtyMapping.default) {
+      return specialtyMapping.default;
+    }
+  }
+
+  // If no specialty mapping found, fall back to the heuristic approach
+
   // For complex medical contexts, Claude models tend to perform best
   const complexMedicalContexts = ['cardiology', 'neurology', 'oncology', 'psychiatry', 'endocrinology'];
 
@@ -951,11 +993,183 @@ function getAvailableModels() {
   };
 }
 
+/**
+ * Analyzes the confidence of a translation based on various factors
+ *
+ * @param {string} sourceText - The original text
+ * @param {string} translatedText - The translated text
+ * @param {string} sourceLanguage - The source language code
+ * @param {string} targetLanguage - The target language code
+ * @param {string} medicalContext - The medical context
+ * @param {string} modelId - The model ID used for translation
+ * @returns {Promise<Object>} - Confidence analysis result
+ */
+async function analyzeTranslationConfidence(sourceText, translatedText, sourceLanguage, targetLanguage, medicalContext, modelId) {
+  try {
+    // Start with a base confidence level based on the model used
+    let baseConfidence = 0.9; // Default high confidence
+
+    // Adjust base confidence based on model family
+    if (modelId.startsWith('anthropic.claude')) {
+      baseConfidence = 0.95; // Claude models have highest confidence for medical content
+    } else if (modelId.startsWith('amazon.titan')) {
+      baseConfidence = 0.85; // Titan models have good general confidence
+    } else if (modelId.startsWith('meta.llama')) {
+      baseConfidence = 0.8; // Llama models have moderate confidence
+    } else if (modelId.startsWith('mistral.')) {
+      baseConfidence = 0.85; // Mistral models have good confidence
+    } else if (modelId === 'aws.translate') {
+      baseConfidence = 0.7; // AWS Translate has lower confidence for medical content
+    }
+
+    // Factors that might affect confidence
+    const factors = [];
+
+    // 1. Check for medical terminology presence
+    const medicalTermsSource = extractMedicalTermsSimple(sourceText, sourceLanguage);
+    const medicalTermsTarget = extractMedicalTermsSimple(translatedText, targetLanguage);
+
+    // If source has medical terms but target has significantly fewer, reduce confidence
+    if (medicalTermsSource.length > 0 && medicalTermsTarget.length < medicalTermsSource.length * 0.7) {
+      baseConfidence -= 0.1;
+      factors.push({
+        factor: 'medical_terminology_mismatch',
+        impact: 'negative',
+        description: 'Potential loss of medical terminology in translation'
+      });
+    }
+
+    // 2. Check for length discrepancy
+    const sourceLengthWords = sourceText.split(/\s+/).length;
+    const targetLengthWords = translatedText.split(/\s+/).length;
+    const lengthRatio = targetLengthWords / sourceLengthWords;
+
+    // If target is significantly shorter or longer than source, reduce confidence
+    if (lengthRatio < 0.7 || lengthRatio > 1.5) {
+      baseConfidence -= 0.1;
+      factors.push({
+        factor: 'length_discrepancy',
+        impact: 'negative',
+        description: 'Significant difference in text length between source and translation'
+      });
+    }
+
+    // 3. Check for complex medical context
+    const complexMedicalContexts = ['cardiology', 'neurology', 'oncology', 'immunology'];
+    if (complexMedicalContexts.includes(medicalContext)) {
+      // For complex contexts, adjust confidence based on model
+      if (modelId.startsWith('anthropic.claude')) {
+        // Claude handles complex contexts well
+        baseConfidence += 0.05;
+        factors.push({
+          factor: 'complex_medical_context',
+          impact: 'positive',
+          description: 'Claude models excel at complex medical contexts'
+        });
+      } else {
+        // Other models may struggle with complex contexts
+        baseConfidence -= 0.05;
+        factors.push({
+          factor: 'complex_medical_context',
+          impact: 'negative',
+          description: 'Complex medical context may reduce translation accuracy'
+        });
+      }
+    }
+
+    // 4. Check for language pair complexity
+    const complexLanguagePairs = [
+      // Language pairs with significant structural differences
+      ['en', 'zh'], ['en', 'ja'], ['en', 'ko'], ['en', 'ar'],
+      ['zh', 'en'], ['ja', 'en'], ['ko', 'en'], ['ar', 'en']
+    ];
+
+    if (complexLanguagePairs.some(pair =>
+      pair[0] === sourceLanguage && pair[1] === targetLanguage)) {
+      baseConfidence -= 0.05;
+      factors.push({
+        factor: 'complex_language_pair',
+        impact: 'negative',
+        description: 'Translation between structurally different languages'
+      });
+    }
+
+    // Convert numerical confidence to categorical level
+    let confidenceLevel;
+    if (baseConfidence >= 0.9) {
+      confidenceLevel = 'high';
+    } else if (baseConfidence >= 0.75) {
+      confidenceLevel = 'medium';
+    } else {
+      confidenceLevel = 'low';
+    }
+
+    return {
+      confidenceLevel,
+      confidenceScore: baseConfidence,
+      factors,
+      modelId,
+      medicalContext
+    };
+  } catch (error) {
+    console.error('Error analyzing translation confidence:', error);
+    // Return default high confidence if analysis fails
+    return {
+      confidenceLevel: 'high',
+      confidenceScore: 0.9,
+      factors: [{
+        factor: 'analysis_error',
+        impact: 'neutral',
+        description: 'Error during confidence analysis'
+      }],
+      modelId,
+      medicalContext
+    };
+  }
+}
+
+/**
+ * Simple function to extract potential medical terms from text
+ * This is a simplified version of the more comprehensive function in medical-kb.js
+ *
+ * @param {string} text - The text to analyze
+ * @param {string} language - The language code
+ * @returns {Array<string>} - Array of potential medical terms
+ */
+function extractMedicalTermsSimple(text, language) {
+  // Skip empty text
+  if (!text || text.trim() === '') {
+    return [];
+  }
+
+  // Common medical term patterns
+  const medicalPatterns = [
+    /\b[A-Z][a-z]+ (disease|syndrome|disorder|condition)\b/g,
+    /\b(MRI|CT|CAT|PET|EKG|ECG|EEG|ultrasound|x-ray)\b/gi,
+    /\b(diagnosis|prognosis|treatment|therapy)\b/gi,
+    /\b(cardiac|pulmonary|hepatic|renal|neural|cerebral)\b/gi,
+    /\b(diabetes|hypertension|asthma|arthritis|cancer)\b/gi
+  ];
+
+  // Extract terms using regex patterns
+  let terms = [];
+  for (const pattern of medicalPatterns) {
+    const matches = text.match(pattern);
+    if (matches) {
+      terms = [...terms, ...matches];
+    }
+  }
+
+  // Remove duplicates and convert to lowercase for consistency
+  return [...new Set(terms.map(term => term.toLowerCase()))];
+}
+
 module.exports = {
   translateText,
   verifyMedicalTerminology,
   selectBestModelForContext,
   getModelInfo,
   getAvailableModels,
-  mockTranslate
+  mockTranslate,
+  analyzeTranslationConfidence
 };

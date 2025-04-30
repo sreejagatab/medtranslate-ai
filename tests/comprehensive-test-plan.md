@@ -245,7 +245,7 @@ Create a new test file `tests/integration/backend-frontend-auth.test.js`:
 ```javascript
 /**
  * Backend-Frontend Authentication Integration Test
- * 
+ *
  * This test verifies the authentication flow between the backend and frontend.
  */
 
@@ -264,22 +264,22 @@ const testProvider = {
 
 describe('Backend-Frontend Authentication Integration', () => {
   let providerToken;
-  
+
   test('Provider can login and receive a valid token', async () => {
     const response = await axios.post(`${API_URL}/auth/login`, testProvider);
-    
+
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty('token');
-    
+
     providerToken = response.data.token;
-    
+
     // Verify token
     const decoded = jwt.verify(providerToken, JWT_SECRET);
     expect(decoded).toHaveProperty('userId');
     expect(decoded).toHaveProperty('email', testProvider.email);
     expect(decoded).toHaveProperty('role', 'provider');
   });
-  
+
   test('Provider can create a session with valid token', async () => {
     const response = await axios.post(
       `${API_URL}/sessions`,
@@ -293,12 +293,12 @@ describe('Backend-Frontend Authentication Integration', () => {
         }
       }
     );
-    
+
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty('sessionId');
     expect(response.data).toHaveProperty('sessionCode');
   });
-  
+
   test('Invalid token is rejected', async () => {
     try {
       await axios.post(
@@ -313,7 +313,7 @@ describe('Backend-Frontend Authentication Integration', () => {
           }
         }
       );
-      
+
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
@@ -330,7 +330,7 @@ Create a new test file `tests/integration/edge-backend-translation.test.js`:
 ```javascript
 /**
  * Edge-Backend Translation Integration Test
- * 
+ *
  * This test verifies the translation flow between the edge and backend.
  */
 
@@ -344,18 +344,18 @@ const EDGE_URL = process.env.EDGE_URL || 'http://localhost:3002';
 describe('Edge-Backend Translation Integration', () => {
   test('Edge can connect to backend health endpoint', async () => {
     const response = await axios.get(`${BACKEND_URL}/health`);
-    
+
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty('status', 'ok');
   });
-  
+
   test('Backend can connect to edge health endpoint', async () => {
     const response = await axios.get(`${EDGE_URL}/health`);
-    
+
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty('status', 'healthy');
   });
-  
+
   test('Edge can fallback to backend for translation', async () => {
     // First, make edge translation fail by requesting an unsupported language pair
     const edgeResponse = await axios.post(`${EDGE_URL}/translate`, {
@@ -364,15 +364,15 @@ describe('Edge-Backend Translation Integration', () => {
       targetLanguage: 'ja', // Assuming Japanese is not supported locally
       context: 'general'
     });
-    
+
     expect(edgeResponse.status).toBe(200);
     expect(edgeResponse.data).toHaveProperty('source', 'cloud');
     expect(edgeResponse.data).toHaveProperty('translatedText');
   });
-  
+
   test('Edge can sync translation data with backend', async () => {
     const response = await axios.post(`${EDGE_URL}/sync`);
-    
+
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty('success', true);
   });
@@ -386,7 +386,7 @@ Create a new test file `tests/integration/end-to-end-websocket.test.js`:
 ```javascript
 /**
  * End-to-End WebSocket Test
- * 
+ *
  * This test verifies the WebSocket communication between provider and patient.
  */
 
@@ -411,12 +411,12 @@ describe('End-to-End WebSocket Communication', () => {
   let providerWs;
   let patientWs;
   let receivedMessages = [];
-  
+
   beforeAll(async () => {
     // Login as provider
     const loginResponse = await axios.post(`${API_URL}/auth/login`, providerCredentials);
     providerToken = loginResponse.data.token;
-    
+
     // Create session
     const sessionResponse = await axios.post(
       `${API_URL}/sessions`,
@@ -430,9 +430,9 @@ describe('End-to-End WebSocket Communication', () => {
         }
       }
     );
-    
+
     sessionId = sessionResponse.data.sessionId;
-    
+
     // Generate patient token
     const patientTokenResponse = await axios.post(
       `${API_URL}/sessions/patient-token`,
@@ -446,37 +446,37 @@ describe('End-to-End WebSocket Communication', () => {
         }
       }
     );
-    
+
     patientToken = patientTokenResponse.data.token;
   });
-  
+
   afterAll(() => {
     // Close WebSocket connections
     if (providerWs) {
       providerWs.close();
     }
-    
+
     if (patientWs) {
       patientWs.close();
     }
   });
-  
+
   test('Provider and patient can connect to WebSocket', async () => {
     return new Promise((resolve) => {
       // Connect provider
       providerWs = new WebSocket(`${WS_URL}/${sessionId}?token=${providerToken}`);
-      
+
       providerWs.on('open', () => {
         expect(providerWs.readyState).toBe(WebSocket.OPEN);
-        
+
         // Connect patient after provider is connected
         patientWs = new WebSocket(`${WS_URL}/${sessionId}?token=${patientToken}`);
-        
+
         patientWs.on('open', () => {
           expect(patientWs.readyState).toBe(WebSocket.OPEN);
           resolve();
         });
-        
+
         patientWs.on('message', (message) => {
           const data = JSON.parse(message);
           receivedMessages.push({
@@ -485,7 +485,7 @@ describe('End-to-End WebSocket Communication', () => {
           });
         });
       });
-      
+
       providerWs.on('message', (message) => {
         const data = JSON.parse(message);
         receivedMessages.push({
@@ -495,21 +495,21 @@ describe('End-to-End WebSocket Communication', () => {
       });
     });
   });
-  
+
   test('Provider can send message to patient', async () => {
     return new Promise((resolve) => {
       const messageId = uuidv4();
-      
+
       // Set up one-time handler for specific message
       const originalHandler = patientWs.onmessage;
       patientWs.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
+
         if (data.messageId === messageId) {
           expect(data.type).toBe('translation');
           expect(data.originalText).toBe('How are you feeling today?');
           expect(data.translatedText).toBeTruthy();
-          
+
           // Restore original handler
           patientWs.onmessage = originalHandler;
           resolve();
@@ -517,7 +517,7 @@ describe('End-to-End WebSocket Communication', () => {
           originalHandler(event);
         }
       };
-      
+
       // Send message from provider
       providerWs.send(JSON.stringify({
         type: 'translation',
@@ -529,21 +529,21 @@ describe('End-to-End WebSocket Communication', () => {
       }));
     });
   });
-  
+
   test('Patient can send message to provider', async () => {
     return new Promise((resolve) => {
       const messageId = uuidv4();
-      
+
       // Set up one-time handler for specific message
       const originalHandler = providerWs.onmessage;
       providerWs.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
+
         if (data.messageId === messageId) {
           expect(data.type).toBe('translation');
           expect(data.originalText).toBe('Me duele la cabeza');
           expect(data.translatedText).toBeTruthy();
-          
+
           // Restore original handler
           providerWs.onmessage = originalHandler;
           resolve();
@@ -551,7 +551,7 @@ describe('End-to-End WebSocket Communication', () => {
           originalHandler(event);
         }
       };
-      
+
       // Send message from patient
       patientWs.send(JSON.stringify({
         type: 'translation',
@@ -612,7 +612,38 @@ describe('End-to-End WebSocket Communication', () => {
 - Update test dependencies
 - Optimize test execution time
 
-## 9. Conclusion
+## 9. Additional Testing Areas
+
+### 9.1 Security Testing
+
+Security testing is covered in detail in the [Security Implementation Testing](../docs/testing/comprehensive-test-plan.md#security-implementation-testing) section of the expanded test plan. This includes:
+
+- Authentication and authorization testing
+- Data protection testing
+- Network security testing
+- Mobile security testing
+- Edge security testing
+- Compliance testing
+
+### 9.2 Localization Testing
+
+Localization testing is covered in detail in the [Localization Testing](../docs/testing/comprehensive-test-plan.md#localization-testing) section of the expanded test plan. This includes:
+
+- Translation completeness testing
+- UI adaptation testing
+- RTL language support testing
+- Language selection testing
+
+### 9.3 App Store Submission Testing
+
+App store submission testing is covered in detail in the [App Store Submission Testing](../docs/testing/comprehensive-test-plan.md#app-store-submission-testing) section of the expanded test plan. This includes:
+
+- App metadata testing
+- App asset testing
+- App binary testing
+- Submission process testing
+
+## 10. Conclusion
 
 This comprehensive test plan provides a roadmap for ensuring the quality and reliability of the MedTranslate AI system. By implementing and maintaining these tests, we can:
 
@@ -620,5 +651,10 @@ This comprehensive test plan provides a roadmap for ensuring the quality and rel
 - Ensure components work together correctly
 - Maintain performance under various conditions
 - Provide a high-quality user experience
+- Ensure security and compliance
+- Support multiple languages
+- Prepare for app store submission
 
 Regular review and updates to this plan will ensure it remains relevant as the system evolves.
+
+For a more detailed implementation of specific testing areas, see the [Expanded Comprehensive Test Plan](../docs/testing/comprehensive-test-plan.md).

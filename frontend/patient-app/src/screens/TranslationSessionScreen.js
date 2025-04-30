@@ -23,7 +23,8 @@ import * as FileSystem from 'expo-file-system';
 import { TranslationContext } from '../context/TranslationContext';
 import { EdgeConnectionContext } from '../context/EdgeConnectionContext';
 import TranslationMessage from '../components/TranslationMessage';
-import VoiceRecordButton from '../components/VoiceRecordButton';
+import EnhancedVoiceRecordButton from '../components/EnhancedVoiceRecordButton';
+import TranslationStatusIndicator from '../components/TranslationStatusIndicator';
 import websocketService from '../services/websocket-service';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
@@ -39,9 +40,15 @@ export default function TranslationSessionScreen({ navigation, route }) {
   const [translating, setTranslating] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [audioPermission, setAudioPermission] = useState(null);
+  const [translationStatus, setTranslationStatus] = useState('idle');
+  const [translationConfidence, setTranslationConfidence] = useState(null);
+  const [translationError, setTranslationError] = useState(null);
+  const [translationProgress, setTranslationProgress] = useState(0);
+  const [recordingLevel, setRecordingLevel] = useState(0);
 
   const scrollViewRef = useRef(null);
   const recordingRef = useRef(null);
+  const recordingLevelInterval = useRef(null);
 
   // Request audio permission and connect to WebSocket on component mount
   useEffect(() => {
@@ -202,6 +209,11 @@ export default function TranslationSessionScreen({ navigation, route }) {
         return;
       }
 
+      // Update translation status
+      setTranslationStatus('recording');
+      setTranslationProgress(0);
+      setTranslationError(null);
+
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
@@ -215,6 +227,16 @@ export default function TranslationSessionScreen({ navigation, route }) {
       recordingRef.current = recording;
       setRecording(true);
 
+      // Start monitoring recording level
+      recordingLevelInterval.current = setInterval(() => {
+        if (recordingRef.current) {
+          // Simulate recording level for now
+          // In a real app, you would get this from the recording API
+          const randomLevel = 0.3 + (Math.random() * 0.7); // Between 0.3 and 1.0
+          setRecordingLevel(randomLevel);
+        }
+      }, 100);
+
       // Visual feedback that recording has started
       addMessage({
         id: `recording-${Date.now()}`,
@@ -225,6 +247,8 @@ export default function TranslationSessionScreen({ navigation, route }) {
       });
     } catch (error) {
       console.error('Failed to start recording:', error);
+      setTranslationStatus('error');
+      setTranslationError('Failed to start recording. Please try again.');
     }
   };
 
@@ -234,6 +258,17 @@ export default function TranslationSessionScreen({ navigation, route }) {
       if (!recordingRef.current) return;
 
       setRecording(false);
+
+      // Clear recording level interval
+      if (recordingLevelInterval.current) {
+        clearInterval(recordingLevelInterval.current);
+        recordingLevelInterval.current = null;
+      }
+
+      // Update translation status
+      setTranslationStatus('processing');
+      setTranslationProgress(0.2);
+
       await recordingRef.current.stopAndUnloadAsync();
 
       const uri = recordingRef.current.getURI();
@@ -246,6 +281,8 @@ export default function TranslationSessionScreen({ navigation, route }) {
       await processAudioForTranslation(uri);
     } catch (error) {
       console.error('Failed to stop recording:', error);
+      setTranslationStatus('error');
+      setTranslationError('Failed to process recording. Please try again.');
     }
   };
 
@@ -253,6 +290,8 @@ export default function TranslationSessionScreen({ navigation, route }) {
   const processAudioForTranslation = async (audioUri) => {
     try {
       setTranslating(true);
+      setTranslationStatus('translating');
+      setTranslationProgress(0.4);
 
       // Create patient message placeholder
       const patientMessageId = `patient-${Date.now()}`;
@@ -266,6 +305,7 @@ export default function TranslationSessionScreen({ navigation, route }) {
 
       // Convert audio to base64
       const audioBase64 = await fileToBase64(audioUri);
+      setTranslationProgress(0.6);
 
       // Try to use edge device if connected
       let translationResult;
@@ -299,6 +339,8 @@ export default function TranslationSessionScreen({ navigation, route }) {
         });
       }
 
+      setTranslationProgress(0.9);
+
       // Update patient message with transcription
       updateMessage(patientMessageId, {
         text: translationResult.originalText,
@@ -317,12 +359,22 @@ export default function TranslationSessionScreen({ navigation, route }) {
         timestamp: new Date().toISOString()
       });
 
+      // Update translation status
+      setTranslationStatus('completed');
+      setTranslationProgress(1.0);
+      setTranslationConfidence(translationResult.confidence || 'medium');
+
       // Play the translation audio if available
       if (translationResult.audioResponse) {
         await playTranslationAudio(translationResult.audioResponse);
       }
     } catch (error) {
       console.error('Translation failed:', error);
+
+      // Update translation status
+      setTranslationStatus('error');
+      setTranslationError('Translation failed. Please try again.');
+      setTranslationProgress(0);
 
       // Update the processing message to show error
       setMessages(prev => prev.map(msg =>
@@ -335,6 +387,14 @@ export default function TranslationSessionScreen({ navigation, route }) {
       ));
     } finally {
       setTranslating(false);
+
+      // Reset translation status after a delay
+      setTimeout(() => {
+        if (translationStatus === 'completed' || translationStatus === 'error') {
+          setTranslationStatus('idle');
+          setTranslationProgress(0);
+        }
+      }, 3000);
     }
   };
 
@@ -493,6 +553,16 @@ export default function TranslationSessionScreen({ navigation, route }) {
         )}
       </ScrollView>
 
+      {/* Translation Status Indicator */}
+      <TranslationStatusIndicator
+        status={translationStatus}
+        confidence={translationConfidence}
+        errorMessage={translationError}
+        progress={translationProgress}
+        onRetry={translationStatus === 'error' ? () => setTranslationStatus('idle') : null}
+        showDetails={translationStatus === 'error' || translationStatus === 'completed'}
+      />
+
       {/* Controls */}
       <View style={styles.controls}>
         <TouchableOpacity
@@ -502,12 +572,15 @@ export default function TranslationSessionScreen({ navigation, route }) {
           <Text style={styles.endButtonText}>End Session</Text>
         </TouchableOpacity>
 
-        <VoiceRecordButton
+        <EnhancedVoiceRecordButton
           onPressIn={startRecording}
           onPressOut={stopRecording}
           isRecording={recording}
           isTranslating={translating}
+          recordingLevel={recordingLevel}
           disabled={!isConnected || !audioPermission}
+          showTimer={true}
+          showWaveform={true}
         />
 
         <TouchableOpacity style={styles.helpButton}>
