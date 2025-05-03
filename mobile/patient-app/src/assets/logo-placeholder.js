@@ -1,0 +1,22 @@
+/**
+ * Logo Placeholder for MedTranslate AI Patient App
+ * 
+ * This file provides a placeholder SVG content for the app logo.
+ */
+
+export const logoPlaceholder = `
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="90" fill="#0077CC" />
+  <circle cx="100" cy="100" r="70" fill="#FFFFFF" />
+  <circle cx="100" cy="100" r="50" fill="#0077CC" />
+  
+  <!-- Medical cross -->
+  <rect x="85" y="60" width="30" height="80" rx="5" fill="#FFFFFF" />
+  <rect x="60" y="85" width="80" height="30" rx="5" fill="#FFFFFF" />
+  
+  <!-- Translation arrows -->
+  <path d="M30,140 L50,130 L50,150 Z" fill="#FFFFFF" />
+  <path d="M170,140 L150,130 L150,150 Z" fill="#FFFFFF" />
+  <path d="M50,140 L150,140" stroke="#FFFFFF" stroke-width="5" />
+</svg>
+`;

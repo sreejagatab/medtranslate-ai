@@ -10,6 +10,8 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import ConnectionAnalyticsPage from './pages/ConnectionAnalyticsPage';
+import RecoveryManagerPage from './pages/RecoveryManagerPage';
 import UsersPage from './pages/UsersPage';
 import SystemHealthPage from './pages/SystemHealthPage';
 import MonitoringDashboard from './pages/MonitoringDashboard';
@@ -97,6 +99,18 @@ function App() {
                 <Route path="/analytics-dashboard" element={
                   <ProtectedRoute>
                     <AnalyticsDashboard />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/connection-analytics" element={
+                  <ProtectedRoute>
+                    <ConnectionAnalyticsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/recovery-manager" element={
+                  <ProtectedRoute>
+                    <RecoveryManagerPage />
                   </ProtectedRoute>
                 } />
 

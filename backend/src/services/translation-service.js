@@ -1,7 +1,8 @@
 /**
  * Translation Service for MedTranslate AI
- * 
+ *
  * This module implements the service functions for translation-related operations.
+ * Enhanced with adaptive confidence thresholds based on medical context.
  */
 
 const db = require('../database');
@@ -11,6 +12,16 @@ const { getTranslationModel } = require('../models/translation-model');
 const { getAudioModel } = require('../models/audio-model');
 const { getLanguageDetectionModel } = require('../models/language-detection-model');
 const { getMedicalTerminologyDatabase } = require('../models/medical-terminology');
+
+// Import enhanced confidence analysis
+let enhancedConfidenceAnalysis = null;
+try {
+  // Try to load the enhanced confidence analysis module
+  enhancedConfidenceAnalysis = require('../lambda/translation/enhanced-bedrock-client').analyzeTranslationConfidence;
+  logger.info('Enhanced confidence analysis module loaded successfully');
+} catch (error) {
+  logger.warn('Enhanced confidence analysis module not available, using fallback confidence scoring');
+}
 
 // Supported languages
 const SUPPORTED_LANGUAGES = [
@@ -30,7 +41,7 @@ const SUPPORTED_LANGUAGES = [
 
 /**
  * Translate text
- * 
+ *
  * @param {string} text - Text to translate
  * @param {string} sourceLanguage - Source language code
  * @param {string} targetLanguage - Target language code
@@ -42,19 +53,19 @@ const SUPPORTED_LANGUAGES = [
 exports.translateText = async (text, sourceLanguage, targetLanguage, context, sessionId, userId) => {
   try {
     logger.info(`Translating text from ${sourceLanguage} to ${targetLanguage}`);
-    
+
     // Get translation model
     const translationModel = getTranslationModel(sourceLanguage, targetLanguage, context);
-    
+
     // Start translation timer
     const startTime = Date.now();
-    
+
     // Translate text
     const translatedText = await translationModel.translate(text);
-    
+
     // Calculate latency
     const latency = Date.now() - startTime;
-    
+
     // Check if auto-correction is needed
     const medicalTerminologyDb = getMedicalTerminologyDatabase();
     const { correctedText, corrected } = await medicalTerminologyDb.correctTranslation(
@@ -63,14 +74,21 @@ exports.translateText = async (text, sourceLanguage, targetLanguage, context, se
       targetLanguage,
       context
     );
-    
-    // Determine confidence level
-    const confidence = determineConfidenceLevel(text, correctedText || translatedText, context);
-    
+
+    // Determine confidence level with enhanced analysis
+    const confidenceResult = await determineConfidenceLevel(
+      text,
+      correctedText || translatedText,
+      context,
+      sourceLanguage,
+      targetLanguage,
+      translationModel.name
+    );
+
     // Generate translation ID
     const translationId = uuidv4();
-    
-    // Store translation in database
+
+    // Store translation in database with enhanced confidence data
     await db.translations.create({
       id: translationId,
       originalText: text,
@@ -79,15 +97,17 @@ exports.translateText = async (text, sourceLanguage, targetLanguage, context, se
       sourceLanguage,
       targetLanguage,
       context,
-      confidence,
+      confidence: confidenceResult.level,
+      confidenceScore: confidenceResult.score,
+      confidenceFactors: confidenceResult.factors ? JSON.stringify(confidenceResult.factors) : null,
       latency,
       corrected,
       sessionId,
       userId,
       timestamp: new Date()
     });
-    
-    // Return translation result
+
+    // Return translation result with enhanced confidence data
     return {
       translationId,
       originalText: text,
@@ -95,7 +115,12 @@ exports.translateText = async (text, sourceLanguage, targetLanguage, context, se
       originalTranslation: corrected ? translatedText : null,
       sourceLanguage,
       targetLanguage,
-      confidence,
+      confidence: {
+        level: confidenceResult.level,
+        score: confidenceResult.score,
+        factors: confidenceResult.factors,
+        analysis: confidenceResult.analysis
+      },
       latency,
       corrected,
       model: translationModel.name
@@ -108,7 +133,7 @@ exports.translateText = async (text, sourceLanguage, targetLanguage, context, se
 
 /**
  * Translate audio
- * 
+ *
  * @param {string} audioData - Base64-encoded audio data
  * @param {string} sourceLanguage - Source language code
  * @param {string} targetLanguage - Target language code
@@ -120,19 +145,19 @@ exports.translateText = async (text, sourceLanguage, targetLanguage, context, se
 exports.translateAudio = async (audioData, sourceLanguage, targetLanguage, context, sessionId, userId) => {
   try {
     logger.info(`Translating audio from ${sourceLanguage} to ${targetLanguage}`);
-    
+
     // Get audio model
     const audioModel = getAudioModel(sourceLanguage);
-    
+
     // Start transcription timer
     const transcriptionStartTime = Date.now();
-    
+
     // Transcribe audio
     const transcribedText = await audioModel.transcribe(audioData);
-    
+
     // Calculate transcription latency
     const transcriptionLatency = Date.now() - transcriptionStartTime;
-    
+
     // Translate transcribed text
     const translationResult = await exports.translateText(
       transcribedText,
@@ -142,14 +167,14 @@ exports.translateAudio = async (audioData, sourceLanguage, targetLanguage, conte
       sessionId,
       userId
     );
-    
+
     // Generate audio response if needed
     let audioResponse = null;
     if (targetLanguage !== 'en') { // Assuming provider language is English
       const targetAudioModel = getAudioModel(targetLanguage);
       audioResponse = await targetAudioModel.synthesize(translationResult.translatedText);
     }
-    
+
     // Return translation result with audio
     return {
       ...translationResult,
@@ -164,7 +189,7 @@ exports.translateAudio = async (audioData, sourceLanguage, targetLanguage, conte
 
 /**
  * Get supported languages
- * 
+ *
  * @returns {Array<Object>} - Supported languages
  */
 exports.getSupportedLanguages = async () => {
@@ -173,7 +198,7 @@ exports.getSupportedLanguages = async () => {
 
 /**
  * Detect language
- * 
+ *
  * @param {string} text - Text to detect language from
  * @param {string} audioData - Base64-encoded audio data
  * @returns {Object} - Detected language
@@ -181,12 +206,12 @@ exports.getSupportedLanguages = async () => {
 exports.detectLanguage = async (text, audioData) => {
   try {
     logger.info('Detecting language');
-    
+
     // Get language detection model
     const languageDetectionModel = getLanguageDetectionModel();
-    
+
     let detectedLanguageCode;
-    
+
     if (text) {
       // Detect language from text
       detectedLanguageCode = await languageDetectionModel.detectFromText(text);
@@ -194,14 +219,14 @@ exports.detectLanguage = async (text, audioData) => {
       // Detect language from audio
       detectedLanguageCode = await languageDetectionModel.detectFromAudio(audioData);
     }
-    
+
     // Find language details
     const detectedLanguage = SUPPORTED_LANGUAGES.find(lang => lang.code === detectedLanguageCode);
-    
+
     if (!detectedLanguage) {
       throw new Error(`Unsupported language detected: ${detectedLanguageCode}`);
     }
-    
+
     return {
       language: detectedLanguage,
       confidence: 'high' // Simplified for now
@@ -214,7 +239,7 @@ exports.detectLanguage = async (text, audioData) => {
 
 /**
  * Report translation error
- * 
+ *
  * @param {string} translationId - Translation ID
  * @param {string} reason - Error reason
  * @param {string} details - Error details
@@ -223,16 +248,16 @@ exports.detectLanguage = async (text, audioData) => {
 exports.reportTranslationError = async (translationId, reason, details, userId) => {
   try {
     logger.info(`Reporting translation error for translation ${translationId}`);
-    
+
     // Get translation
     const translation = await db.translations.findOne({
       where: { id: translationId }
     });
-    
+
     if (!translation) {
       throw new Error(`Translation not found: ${translationId}`);
     }
-    
+
     // Store error report
     await db.translationErrors.create({
       id: uuidv4(),
@@ -242,12 +267,12 @@ exports.reportTranslationError = async (translationId, reason, details, userId) 
       userId,
       timestamp: new Date()
     });
-    
+
     // Update translation error count
     await translation.update({
       errorCount: (translation.errorCount || 0) + 1
     });
-    
+
     // Log error for model improvement
     logger.info(`Translation error reported: ${reason}`, {
       translationId,
@@ -267,7 +292,7 @@ exports.reportTranslationError = async (translationId, reason, details, userId) 
 
 /**
  * Get alternative translation
- * 
+ *
  * @param {string} translationId - Translation ID
  * @param {string} userId - User ID
  * @returns {Object} - Alternative translation
@@ -275,16 +300,16 @@ exports.reportTranslationError = async (translationId, reason, details, userId) 
 exports.getAlternativeTranslation = async (translationId, userId) => {
   try {
     logger.info(`Getting alternative translation for translation ${translationId}`);
-    
+
     // Get translation
     const translation = await db.translations.findOne({
       where: { id: translationId }
     });
-    
+
     if (!translation) {
       throw new Error(`Translation not found: ${translationId}`);
     }
-    
+
     // Get alternative translation model
     const alternativeModel = getTranslationModel(
       translation.sourceLanguage,
@@ -292,27 +317,30 @@ exports.getAlternativeTranslation = async (translationId, userId) => {
       translation.context,
       true // Use alternative model
     );
-    
+
     // Start translation timer
     const startTime = Date.now();
-    
+
     // Translate text
     const alternativeText = await alternativeModel.translate(translation.originalText);
-    
+
     // Calculate latency
     const latency = Date.now() - startTime;
-    
-    // Determine confidence level
-    const confidence = determineConfidenceLevel(
+
+    // Determine confidence level with enhanced analysis
+    const confidenceResult = await determineConfidenceLevel(
       translation.originalText,
       alternativeText,
-      translation.context
+      translation.context,
+      translation.sourceLanguage,
+      translation.targetLanguage,
+      alternativeModel.name
     );
-    
+
     // Generate translation ID
     const alternativeTranslationId = uuidv4();
-    
-    // Store alternative translation in database
+
+    // Store alternative translation in database with enhanced confidence data
     await db.translations.create({
       id: alternativeTranslationId,
       originalText: translation.originalText,
@@ -320,7 +348,9 @@ exports.getAlternativeTranslation = async (translationId, userId) => {
       sourceLanguage: translation.sourceLanguage,
       targetLanguage: translation.targetLanguage,
       context: translation.context,
-      confidence,
+      confidence: confidenceResult.level,
+      confidenceScore: confidenceResult.score,
+      confidenceFactors: confidenceResult.factors ? JSON.stringify(confidenceResult.factors) : null,
       latency,
       corrected: false,
       sessionId: translation.sessionId,
@@ -329,8 +359,8 @@ exports.getAlternativeTranslation = async (translationId, userId) => {
       originalTranslationId: translationId,
       timestamp: new Date()
     });
-    
-    // Return alternative translation
+
+    // Return alternative translation with enhanced confidence data
     return {
       translation: {
         id: alternativeTranslationId,
@@ -338,7 +368,12 @@ exports.getAlternativeTranslation = async (translationId, userId) => {
         translatedText: alternativeText,
         sourceLanguage: translation.sourceLanguage,
         targetLanguage: translation.targetLanguage,
-        confidence,
+        confidence: {
+          level: confidenceResult.level,
+          score: confidenceResult.score,
+          factors: confidenceResult.factors,
+          analysis: confidenceResult.analysis
+        },
         latency,
         model: alternativeModel.name,
         isAlternative: true
@@ -352,7 +387,7 @@ exports.getAlternativeTranslation = async (translationId, userId) => {
 
 /**
  * Get translation statistics
- * 
+ *
  * @param {string} sessionId - Session ID
  * @param {string} userId - User ID
  * @param {string} startDate - Start date
@@ -362,36 +397,36 @@ exports.getAlternativeTranslation = async (translationId, userId) => {
 exports.getTranslationStats = async (sessionId, userId, startDate, endDate) => {
   try {
     logger.info('Getting translation statistics');
-    
+
     // Build query conditions
     const where = {};
-    
+
     if (sessionId) {
       where.sessionId = sessionId;
     }
-    
+
     if (userId) {
       where.userId = userId;
     }
-    
+
     if (startDate || endDate) {
       where.timestamp = {};
-      
+
       if (startDate) {
         where.timestamp.$gte = new Date(startDate);
       }
-      
+
       if (endDate) {
         where.timestamp.$lte = new Date(endDate);
       }
     }
-    
+
     // Get translations
     const translations = await db.translations.findAll({
       where,
       order: [['timestamp', 'DESC']]
     });
-    
+
     // Calculate statistics
     const stats = {
       total: translations.length,
@@ -408,27 +443,27 @@ exports.getTranslationStats = async (sessionId, userId, startDate, endDate) => {
       byContext: {},
       averageLatency: translations.reduce((sum, t) => sum + t.latency, 0) / translations.length || 0
     };
-    
+
     // Calculate language statistics
     translations.forEach(t => {
       const languagePair = `${t.sourceLanguage}-${t.targetLanguage}`;
-      
+
       if (!stats.byLanguage[languagePair]) {
         stats.byLanguage[languagePair] = 0;
       }
-      
+
       stats.byLanguage[languagePair]++;
     });
-    
+
     // Calculate context statistics
     translations.forEach(t => {
       if (!stats.byContext[t.context]) {
         stats.byContext[t.context] = 0;
       }
-      
+
       stats.byContext[t.context]++;
     });
-    
+
     return stats;
   } catch (error) {
     logger.error('Error getting translation statistics:', error);
@@ -438,27 +473,57 @@ exports.getTranslationStats = async (sessionId, userId, startDate, endDate) => {
 
 /**
  * Determine confidence level
- * 
+ *
  * @param {string} originalText - Original text
  * @param {string} translatedText - Translated text
  * @param {string} context - Medical context
- * @returns {string} - Confidence level (high, medium, low)
+ * @param {string} sourceLanguage - Source language code
+ * @param {string} targetLanguage - Target language code
+ * @param {string} modelId - Optional model ID used for translation
+ * @returns {Object} - Confidence analysis result with level and details
  */
-function determineConfidenceLevel(originalText, translatedText, context) {
-  // This is a simplified implementation
-  // In a real system, you would use more sophisticated confidence scoring
-  
+async function determineConfidenceLevel(originalText, translatedText, context, sourceLanguage = 'en', targetLanguage = 'es', modelId = null) {
+  // Use enhanced confidence analysis if available
+  if (enhancedConfidenceAnalysis) {
+    try {
+      // Call the enhanced confidence analysis
+      const confidenceAnalysis = await enhancedConfidenceAnalysis(
+        originalText,
+        translatedText,
+        sourceLanguage,
+        targetLanguage,
+        context,
+        modelId || 'default'
+      );
+
+      logger.debug('Enhanced confidence analysis result:', confidenceAnalysis);
+
+      return {
+        level: confidenceAnalysis.confidenceLevel,
+        score: confidenceAnalysis.confidenceScore,
+        factors: confidenceAnalysis.factors,
+        analysis: confidenceAnalysis.analysis
+      };
+    } catch (error) {
+      logger.error('Error using enhanced confidence analysis, falling back to basic analysis:', error);
+      // Fall back to basic analysis if enhanced analysis fails
+    }
+  }
+
+  // Basic confidence analysis (fallback)
+  logger.debug('Using basic confidence analysis');
+
   // Check if translation is empty or very short
   if (!translatedText || translatedText.length < 3) {
-    return 'low';
+    return { level: 'low', score: 0.4 };
   }
-  
+
   // Check if translation is much shorter or longer than original
   const lengthRatio = translatedText.length / originalText.length;
   if (lengthRatio < 0.5 || lengthRatio > 2) {
-    return 'medium';
+    return { level: 'medium', score: 0.7 };
   }
-  
+
   // Check for medical terminology
   const medicalTerminologyDb = getMedicalTerminologyDatabase();
   const medicalTermsScore = medicalTerminologyDb.evaluateTranslation(
@@ -466,14 +531,14 @@ function determineConfidenceLevel(originalText, translatedText, context) {
     translatedText,
     context
   );
-  
+
   if (medicalTermsScore < 0.7) {
-    return 'medium';
+    return { level: 'medium', score: 0.7 };
   }
-  
+
   if (medicalTermsScore < 0.5) {
-    return 'low';
+    return { level: 'low', score: 0.4 };
   }
-  
-  return 'high';
+
+  return { level: 'high', score: 0.9 };
 }

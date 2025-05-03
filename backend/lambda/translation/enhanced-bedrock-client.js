@@ -995,6 +995,7 @@ function getAvailableModels() {
 
 /**
  * Analyzes the confidence of a translation based on various factors
+ * using the enhanced adaptive confidence threshold system
  *
  * @param {string} sourceText - The original text
  * @param {string} translatedText - The translated text
@@ -1006,6 +1007,14 @@ function getAvailableModels() {
  */
 async function analyzeTranslationConfidence(sourceText, translatedText, sourceLanguage, targetLanguage, medicalContext, modelId) {
   try {
+    // Import the adaptive confidence module with enhanced functionality
+    const {
+      calculateAdaptiveThresholds,
+      determineConfidenceLevel,
+      analyzeMedicalTerminologyComplexity,
+      getContextComplexityFactor
+    } = require('./adaptive-confidence');
+
     // Start with a base confidence level based on the model used
     let baseConfidence = 0.9; // Default high confidence
 
@@ -1025,18 +1034,57 @@ async function analyzeTranslationConfidence(sourceText, translatedText, sourceLa
     // Factors that might affect confidence
     const factors = [];
 
-    // 1. Check for medical terminology presence
-    const medicalTermsSource = extractMedicalTermsSimple(sourceText, sourceLanguage);
-    const medicalTermsTarget = extractMedicalTermsSimple(translatedText, targetLanguage);
+    // Analyze medical terminology in source and target texts
+    const sourceTerminologyAnalysis = analyzeMedicalTerminologyComplexity(sourceText, sourceLanguage, medicalContext);
+    const targetTerminologyAnalysis = analyzeMedicalTerminologyComplexity(translatedText, targetLanguage, medicalContext);
 
-    // If source has medical terms but target has significantly fewer, reduce confidence
-    if (medicalTermsSource.length > 0 && medicalTermsTarget.length < medicalTermsSource.length * 0.7) {
-      baseConfidence -= 0.1;
-      factors.push({
-        factor: 'medical_terminology_mismatch',
-        impact: 'negative',
-        description: 'Potential loss of medical terminology in translation'
-      });
+    // Get context complexity factor
+    const contextComplexity = getContextComplexityFactor(medicalContext);
+
+    // Add context complexity as a factor
+    factors.push({
+      factor: 'medical_context_complexity',
+      impact: contextComplexity > 1.2 ? 'negative' : 'neutral',
+      description: `Medical context ${medicalContext} has complexity factor ${contextComplexity.toFixed(2)}`,
+      value: contextComplexity
+    });
+
+    // Add terminology complexity as a factor
+    factors.push({
+      factor: 'terminology_complexity',
+      impact: sourceTerminologyAnalysis.complexityScore > 1.2 ? 'negative' : 'neutral',
+      description: `Source text has terminology complexity score ${sourceTerminologyAnalysis.complexityScore.toFixed(2)}`,
+      value: sourceTerminologyAnalysis.complexityScore
+    });
+
+    // 1. Check for medical terminology presence and preservation
+    if (sourceTerminologyAnalysis.termCount > 0) {
+      // Calculate terminology preservation ratio
+      const preservationRatio = targetTerminologyAnalysis.termCount / sourceTerminologyAnalysis.termCount;
+
+      // If source has medical terms but target has significantly fewer, reduce confidence
+      if (preservationRatio < 0.7) {
+        // Scale confidence reduction based on the severity of terminology loss
+        const confidenceReduction = 0.1 * (1 - preservationRatio);
+        baseConfidence -= confidenceReduction;
+
+        factors.push({
+          factor: 'medical_terminology_preservation',
+          impact: 'negative',
+          description: `Only ${Math.round(preservationRatio * 100)}% of medical terms appear to be preserved in translation`,
+          sourceTerms: sourceTerminologyAnalysis.termCount,
+          targetTerms: targetTerminologyAnalysis.termCount,
+          preservationRatio
+        });
+      } else {
+        // Good preservation of terminology
+        factors.push({
+          factor: 'medical_terminology_preservation',
+          impact: 'positive',
+          description: `Good preservation of medical terminology (${Math.round(preservationRatio * 100)}%)`,
+          preservationRatio
+        });
+      }
     }
 
     // 2. Check for length discrepancy
@@ -1046,70 +1094,108 @@ async function analyzeTranslationConfidence(sourceText, translatedText, sourceLa
 
     // If target is significantly shorter or longer than source, reduce confidence
     if (lengthRatio < 0.7 || lengthRatio > 1.5) {
-      baseConfidence -= 0.1;
+      // Scale confidence reduction based on how extreme the length difference is
+      const normalizedRatio = lengthRatio < 1 ? lengthRatio : 1/lengthRatio;
+      const confidenceReduction = 0.1 * (1 - normalizedRatio);
+      baseConfidence -= confidenceReduction;
+
       factors.push({
         factor: 'length_discrepancy',
         impact: 'negative',
-        description: 'Significant difference in text length between source and translation'
+        description: `Significant difference in text length between source (${sourceLengthWords} words) and translation (${targetLengthWords} words)`,
+        lengthRatio
       });
     }
 
-    // 3. Check for complex medical context
-    const complexMedicalContexts = ['cardiology', 'neurology', 'oncology', 'immunology'];
-    if (complexMedicalContexts.includes(medicalContext)) {
+    // 3. Check for critical terms preservation
+    if (sourceTerminologyAnalysis.criticalTermsCount > 0) {
+      // Calculate critical terms preservation ratio
+      const criticalTermsRatio = targetTerminologyAnalysis.criticalTermsCount / sourceTerminologyAnalysis.criticalTermsCount;
+
+      if (criticalTermsRatio < 1.0) {
+        // Any loss of critical terms is significant
+        const criticalReduction = 0.15 * (1 - criticalTermsRatio);
+        baseConfidence -= criticalReduction;
+
+        factors.push({
+          factor: 'critical_terms_preservation',
+          impact: 'negative',
+          description: `Only ${Math.round(criticalTermsRatio * 100)}% of critical medical terms preserved`,
+          sourceCriticalTerms: sourceTerminologyAnalysis.criticalTermsCount,
+          targetCriticalTerms: targetTerminologyAnalysis.criticalTermsCount
+        });
+      } else {
+        // All critical terms preserved
+        factors.push({
+          factor: 'critical_terms_preservation',
+          impact: 'positive',
+          description: 'All critical medical terms preserved in translation'
+        });
+      }
+    }
+
+    // 4. Apply model-specific adjustments for complex medical contexts
+    if (contextComplexity > 1.2) {
       // For complex contexts, adjust confidence based on model
       if (modelId.startsWith('anthropic.claude')) {
         // Claude handles complex contexts well
         baseConfidence += 0.05;
         factors.push({
-          factor: 'complex_medical_context',
+          factor: 'model_context_handling',
           impact: 'positive',
           description: 'Claude models excel at complex medical contexts'
         });
       } else {
         // Other models may struggle with complex contexts
-        baseConfidence -= 0.05;
+        // Scale reduction based on context complexity
+        const contextReduction = 0.05 * (contextComplexity - 1.0);
+        baseConfidence -= contextReduction;
+
         factors.push({
-          factor: 'complex_medical_context',
+          factor: 'model_context_handling',
           impact: 'negative',
-          description: 'Complex medical context may reduce translation accuracy'
+          description: `Model may have reduced accuracy with complex ${medicalContext} context`
         });
       }
     }
 
-    // 4. Check for language pair complexity
-    const complexLanguagePairs = [
-      // Language pairs with significant structural differences
-      ['en', 'zh'], ['en', 'ja'], ['en', 'ko'], ['en', 'ar'],
-      ['zh', 'en'], ['ja', 'en'], ['ko', 'en'], ['ar', 'en']
-    ];
+    // Get enhanced adaptive thresholds based on context and other factors
+    const adaptiveThresholds = calculateAdaptiveThresholds(
+      medicalContext,
+      sourceLanguage,
+      targetLanguage,
+      sourceText,
+      {
+        previousAccuracy: 0.9, // Default previous accuracy
+        terminologyComplexity: sourceTerminologyAnalysis.complexityScore,
+        criticalTermsCount: sourceTerminologyAnalysis.criticalTermsCount
+      }
+    );
 
-    if (complexLanguagePairs.some(pair =>
-      pair[0] === sourceLanguage && pair[1] === targetLanguage)) {
-      baseConfidence -= 0.05;
-      factors.push({
-        factor: 'complex_language_pair',
-        impact: 'negative',
-        description: 'Translation between structurally different languages'
-      });
-    }
+    // Determine confidence level using adaptive thresholds
+    const confidenceLevel = determineConfidenceLevel(baseConfidence, adaptiveThresholds);
 
-    // Convert numerical confidence to categorical level
-    let confidenceLevel;
-    if (baseConfidence >= 0.9) {
-      confidenceLevel = 'high';
-    } else if (baseConfidence >= 0.75) {
-      confidenceLevel = 'medium';
-    } else {
-      confidenceLevel = 'low';
-    }
+    // Add adaptive threshold information to the result
+    factors.push({
+      factor: 'adaptive_thresholds',
+      impact: 'neutral',
+      description: 'Using enhanced adaptive thresholds based on medical context complexity',
+      thresholds: adaptiveThresholds
+    });
 
     return {
       confidenceLevel,
       confidenceScore: baseConfidence,
+      adaptiveThresholds,
       factors,
       modelId,
-      medicalContext
+      medicalContext,
+      analysis: {
+        sourceTerminology: sourceTerminologyAnalysis,
+        targetTerminology: targetTerminologyAnalysis,
+        contextComplexity,
+        lengthRatio
+      }
     };
   } catch (error) {
     console.error('Error analyzing translation confidence:', error);

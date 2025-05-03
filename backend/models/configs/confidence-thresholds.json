@@ -1,0 +1,190 @@
+{
+  "default": {
+    "high": 0.9,
+    "medium": 0.75,
+    "low": 0.6
+  },
+  "contexts": {
+    "cardiology": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.65,
+      "criticalTerms": ["heart attack", "myocardial infarction", "arrhythmia", "tachycardia", "bradycardia", "angina", "coronary", "thrombosis", "embolism", "ischemia", "fibrillation", "palpitation", "hypertension", "hypotension"],
+      "complexityRating": 1.4,
+      "criticalityRating": 1.6
+    },
+    "neurology": {
+      "high": 0.93,
+      "medium": 0.82,
+      "low": 0.7,
+      "criticalTerms": ["stroke", "seizure", "epilepsy", "multiple sclerosis", "parkinson", "alzheimer", "dementia", "neuropathy", "encephalopathy", "meningitis", "hemorrhage", "aneurysm", "concussion", "coma"],
+      "complexityRating": 1.5,
+      "criticalityRating": 1.7
+    },
+    "oncology": {
+      "high": 0.95,
+      "medium": 0.85,
+      "low": 0.75,
+      "criticalTerms": ["cancer", "tumor", "metastasis", "chemotherapy", "radiation", "carcinoma", "sarcoma", "lymphoma", "leukemia", "malignant", "biopsy", "remission", "recurrence", "staging"],
+      "complexityRating": 1.6,
+      "criticalityRating": 1.8
+    },
+    "pediatrics": {
+      "high": 0.91,
+      "medium": 0.78,
+      "low": 0.65,
+      "criticalTerms": ["fever", "vaccination", "developmental milestone", "congenital", "growth", "dehydration", "jaundice", "croup", "otitis", "meningitis", "epiglottitis", "intussusception"],
+      "complexityRating": 1.3,
+      "criticalityRating": 1.5
+    },
+    "emergency": {
+      "high": 0.94,
+      "medium": 0.85,
+      "low": 0.75,
+      "criticalTerms": ["hemorrhage", "cardiac arrest", "anaphylaxis", "trauma", "overdose", "respiratory distress", "shock", "fracture", "laceration", "intubation", "resuscitation", "triage", "code blue", "stroke", "myocardial infarction"],
+      "complexityRating": 1.7,
+      "criticalityRating": 1.9
+    },
+    "pulmonology": {
+      "high": 0.93,
+      "medium": 0.82,
+      "low": 0.7,
+      "criticalTerms": ["asthma", "copd", "pneumonia", "tuberculosis", "pulmonary embolism", "respiratory failure", "bronchitis", "emphysema", "pleural effusion", "pneumothorax", "hypoxemia", "dyspnea"],
+      "complexityRating": 1.3,
+      "criticalityRating": 1.5
+    },
+    "gastroenterology": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.65,
+      "criticalTerms": ["ulcer", "gastritis", "hepatitis", "cirrhosis", "pancreatitis", "cholecystitis", "diverticulitis", "crohn's disease", "ulcerative colitis", "gastrointestinal bleeding", "jaundice", "ascites"],
+      "complexityRating": 1.2,
+      "criticalityRating": 1.4
+    },
+    "immunology": {
+      "high": 0.94,
+      "medium": 0.84,
+      "low": 0.72,
+      "criticalTerms": ["anaphylaxis", "autoimmune", "immunodeficiency", "transplant rejection", "graft-versus-host disease", "lupus", "rheumatoid arthritis", "immunosuppression", "hypersensitivity"],
+      "complexityRating": 1.5,
+      "criticalityRating": 1.6
+    },
+    "general": {
+      "high": 0.9,
+      "medium": 0.75,
+      "low": 0.6,
+      "criticalTerms": ["anaphylaxis", "cardiac arrest", "respiratory failure", "hemorrhage", "sepsis", "shock", "stroke", "seizure", "overdose", "trauma"],
+      "complexityRating": 1.0,
+      "criticalityRating": 1.0
+    }
+  },
+  "languagePairs": {
+    "en-es": {
+      "high": 0.88,
+      "medium": 0.73,
+      "low": 0.58
+    },
+    "en-zh": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.68
+    },
+    "en-ja": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.68
+    },
+    "en-ko": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.68
+    },
+    "en-ar": {
+      "high": 0.93,
+      "medium": 0.82,
+      "low": 0.7
+    },
+    "en-ru": {
+      "high": 0.91,
+      "medium": 0.79,
+      "low": 0.65
+    },
+    "en-fr": {
+      "high": 0.88,
+      "medium": 0.73,
+      "low": 0.58
+    },
+    "en-de": {
+      "high": 0.89,
+      "medium": 0.74,
+      "low": 0.6
+    },
+    "es-en": {
+      "high": 0.88,
+      "medium": 0.73,
+      "low": 0.58
+    },
+    "zh-en": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.68
+    },
+    "ja-en": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.68
+    },
+    "ko-en": {
+      "high": 0.92,
+      "medium": 0.8,
+      "low": 0.68
+    },
+    "ar-en": {
+      "high": 0.93,
+      "medium": 0.82,
+      "low": 0.7
+    }
+  },
+  "adaptiveFactors": {
+    "textLength": {
+      "short": 0.02,
+      "medium": 0,
+      "long": -0.03
+    },
+    "criticalTermsPresent": 0.05,
+    "complexLanguagePair": -0.03,
+    "previousAccuracy": 0.04,
+    "terminologyDensity": 0.05,
+    "terminologyComplexity": 0.03,
+    "contextComplexity": 0.04,
+    "contextCriticality": 0.06
+  },
+  "contextWeights": {
+    "general": 1.0,
+    "emergency": 1.7,
+    "oncology": 1.6,
+    "neurology": 1.5,
+    "cardiology": 1.4,
+    "surgery": 1.5,
+    "obstetrics": 1.3,
+    "pediatrics": 1.3,
+    "infectious_disease": 1.4,
+    "immunology": 1.5,
+    "pulmonology": 1.3,
+    "endocrinology": 1.3,
+    "gastroenterology": 1.2,
+    "psychiatry": 1.2,
+    "orthopedics": 1.1,
+    "dermatology": 1.0,
+    "ophthalmology": 1.2,
+    "urology": 1.1,
+    "nephrology": 1.3,
+    "hematology": 1.4,
+    "rheumatology": 1.2,
+    "anesthesiology": 1.4,
+    "pathology": 1.3,
+    "pharmacy": 1.2,
+    "radiology": 1.1,
+    "gynecology": 1.2
+  }
+}

@@ -1,18 +1,21 @@
 /**
- * Translation Status Indicator Component for MedTranslate AI Patient Application
- * 
- * This component provides visual feedback for the current status of a translation,
- * including confidence levels, errors, and processing states.
+ * Enhanced Translation Status Indicator Component for MedTranslate AI Patient Application
+ *
+ * This component provides detailed visual feedback for the current status of a translation,
+ * including confidence levels, factors affecting confidence, errors, and processing states.
+ * It includes animations and detailed information about the translation process.
  */
 
-import React, { useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Animated, 
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
   Easing,
-  TouchableOpacity
+  TouchableOpacity,
+  Modal,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -50,19 +53,50 @@ const CONFIDENCE_COLORS = {
   [CONFIDENCE_LEVELS.LOW]: '#F44336'
 };
 
-export default function TranslationStatusIndicator({ 
+// Confidence descriptions
+const CONFIDENCE_DESCRIPTIONS = {
+  [CONFIDENCE_LEVELS.HIGH]: 'High confidence indicates a reliable translation with high accuracy.',
+  [CONFIDENCE_LEVELS.MEDIUM]: 'Medium confidence suggests a generally accurate translation with possible minor issues.',
+  [CONFIDENCE_LEVELS.LOW]: 'Low confidence indicates potential issues with the translation accuracy.'
+};
+
+// Confidence factors
+const CONFIDENCE_FACTORS = {
+  [CONFIDENCE_LEVELS.HIGH]: [
+    'Medical terminology correctly translated',
+    'Source and target text have appropriate length ratio',
+    'High-quality model used for translation'
+  ],
+  [CONFIDENCE_LEVELS.MEDIUM]: [
+    'Some medical terms may need verification',
+    'Translation may have slight structural differences',
+    'Consider reviewing critical information'
+  ],
+  [CONFIDENCE_LEVELS.LOW]: [
+    'Medical terminology may be inaccurate',
+    'Significant length discrepancy between source and translation',
+    'Consider requesting a new translation'
+  ]
+};
+
+export default function TranslationStatusIndicator({
   status = STATUS_TYPES.IDLE,
   confidence = null,
+  confidenceFactors = [],
   errorMessage = null,
   progress = 0,
+  processingTime = null,
   onRetry = null,
-  showDetails = false
+  showDetails = false,
+  translationModel = null
 }) {
+  // State for confidence info modal
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   // Animation values
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  
+
   // Update progress animation when progress changes
   useEffect(() => {
     Animated.timing(progressAnim, {
@@ -71,7 +105,7 @@ export default function TranslationStatusIndicator({
       useNativeDriver: false
     }).start();
   }, [progress]);
-  
+
   // Start pulse animation for active states
   useEffect(() => {
     if (status === STATUS_TYPES.RECORDING || status === STATUS_TYPES.PROCESSING || status === STATUS_TYPES.TRANSLATING) {
@@ -95,7 +129,7 @@ export default function TranslationStatusIndicator({
       // Reset pulse animation
       pulseAnim.setValue(1);
     }
-    
+
     // Fade animation for status changes
     Animated.sequence([
       Animated.timing(fadeAnim, {
@@ -110,7 +144,7 @@ export default function TranslationStatusIndicator({
       })
     ]).start();
   }, [status]);
-  
+
   // Get status icon
   const getStatusIcon = () => {
     switch (status) {
@@ -128,7 +162,7 @@ export default function TranslationStatusIndicator({
         return 'ellipse';
     }
   };
-  
+
   // Get status text
   const getStatusText = () => {
     switch (status) {
@@ -146,52 +180,134 @@ export default function TranslationStatusIndicator({
         return 'Ready';
     }
   };
-  
+
   // Get confidence badge
   const getConfidenceBadge = () => {
     if (!confidence || status !== STATUS_TYPES.COMPLETED) return null;
-    
+
     const color = CONFIDENCE_COLORS[confidence] || CONFIDENCE_COLORS.MEDIUM;
-    
+
     return (
-      <View style={[styles.confidenceBadge, { backgroundColor: color }]}>
+      <TouchableOpacity
+        style={[styles.confidenceBadge, { backgroundColor: color }]}
+        onPress={() => setInfoModalVisible(true)}
+      >
         <Text style={styles.confidenceText}>
           {confidence.charAt(0).toUpperCase() + confidence.slice(1)}
         </Text>
-      </View>
+        <Ionicons name="information-circle-outline" size={12} color="#FFFFFF" style={styles.infoIcon} />
+      </TouchableOpacity>
     );
   };
-  
+
+  // Get confidence info modal
+  const getConfidenceInfoModal = () => {
+    if (!confidence) return null;
+
+    const color = CONFIDENCE_COLORS[confidence] || CONFIDENCE_COLORS.MEDIUM;
+    const description = CONFIDENCE_DESCRIPTIONS[confidence] || '';
+    const factors = confidenceFactors.length > 0
+      ? confidenceFactors
+      : CONFIDENCE_FACTORS[confidence] || [];
+
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={infoModalVisible}
+        onRequestClose={() => setInfoModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={[styles.modalHeader, { backgroundColor: color }]}>
+              <Text style={styles.modalTitle}>
+                {confidence.charAt(0).toUpperCase() + confidence.slice(1)} Confidence
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setInfoModalVisible(false)}
+              >
+                <Ionicons name="close" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <Text style={styles.modalDescription}>{description}</Text>
+
+              <Text style={styles.modalSectionTitle}>Factors:</Text>
+              {factors.map((factor, index) => (
+                <View key={index} style={styles.factorItem}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={16}
+                    color={color}
+                    style={styles.factorIcon}
+                  />
+                  <Text style={styles.factorText}>{factor}</Text>
+                </View>
+              ))}
+
+              {translationModel && (
+                <>
+                  <Text style={styles.modalSectionTitle}>Translation Model:</Text>
+                  <Text style={styles.modalText}>{translationModel}</Text>
+                </>
+              )}
+
+              {processingTime && (
+                <>
+                  <Text style={styles.modalSectionTitle}>Processing Time:</Text>
+                  <Text style={styles.modalText}>{processingTime}s</Text>
+                </>
+              )}
+
+              <View style={styles.tipContainer}>
+                <Ionicons name="bulb" size={20} color="#FFC107" style={styles.tipIcon} />
+                <Text style={styles.tipText}>
+                  {confidence === CONFIDENCE_LEVELS.HIGH
+                    ? 'This translation is highly reliable for medical communication.'
+                    : confidence === CONFIDENCE_LEVELS.MEDIUM
+                      ? 'Verify critical medical terms before making decisions.'
+                      : 'Consider requesting a new translation for critical information.'}
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   // Get progress width
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%']
   });
-  
+
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles.container,
         { opacity: fadeAnim }
       ]}
     >
       <View style={styles.statusBar}>
-        <Animated.View 
+        <Animated.View
           style={[
             styles.progressBar,
-            { 
+            {
               backgroundColor: STATUS_COLORS[status],
               width: progressWidth
             }
           ]}
         />
       </View>
-      
+
       <View style={styles.content}>
-        <Animated.View 
+        <Animated.View
           style={[
             styles.iconContainer,
-            { 
+            {
               backgroundColor: STATUS_COLORS[status],
               transform: [{ scale: pulseAnim }]
             }
@@ -199,19 +315,19 @@ export default function TranslationStatusIndicator({
         >
           <Ionicons name={getStatusIcon()} size={20} color="#FFFFFF" />
         </Animated.View>
-        
+
         <View style={styles.textContainer}>
           <Text style={styles.statusText}>{getStatusText()}</Text>
-          
+
           {errorMessage && status === STATUS_TYPES.ERROR && (
             <Text style={styles.errorText}>{errorMessage}</Text>
           )}
         </View>
-        
+
         {getConfidenceBadge()}
-        
+
         {status === STATUS_TYPES.ERROR && onRetry && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.retryButton}
             onPress={onRetry}
           >
@@ -219,37 +335,90 @@ export default function TranslationStatusIndicator({
           </TouchableOpacity>
         )}
       </View>
-      
+
       {showDetails && (
         <View style={styles.detailsContainer}>
           {status === STATUS_TYPES.COMPLETED && confidence && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Confidence:</Text>
-              <View style={[
-                styles.confidenceIndicator, 
-                { backgroundColor: CONFIDENCE_COLORS[confidence] }
-              ]}>
-                <Text style={styles.confidenceIndicatorText}>
-                  {confidence.charAt(0).toUpperCase() + confidence.slice(1)}
-                </Text>
+            <>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Confidence:</Text>
+                <TouchableOpacity
+                  onPress={() => setInfoModalVisible(true)}
+                  style={styles.confidenceInfoButton}
+                >
+                  <View style={[
+                    styles.confidenceIndicator,
+                    { backgroundColor: CONFIDENCE_COLORS[confidence] }
+                  ]}>
+                    <Text style={styles.confidenceIndicatorText}>
+                      {confidence.charAt(0).toUpperCase() + confidence.slice(1)}
+                    </Text>
+                  </View>
+                  <Ionicons name="information-circle" size={16} color="#757575" style={styles.detailInfoIcon} />
+                </TouchableOpacity>
               </View>
-            </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Processing Time:</Text>
+                <Text style={styles.detailValue}>{processingTime || '1.2'}s</Text>
+              </View>
+
+              {translationModel && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Model:</Text>
+                  <Text style={styles.detailValue}>{translationModel}</Text>
+                </View>
+              )}
+
+              <View style={styles.factorsSummary}>
+                <Text style={styles.factorsSummaryTitle}>Key Factors:</Text>
+                {(confidenceFactors.length > 0 ? confidenceFactors : CONFIDENCE_FACTORS[confidence] || [])
+                  .slice(0, 2)
+                  .map((factor, index) => (
+                    <View key={index} style={styles.factorSummaryItem}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={14}
+                        color={CONFIDENCE_COLORS[confidence]}
+                        style={styles.factorSummaryIcon}
+                      />
+                      <Text style={styles.factorSummaryText}>{factor}</Text>
+                    </View>
+                  ))}
+                <TouchableOpacity
+                  style={styles.viewMoreButton}
+                  onPress={() => setInfoModalVisible(true)}
+                >
+                  <Text style={styles.viewMoreText}>View More Details</Text>
+                  <Ionicons name="chevron-forward" size={14} color="#2196F3" />
+                </TouchableOpacity>
+              </View>
+            </>
           )}
-          
-          {status === STATUS_TYPES.COMPLETED && (
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Processing Time:</Text>
-              <Text style={styles.detailValue}>1.2s</Text>
-            </View>
-          )}
-          
+
           {status === STATUS_TYPES.ERROR && (
             <View style={styles.errorDetailsContainer}>
               <Text style={styles.errorDetailsTitle}>Error Details:</Text>
               <Text style={styles.errorDetailsText}>{errorMessage || 'Unknown error occurred'}</Text>
-              
+
+              <View style={styles.errorTipsContainer}>
+                <Text style={styles.errorTipsTitle}>Troubleshooting Tips:</Text>
+                <View style={styles.errorTipItem}>
+                  <Ionicons name="checkmark-circle" size={14} color="#757575" style={styles.errorTipIcon} />
+                  <Text style={styles.errorTipText}>Check your internet connection</Text>
+                </View>
+                <View style={styles.errorTipItem}>
+                  <Ionicons name="checkmark-circle" size={14} color="#757575" style={styles.errorTipIcon} />
+                  <Text style={styles.errorTipText}>Try speaking more clearly</Text>
+                </View>
+                <View style={styles.errorTipItem}>
+                  <Ionicons name="checkmark-circle" size={14} color="#757575" style={styles.errorTipIcon} />
+                  <Text style={styles.errorTipText}>Reduce background noise</Text>
+                </View>
+              </View>
+
               {onRetry && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.retryButtonLarge}
                   onPress={onRetry}
                 >
@@ -261,6 +430,9 @@ export default function TranslationStatusIndicator({
           )}
         </View>
       )}
+
+      {/* Confidence Info Modal */}
+      {getConfidenceInfoModal()}
     </Animated.View>
   );
 }
@@ -313,6 +485,8 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   confidenceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 4,
@@ -322,6 +496,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     fontWeight: '500'
+  },
+  infoIcon: {
+    marginLeft: 4
   },
   retryButton: {
     padding: 8
@@ -346,6 +523,10 @@ const styles = StyleSheet.create({
     color: '#333333',
     fontWeight: '500'
   },
+  confidenceInfoButton: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   confidenceIndicator: {
     paddingVertical: 2,
     paddingHorizontal: 8,
@@ -355,6 +536,46 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     fontWeight: '500'
+  },
+  detailInfoIcon: {
+    marginLeft: 4
+  },
+  factorsSummary: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 4,
+    padding: 10,
+    marginTop: 8
+  },
+  factorsSummaryTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    marginBottom: 8
+  },
+  factorSummaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6
+  },
+  factorSummaryIcon: {
+    marginRight: 6
+  },
+  factorSummaryText: {
+    fontSize: 13,
+    color: '#333333',
+    flex: 1
+  },
+  viewMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8
+  },
+  viewMoreText: {
+    fontSize: 13,
+    color: '#2196F3',
+    fontWeight: '500',
+    marginRight: 4
   },
   errorDetailsContainer: {
     backgroundColor: '#FFEBEE',
@@ -372,6 +593,30 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 12
   },
+  errorTipsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 12
+  },
+  errorTipsTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    marginBottom: 8
+  },
+  errorTipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6
+  },
+  errorTipIcon: {
+    marginRight: 6
+  },
+  errorTipText: {
+    fontSize: 13,
+    color: '#333333'
+  },
   retryButtonLarge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,5 +632,94 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '500',
     marginLeft: 8
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF'
+  },
+  closeButton: {
+    padding: 4
+  },
+  modalBody: {
+    padding: 16,
+    maxHeight: 400
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#333333',
+    marginBottom: 16,
+    lineHeight: 20
+  },
+  modalSectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333333',
+    marginBottom: 8,
+    marginTop: 16
+  },
+  modalText: {
+    fontSize: 14,
+    color: '#333333',
+    marginBottom: 8
+  },
+  factorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  factorIcon: {
+    marginRight: 8
+  },
+  factorText: {
+    fontSize: 14,
+    color: '#333333',
+    flex: 1
+  },
+  tipContainer: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 4,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 16,
+    marginBottom: 8
+  },
+  tipIcon: {
+    marginRight: 8,
+    marginTop: 2
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#333333',
+    flex: 1,
+    lineHeight: 20
   }
 });

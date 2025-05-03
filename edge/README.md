@@ -79,6 +79,8 @@ The edge application exposes the following REST API endpoints:
 - `POST /sync/force` - Force synchronization with the cloud
 - `POST /models/update` - Check for and download model updates
 - `POST /cache/clear` - Clear the translation cache
+- `GET /cache/stats` - Get cache statistics and offline readiness information
+- `POST /cache/prepare-offline` - Prepare for offline mode by pre-caching predicted content
 
 ## WebSocket API
 
@@ -98,11 +100,38 @@ ws.send(JSON.stringify({
   context: 'general'
 }));
 
-// Receive translation response
+// Get cache statistics and offline readiness
+ws.send(JSON.stringify({
+  type: 'get_cache_stats',
+  requestId: 'cache-stats-request-id'
+}));
+
+// Check network status
+ws.send(JSON.stringify({
+  type: 'network_check',
+  requestId: 'network-check-request-id'
+}));
+
+// Receive responses
 ws.onmessage = (event) => {
   const response = JSON.parse(event.data);
+
+  // Handle translation response
   if (response.type === 'translation' && response.requestId === 'unique-request-id') {
     console.log(response.result.translatedText);
+  }
+
+  // Handle cache stats response
+  if (response.type === 'cache_stats' && response.requestId === 'cache-stats-request-id') {
+    console.log('Cache stats:', response.stats);
+    console.log('Offline readiness:', response.offlineReadiness + '%');
+    console.log('Offline risk:', response.offlineRisk * 100 + '%');
+  }
+
+  // Handle network status response
+  if (response.type === 'network_status' && response.requestId === 'network-check-request-id') {
+    console.log('Online status:', response.online);
+    console.log('Timestamp:', response.timestamp);
   }
 };
 ```

@@ -25,6 +25,7 @@ import { EdgeConnectionContext } from '../context/EdgeConnectionContext';
 import TranslationMessage from '../components/TranslationMessage';
 import EnhancedVoiceRecordButton from '../components/EnhancedVoiceRecordButton';
 import TranslationStatusIndicator from '../components/TranslationStatusIndicator';
+import WebSocketStatus from '../../shared/components/WebSocketStatus';
 import websocketService from '../services/websocket-service';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
@@ -511,13 +512,12 @@ export default function TranslationSessionScreen({ navigation, route }) {
         </Text>
 
         <View style={styles.connectionIndicator}>
-          <View style={[
-            styles.connectionDot,
-            { backgroundColor: isConnected ? '#4CAF50' : '#F44336' }
-          ]} />
-          <Text style={styles.connectionText}>
-            {isConnected ? 'Connected' : 'Offline'}
-          </Text>
+          <WebSocketStatus
+            websocketService={websocketService}
+            showReconnectButton={false}
+            textStyle={styles.connectionText}
+            iconSize={12}
+          />
         </View>
       </View>
 

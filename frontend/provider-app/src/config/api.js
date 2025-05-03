@@ -1,6 +1,6 @@
 /**
  * API Configuration for MedTranslate AI Provider Application
- * 
+ *
  * This file contains API endpoints and configuration for the application.
  */
 
@@ -18,7 +18,7 @@ export const API_ENDPOINTS = {
     VERIFY: `${API_BASE_URL}/auth/verify`,
     REFRESH: `${API_BASE_URL}/auth/refresh`,
   },
-  
+
   // Session endpoints
   SESSIONS: {
     CREATE: `${API_BASE_URL}/sessions`,
@@ -27,20 +27,29 @@ export const API_ENDPOINTS = {
     PATIENT_TOKEN: `${API_BASE_URL}/sessions/patient-token`,
     GET: (sessionId) => `${API_BASE_URL}/storage/sessions/${sessionId}`,
   },
-  
+
   // Translation endpoints
   TRANSLATE: {
     TEXT: `${API_BASE_URL}/translate/text`,
     AUDIO: `${API_BASE_URL}/translate/audio`,
+    ALTERNATIVE: (translationId) => `${API_BASE_URL}/translate/alternative/${translationId}`,
+    CONFIDENCE: `${API_BASE_URL}/translate/confidence`,
   },
-  
+
   // Storage endpoints
   STORAGE: {
     TRANSCRIPT: `${API_BASE_URL}/storage/transcript`,
   },
-  
+
+  // Feedback endpoints
+  FEEDBACK: {
+    SUBMIT: `${API_BASE_URL}/feedback/submit`,
+    TRANSLATION: `${API_BASE_URL}/feedback/translation`,
+    TRANSLATION_STATS: `${API_BASE_URL}/feedback/translation/stats`,
+  },
+
   // WebSocket endpoint
-  WEBSOCKET: (sessionId, token) => 
+  WEBSOCKET: (sessionId, token) =>
     `ws://${API_BASE_URL.replace('http://', '')}/ws/${sessionId}?token=${token}`,
 };
 
@@ -55,41 +64,41 @@ export const REQUEST_TIMEOUT = 30000;
 // API request helper function
 export const apiRequest = async (url, options = {}) => {
   const { headers, ...restOptions } = options;
-  
+
   // Set default headers
   const requestHeaders = {
     ...DEFAULT_HEADERS,
     ...headers,
   };
-  
+
   // Set timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-  
+
   try {
     const response = await fetch(url, {
       ...restOptions,
       headers: requestHeaders,
       signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     // Parse response
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'API request failed');
     }
-    
+
     return data;
   } catch (error) {
     clearTimeout(timeoutId);
-    
+
     if (error.name === 'AbortError') {
       throw new Error('Request timeout');
     }
-    
+
     throw error;
   }
 };

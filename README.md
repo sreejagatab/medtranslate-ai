@@ -2,39 +2,73 @@
 
 Real-time medical translation system using AWS Generative AI and Edge Computing
 
+![MedTranslate AI](docs/images/medtranslate-logo.png)
+
 ## Overview
 
-MedTranslate AI bridges language barriers in healthcare settings by providing accurate, real-time translation between healthcare providers and patients. The system combines AWS generative AI services with edge computing and 5G connectivity for reliable, low-latency operation.
+MedTranslate AI bridges language barriers in healthcare settings by providing accurate, real-time translation between healthcare providers and patients. The system combines AWS generative AI services with edge computing and 5G connectivity for reliable, low-latency operation, even in environments with limited connectivity.
 
 ### Key Features
 
-- Real-time medical conversation translation
-- Support for specialized medical terminology and context
-- Edge computing for privacy and low latency
-- Compatible with 5G and variable network conditions
-- HIPAA-compliant security implementation
-- Intuitive mobile interfaces for patients and providers
+- **Real-time Medical Translation**: Accurate translation of medical conversations with specialized terminology support
+- **Comprehensive Medical Knowledge Base**: Integration with UMLS, SNOMED, ICD10, and other medical terminology databases
+- **Multi-Model AI Translation**: Leveraging Amazon Bedrock models (Claude, Titan, Llama, Mistral) with context-aware selection
+- **Edge Computing**: Local inference for privacy, low latency, and offline operation
+- **Multi-Factor Authentication**: Secure access with TOTP-based two-factor authentication
+- **Role-Based Access Control**: Fine-grained permission system for healthcare providers and administrators
+- **WebSocket Communication**: Real-time bidirectional communication with reconnection handling
+- **Cross-Platform Mobile Applications**: React Native apps for patients and providers
+- **System Health Monitoring**: Real-time monitoring of all system components
+- **HIPAA-Compliant Design**: Security and privacy features designed for healthcare environments
 
 ## Architecture
 
-MedTranslate AI uses a hybrid cloud/edge architecture:
+MedTranslate AI uses a hybrid cloud/edge architecture designed for reliability, performance, and security in healthcare environments.
 
-- **AWS Generative AI**: Amazon Bedrock powers the core translation with medical domain knowledge
-- **Edge Computing**: Local inference for low-latency and offline operation
-- **5G Connectivity**: Optimized for healthcare environments
-- **Mobile Applications**: React Native apps for patients and providers
-- **WebSocket Communication**: Real-time bidirectional communication between patients and providers
+![Architecture Diagram](docs/images/architecture-diagram.png)
+
+### Cloud Components
+
+- **AWS Bedrock**: Powers the core translation with specialized medical prompts and models
+- **Amazon DynamoDB**: Stores medical terminology, user data, and session information
+- **Amazon Cognito**: Manages user authentication and authorization
+- **AWS Lambda**: Handles serverless processing for translation and verification
+- **Amazon S3**: Stores audio recordings and translation artifacts
+- **Amazon CloudWatch**: Monitors system performance and logs
+
+### Edge Components
+
+- **Edge Runtime**: Optimized environment for local model execution
+- **Local Models**: Compressed models for offline translation
+- **Caching Layer**: Stores recent translations and terminology
+- **Sync Manager**: Handles synchronization with cloud services
+- **WebSocket Server**: Manages real-time communication
+- **Health Monitor**: Tracks system status and performance
+
+### Client Applications
+
+- **Provider Application**: React Native app for healthcare providers
+- **Patient Application**: React Native app for patients
+- **Admin Dashboard**: Web application for system administration
+- **Mobile Edge Application**: Deployable on dedicated edge devices
 
 ## Getting Started
 
 ### Prerequisites
 
-- AWS Account with access to Amazon Bedrock
-- Node.js 18+ and npm
-- React Native development environment
-- AWS CLI configured with appropriate permissions
+- **AWS Account** with access to:
+  - Amazon Bedrock (Claude, Titan, Llama, and Mistral models)
+  - DynamoDB, S3, Lambda, Cognito, and CloudWatch
+- **Development Environment**:
+  - Node.js 18+ and npm
+  - Python 3.9+ (for edge ML components)
+  - React Native development environment
+  - AWS CLI v2+ configured with appropriate permissions
+- **Hardware** (for edge deployment):
+  - Edge device with 4GB+ RAM, quad-core processor
+  - 5G or reliable Wi-Fi connectivity
 
-### Local Development
+### Environment Setup
 
 1. Clone the repository:
    ```bash
@@ -42,80 +76,207 @@ MedTranslate AI uses a hybrid cloud/edge architecture:
    cd medtranslate-ai
    ```
 
-2. Install dependencies:
+2. Set up environment variables:
    ```bash
-   # Install backend dependencies
-   cd backend
-   npm install
+   # Copy example environment files
+   cp backend/.env.example backend/.env.development
+   cp edge/.env.example edge/.env.development
 
-   # Install edge dependencies
-   cd ../edge
-   npm install
-
-   # Install provider app dependencies
-   cd ../frontend/provider-app
-   npm install
-
-   # Install patient app dependencies
-   cd ../frontend/patient-app
-   npm install
+   # Edit the environment files with your configuration
+   # You'll need to set AWS credentials, region, and service endpoints
    ```
 
-3. Start the development environment:
+3. Install dependencies and set up the project:
+   ```bash
+   # Run the setup script (installs all dependencies)
+   npm run setup
+
+   # Or install dependencies manually
+   cd backend && npm install
+   cd ../edge && npm install
+   cd ../frontend/provider-app && npm install
+   cd ../patient-app && npm install
+   cd ../admin-dashboard && npm install
+   ```
+
+### Local Development
+
+1. Start the development environment:
    ```bash
    # From the project root
-   ./start-dev-environment.ps1
+   npm start
    ```
 
-   This will start:
-   - Backend API server on http://localhost:3001
-   - Edge computing server on http://localhost:3002
-   - Provider app on http://localhost:3003
-   - Patient app on http://localhost:3004
+   This will start all components:
+   - Backend API server on http://localhost:4001
+   - Edge computing server on http://localhost:4000
+   - Provider app on http://localhost:4003
+   - Patient app on http://localhost:4004
+   - Admin dashboard on http://localhost:4002
+
+2. Access the applications:
+   - Provider Application: http://localhost:4003
+   - Patient Application: http://localhost:4004
+   - Admin Dashboard: http://localhost:4002
+   - API Documentation: http://localhost:4001/api-docs
 
 ### AWS Deployment
 
-1. Configure AWS CLI:
+1. Configure AWS resources:
    ```bash
-   aws configure
-   ```
-
-2. Deploy the infrastructure:
-   ```bash
+   # Deploy infrastructure using CloudFormation
    cd infrastructure
    ./deploy.ps1 -Environment dev -Region us-east-1
+
+   # This creates:
+   # - DynamoDB tables for users, sessions, and medical terminology
+   # - S3 buckets for storage
+   # - Cognito user pools
+   # - IAM roles and policies
+   # - API Gateway endpoints
    ```
 
-3. Set up backend services:
+2. Deploy backend services:
    ```bash
    cd backend
    npm run deploy:dev
+
+   # This deploys Lambda functions and configures API Gateway
    ```
 
-4. Build and run the provider application:
+3. Configure frontend applications:
    ```bash
-   cd frontend/provider-app
-   npm install
-   npm run start
+   # Configure frontend to use deployed backend
+   cd infrastructure
+   ./configure-frontend.ps1 -Environment dev
+
+   # Build and deploy web applications
+   cd ../frontend/admin-dashboard
+   npm run build
+   # Deploy the build directory to your hosting service (S3, Amplify, etc.)
    ```
 
-5. Build and run the patient application:
+4. Build mobile applications:
    ```bash
-   cd frontend/patient-app
-   npm install
-   npm run start
+   # For Android
+   cd mobile/patient-app
+   npm run build:android
+
+   # For iOS
+   cd mobile/patient-app
+   npm run build:ios
+
+   # Repeat for provider app
+   ```
+
+### Edge Device Deployment
+
+1. Prepare the edge device:
+   ```bash
+   # Install dependencies on the edge device
+   ssh user@edge-device "sudo apt-get update && sudo apt-get install -y nodejs npm python3 python3-pip"
+
+   # Copy edge application to the device
+   scp -r edge user@edge-device:/home/user/medtranslate-edge
+   ```
+
+2. Configure and start the edge application:
+   ```bash
+   ssh user@edge-device "cd /home/user/medtranslate-edge && npm install && npm start"
+   ```
+
+3. Set up as a service (optional):
+   ```bash
+   # Create a systemd service for automatic startup
+   scp deployment/edge-service.service user@edge-device:/tmp/
+   ssh user@edge-device "sudo mv /tmp/edge-service.service /etc/systemd/system/ && sudo systemctl enable edge-service && sudo systemctl start edge-service"
    ```
 
 ## Development
 
 ### Project Structure
 
-- `/infrastructure`: Infrastructure as Code (CloudFormation/Terraform)
-- `/backend`: AWS Lambda functions and API configurations
-- `/edge`: Edge computing components
-- `/frontend`: React Native applications
-- `/docs`: Documentation
-- `/tests`: Test suites
+```
+medtranslate-ai/
+├── backend/                  # Backend services
+│   ├── src/                  # Source code
+│   │   ├── api/              # API endpoints
+│   │   ├── auth/             # Authentication services
+│   │   ├── models/           # Data models
+│   │   ├── services/         # Business logic
+│   │   └── utils/            # Utility functions
+│   ├── tests/                # Backend tests
+│   └── serverless.yml        # Serverless configuration
+├── edge/                     # Edge computing components
+│   ├── app/                  # Edge application
+│   │   ├── server.js         # Main server
+│   │   ├── translation.js    # Translation module
+│   │   ├── model_manager.js  # Model management
+│   │   └── sync.js           # Cloud synchronization
+│   ├── runtime/              # Edge runtime environment
+│   └── models/               # Optimized models for edge
+├── frontend/                 # Frontend applications
+│   ├── provider-app/         # Provider application
+│   ├── patient-app/          # Patient application
+│   ├── admin-dashboard/      # Admin dashboard
+│   └── shared/               # Shared components
+├── mobile/                   # Native mobile applications
+│   ├── provider-app/         # Provider mobile app
+│   └── patient-app/          # Patient mobile app
+├── infrastructure/           # Infrastructure as Code
+│   ├── cloudformation/       # CloudFormation templates
+│   ├── terraform/            # Terraform configurations
+│   └── scripts/              # Deployment scripts
+├── scripts/                  # Utility scripts
+├── tests/                    # Integration and E2E tests
+└── docs/                     # Documentation
+```
+
+### Key Components
+
+#### Backend Services
+
+The backend is built with Node.js and Express, deployed as serverless functions on AWS Lambda:
+
+- **Authentication Service**: Handles user authentication, MFA, and session management
+- **Translation Service**: Manages translation requests and integrates with Bedrock
+- **Medical Knowledge Base**: Provides medical terminology verification and context
+- **WebSocket Server**: Manages real-time communication between clients
+- **Storage Service**: Handles secure storage of session data and transcripts
+
+#### Edge Application
+
+The edge application runs on dedicated edge devices or as a local service:
+
+- **Local Inference Engine**: Runs optimized models for offline translation
+- **Caching System**: Stores recent translations and terminology
+- **Synchronization Module**: Manages data synchronization with cloud
+- **Health Monitoring**: Tracks system performance and status
+
+#### Frontend Applications
+
+The frontend applications are built with React Native for cross-platform compatibility:
+
+- **Provider Application**: Used by healthcare providers to manage translation sessions
+- **Patient Application**: Used by patients to participate in translation sessions
+- **Admin Dashboard**: Web application for system administration and monitoring
+
+### Development Workflow
+
+1. **Feature Development**:
+   - Create a feature branch from `develop`
+   - Implement the feature with tests
+   - Submit a pull request to `develop`
+
+2. **Testing**:
+   - Run unit tests: `npm test`
+   - Run integration tests: `npm run test:integration`
+   - Run end-to-end tests: `npm run test:e2e`
+
+3. **Deployment**:
+   - Merge to `develop` for development deployment
+   - Merge to `staging` for staging deployment
+   - Merge to `main` for production deployment
 
 ## Recent Updates
 
@@ -163,33 +324,149 @@ Enhanced security with comprehensive authentication and authorization features:
 - **Security Middleware**: Permission-based middleware for API endpoint protection
 - **User Profile Management**: Enhanced user profile with security settings management
 
+## Testing
+
+MedTranslate AI includes comprehensive testing to ensure reliability, performance, and security.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm run test:all
+
+# Run specific test suites
+npm run test:unit            # Unit tests
+npm run test:integration     # Integration tests
+npm run test:edge            # Edge application tests
+npm run test:security        # Security tests
+npm run test:performance     # Performance tests
+```
+
+### Test Coverage
+
+- **Unit Tests**: Test individual components and functions
+- **Integration Tests**: Test interactions between components
+- **Edge Tests**: Test edge application functionality
+- **Security Tests**: Verify security implementations
+- **Performance Tests**: Measure system performance under load
+
+## Security and Compliance
+
+MedTranslate AI is designed with healthcare security and privacy requirements in mind.
+
+### Security Features
+
+- **Authentication**: Multi-factor authentication with TOTP
+- **Authorization**: Role-based access control with fine-grained permissions
+- **Data Protection**: Encryption for data in transit and at rest
+- **Audit Logging**: Comprehensive logging of all system activities
+- **Session Management**: Secure session handling with timeout and inactivity detection
+
+### HIPAA Compliance
+
+The system is designed to meet HIPAA requirements:
+
+- **Privacy**: Minimizes collection and storage of PHI
+- **Security**: Implements required technical safeguards
+- **Audit Controls**: Tracks access to protected information
+- **Integrity**: Ensures data is not altered inappropriately
+- **Transmission Security**: Protects data during transmission
+
+## Troubleshooting
+
+### Common Issues
+
+#### Backend Connection Issues
+
+- Ensure AWS credentials are correctly configured
+- Check that the required AWS services are available in your region
+- Verify network connectivity to AWS endpoints
+
+#### Edge Device Issues
+
+- Ensure the edge device meets minimum hardware requirements
+- Check network connectivity for synchronization
+- Verify that required models are downloaded and available
+
+#### Mobile Application Issues
+
+- For React Native version mismatches, run the dependency fix script:
+  ```bash
+  node scripts/fix-dependencies.js
+  ```
+- If you encounter specific React Native version issues:
+  ```bash
+  # Check current versions across all applications
+  grep -r "\"react-native\":" --include="package.json" .
+
+  # Standardize to version 0.72.10 (recommended)
+  cd scripts
+  node fix-dependencies.js
+
+  # Test applications after updates
+  node test-react-native-updates.js
+  ```
+- Ensure the correct API endpoints are configured
+- Check for missing assets and add placeholders if needed
+
+### Logging and Debugging
+
+- Backend logs are available in CloudWatch Logs
+- Edge application logs are stored in `edge/logs`
+- Mobile application logs can be viewed using React Native Debugger
+
 ## Next Steps
 
-To further improve the MedTranslate AI system:
+Based on the current implementation status, the following enhancements are planned:
 
-1. **Enhance Edge Computing Capabilities**:
+1. **Edge Computing Enhancements**:
    - Complete offline capabilities with robust caching
-   - Implement local inference engine for low-latency translation
-   - Develop synchronization protocol for model updates
-   - Add conflict resolution for offline operations
+   - Optimize models for edge deployment with size constraints
+   - Implement resource utilization monitoring
+   - Add network quality assessment
 
-2. **Develop Native Mobile Applications with Push Notifications**:
-   - Enhance mobile apps with push notifications
-   - Improve offline capabilities
+2. **User Interface Improvements**:
+   - Standardize React Native versions across applications
    - Add visual confidence indicators for translations
+   - Implement offline mode UI indicators
+   - Enhance accessibility features
 
-3. **Implement Monitoring and Analytics Systems**:
-   - Complete comprehensive logging system
-   - Implement performance metrics collection
-   - Add usage analytics dashboard
-   - Develop alerting system for issues
-
-4. **Strengthen Security and Compliance**:
-   - Complete end-to-end encryption for all communications
+3. **Security Enhancements**:
+   - Implement end-to-end encryption for all communications
    - Set up comprehensive audit logging
    - Implement HIPAA-compliant data retention policies
 
-5. **Implement Comprehensive Testing**:
-   - Add unit, integration, and end-to-end tests
-   - Implement performance testing
-   - Test with real-world medical scenarios
+4. **Integration Improvements**:
+   - Improve WebSocket reconnection handling
+   - Implement message queuing for offline mode
+   - Enhance network status monitoring
+   - Develop comprehensive error handling
+
+5. **Monitoring and Analytics**:
+   - Configure proper CloudWatch integration for production
+   - Implement translation quality monitoring
+   - Add system health visualization
+   - Develop error trend analysis
+
+## Contributing
+
+We welcome contributions to the MedTranslate AI project! Please follow these steps to contribute:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on our code of conduct and the process for submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Medical terminology resources provided by UMLS, SNOMED, and ICD10
+- AWS for providing the Bedrock generative AI services
+- Healthcare partners for domain expertise and testing
+- Open source community for various libraries and tools used in this project

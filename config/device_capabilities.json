@@ -1,0 +1,34 @@
+{
+  "cpu": {
+    "count": 16,
+    "model": "AMD Ryzen 7 5800X 8-Core Processor             ",
+    "architecture": "x64"
+  },
+  "memory": {
+    "total": 17089699840,
+    "free": 8596975616,
+    "totalGB": 15.9
+  },
+  "gpu": {
+    "available": true,
+    "info": [
+      {
+        "name": "NVIDIA GeForce RTX 3060",
+        "memory": "12288 MiB"
+      }
+    ]
+  },
+  "os": {
+    "platform": "win32",
+    "release": "10.0.26100",
+    "type": "Windows_NT"
+  },
+  "inference": {
+    "recommendedEngine": "gpu",
+    "recommendedComputeType": "fp16",
+    "maxBatchSize": 8,
+    "useQuantization": false,
+    "useOptimizedModels": true
+  },
+  "timestamp": 1746133768100
+}

@@ -23,6 +23,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useSession } from '../contexts/SessionContext';
 import { LANGUAGES } from '../utils/config';
 import { registerForPushNotifications } from '../services/NotificationService';
+import FallbackImage from '../components/FallbackImage';
 
 const JoinSessionScreen = ({ navigation, route }) => {
   const { language: routeLanguage } = route.params || {};
@@ -87,10 +88,13 @@ const JoinSessionScreen = ({ navigation, route }) => {
         style={styles.keyboardAvoidingView}
       >
         <View style={styles.content}>
-          {/* Placeholder for logo - will be replaced with actual logo */}
-          <View style={[styles.logo, {backgroundColor: '#0066CC', justifyContent: 'center', alignItems: 'center', borderRadius: 50}]}>
-            <Text style={{color: '#FFFFFF', fontSize: 20, fontWeight: 'bold'}}>MT</Text>
-          </View>
+          {/* Logo with fallback */}
+          <FallbackImage
+            source={require('../assets/logo.png')}
+            style={styles.logo}
+            fallbackType="logo"
+            fallbackText="MT"
+          />
 
           <Text style={styles.title}>MedTranslate AI</Text>
           <Text style={styles.subtitle}>Patient Application</Text>

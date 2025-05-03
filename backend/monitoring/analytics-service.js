@@ -1,6 +1,6 @@
 /**
  * Analytics Service for MedTranslate AI
- * 
+ *
  * This module provides monitoring and analytics capabilities
  * to track system performance and usage.
  */
@@ -12,10 +12,18 @@ const { v4: uuidv4 } = require('uuid');
 const CLOUDWATCH_NAMESPACE = process.env.CLOUDWATCH_NAMESPACE || 'MedTranslateAI';
 const ANALYTICS_TABLE = process.env.ANALYTICS_TABLE || 'MedTranslateAnalytics';
 const IS_OFFLINE = process.env.IS_OFFLINE === 'true';
+const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
+
+// Set global AWS region
+AWS.config.update({ region: AWS_REGION });
 
 // Configure AWS services
-const cloudWatchConfig = {};
-const dynamoDbConfig = {};
+const cloudWatchConfig = {
+  region: AWS_REGION
+};
+const dynamoDbConfig = {
+  region: AWS_REGION
+};
 
 if (IS_OFFLINE) {
   cloudWatchConfig.endpoint = 'http://localhost:4582';
@@ -27,7 +35,7 @@ const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDbConfig);
 
 /**
  * Record a translation event
- * 
+ *
  * @param {Object} data - Translation event data
  * @returns {Promise<void>}
  */
@@ -48,7 +56,7 @@ async function recordTranslationEvent(data) {
       deviceType,
       medicalContext
     } = data;
-    
+
     // Create event record
     const event = {
       event_id: uuidv4(),
@@ -69,13 +77,13 @@ async function recordTranslationEvent(data) {
       timestamp: new Date().toISOString(),
       year_month: new Date().toISOString().substring(0, 7) // YYYY-MM format for partitioning
     };
-    
+
     // Save to DynamoDB
     await dynamoDB.put({
       TableName: ANALYTICS_TABLE,
       Item: event
     }).promise();
-    
+
     // Send metrics to CloudWatch
     await cloudWatch.putMetricData({
       Namespace: CLOUDWATCH_NAMESPACE,
@@ -117,7 +125,7 @@ async function recordTranslationEvent(data) {
 
 /**
  * Record a session event
- * 
+ *
  * @param {Object} data - Session event data
  * @returns {Promise<void>}
  */
@@ -131,7 +139,7 @@ async function recordSessionEvent(data) {
       deviceType,
       medicalContext
     } = data;
-    
+
     // Create event record
     const event = {
       event_id: uuidv4(),
@@ -144,13 +152,13 @@ async function recordSessionEvent(data) {
       timestamp: new Date().toISOString(),
       year_month: new Date().toISOString().substring(0, 7) // YYYY-MM format for partitioning
     };
-    
+
     // Save to DynamoDB
     await dynamoDB.put({
       TableName: ANALYTICS_TABLE,
       Item: event
     }).promise();
-    
+
     // Send metrics to CloudWatch
     await cloudWatch.putMetricData({
       Namespace: CLOUDWATCH_NAMESPACE,
@@ -174,7 +182,7 @@ async function recordSessionEvent(data) {
 
 /**
  * Record an error event
- * 
+ *
  * @param {Object} data - Error event data
  * @returns {Promise<void>}
  */
@@ -189,7 +197,7 @@ async function recordErrorEvent(data) {
       userType,
       deviceType
     } = data;
-    
+
     // Create event record
     const event = {
       event_id: uuidv4(),
@@ -204,13 +212,13 @@ async function recordErrorEvent(data) {
       timestamp: new Date().toISOString(),
       year_month: new Date().toISOString().substring(0, 7) // YYYY-MM format for partitioning
     };
-    
+
     // Save to DynamoDB
     await dynamoDB.put({
       TableName: ANALYTICS_TABLE,
       Item: event
     }).promise();
-    
+
     // Send metrics to CloudWatch
     await cloudWatch.putMetricData({
       Namespace: CLOUDWATCH_NAMESPACE,
@@ -234,7 +242,7 @@ async function recordErrorEvent(data) {
 
 /**
  * Record system performance metrics
- * 
+ *
  * @param {Object} data - Performance metrics data
  * @returns {Promise<void>}
  */
@@ -248,7 +256,7 @@ async function recordPerformanceMetrics(data) {
       memoryUsage,
       successRate
     } = data;
-    
+
     // Send metrics to CloudWatch
     await cloudWatch.putMetricData({
       Namespace: CLOUDWATCH_NAMESPACE,
@@ -297,7 +305,7 @@ async function recordPerformanceMetrics(data) {
 
 /**
  * Get analytics data for a specific time period
- * 
+ *
  * @param {Object} params - Query parameters
  * @returns {Promise<Object>} - Analytics data
  */
@@ -309,19 +317,19 @@ async function getAnalyticsData(params) {
       eventType,
       groupBy
     } = params;
-    
+
     // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate || new Date());
-    
+
     if (isNaN(start.getTime())) {
       throw new Error('Invalid start date');
     }
-    
+
     // Format dates for query
     const startTimestamp = start.toISOString();
     const endTimestamp = end.toISOString();
-    
+
     // Build query
     const queryParams = {
       TableName: ANALYTICS_TABLE,
@@ -336,35 +344,35 @@ async function getAnalyticsData(params) {
         ':end': endTimestamp
       }
     };
-    
+
     // Add filter for event type if specified
     if (eventType) {
       queryParams.FilterExpression = 'event_type = :et';
       queryParams.ExpressionAttributeValues[':et'] = eventType;
     }
-    
+
     // Execute query
     const result = await dynamoDB.query(queryParams).promise();
-    
+
     // Process results based on groupBy parameter
     let processedData = result.Items;
-    
+
     if (groupBy) {
       const groupedData = {};
-      
+
       for (const item of result.Items) {
         const key = item[groupBy];
-        
+
         if (!groupedData[key]) {
           groupedData[key] = [];
         }
-        
+
         groupedData[key].push(item);
       }
-      
+
       processedData = groupedData;
     }
-    
+
     return {
       success: true,
       data: processedData,
@@ -381,7 +389,7 @@ async function getAnalyticsData(params) {
 
 /**
  * Get system performance dashboard data
- * 
+ *
  * @param {Object} params - Query parameters
  * @returns {Promise<Object>} - Dashboard data
  */
@@ -392,15 +400,15 @@ async function getPerformanceDashboard(params) {
       endDate,
       component
     } = params;
-    
+
     // Validate dates
     const start = new Date(startDate || new Date(Date.now() - 24 * 60 * 60 * 1000)); // Default to last 24 hours
     const end = new Date(endDate || new Date());
-    
+
     if (isNaN(start.getTime())) {
       throw new Error('Invalid start date');
     }
-    
+
     // Get CloudWatch metrics
     const metricParams = {
       Namespace: CLOUDWATCH_NAMESPACE,
@@ -410,15 +418,15 @@ async function getPerformanceDashboard(params) {
       Period: 3600, // 1 hour
       Statistics: ['Average', 'Maximum', 'Minimum']
     };
-    
+
     if (component) {
       metricParams.Dimensions = [
         { Name: 'Component', Value: component }
       ];
     }
-    
+
     const metrics = await cloudWatch.getMetricStatistics(metricParams).promise();
-    
+
     // Get error counts
     const errorParams = {
       Namespace: CLOUDWATCH_NAMESPACE,
@@ -428,15 +436,15 @@ async function getPerformanceDashboard(params) {
       Period: 3600, // 1 hour
       Statistics: ['Sum']
     };
-    
+
     if (component) {
       errorParams.Dimensions = [
         { Name: 'Component', Value: component }
       ];
     }
-    
+
     const errors = await cloudWatch.getMetricStatistics(errorParams).promise();
-    
+
     // Get success rate
     const successParams = {
       Namespace: CLOUDWATCH_NAMESPACE,
@@ -446,15 +454,15 @@ async function getPerformanceDashboard(params) {
       Period: 3600, // 1 hour
       Statistics: ['Average']
     };
-    
+
     if (component) {
       successParams.Dimensions = [
         { Name: 'Component', Value: component }
       ];
     }
-    
+
     const successRate = await cloudWatch.getMetricStatistics(successParams).promise();
-    
+
     return {
       success: true,
       responseTime: metrics.Datapoints,

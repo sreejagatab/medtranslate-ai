@@ -4,46 +4,95 @@
  * First-time user onboarding screen
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../utils/config';
+import FallbackImage from '../components/FallbackImage';
+import { SvgXml } from 'react-native-svg';
+import { welcomePlaceholders } from '../assets/welcome-placeholder';
+
+// Try to import the actual images, but they might not exist
+let welcomeImages = {
+  1: null,
+  2: null,
+  3: null,
+  4: null
+};
+
+// Try to import the welcome images
+try {
+  welcomeImages = {
+    1: require('../assets/welcome-1.png'),
+    2: require('../assets/welcome-2.png'),
+    3: require('../assets/welcome-3.png'),
+    4: require('../assets/welcome-4.png')
+  };
+} catch (error) {
+  console.warn('Welcome images not found, using placeholders');
+}
 
 const WelcomeScreen = ({ navigation }) => {
   const [currentPage, setCurrentPage] = useState(0);
+  const [imagesExist, setImagesExist] = useState({
+    1: false,
+    2: false,
+    3: false,
+    4: false
+  });
+
+  // Check if images exist
+  useEffect(() => {
+    const checkImages = async () => {
+      try {
+        // This will throw an error if the image doesn't exist
+        welcomeImages[1] && Image.resolveAssetSource(welcomeImages[1]);
+        welcomeImages[2] && Image.resolveAssetSource(welcomeImages[2]);
+        welcomeImages[3] && Image.resolveAssetSource(welcomeImages[3]);
+        welcomeImages[4] && Image.resolveAssetSource(welcomeImages[4]);
+
+        setImagesExist({
+          1: !!welcomeImages[1],
+          2: !!welcomeImages[2],
+          3: !!welcomeImages[3],
+          4: !!welcomeImages[4]
+        });
+      } catch (error) {
+        console.warn('Error checking welcome images:', error);
+      }
+    };
+
+    checkImages();
+  }, []);
 
   // Onboarding pages content
   const pages = [
     {
       title: 'Welcome to MedTranslate AI',
       description: 'Breaking language barriers in healthcare with real-time medical translation.',
-      // Placeholder for image
       imageId: 1
     },
     {
       title: 'Join Translation Sessions',
       description: 'Connect with healthcare providers using a simple 6-digit code.',
-      // Placeholder for image
       imageId: 2
     },
     {
       title: 'Voice & Text Translation',
       description: 'Communicate naturally with voice or text in your preferred language.',
-      // Placeholder for image
       imageId: 3
     },
     {
       title: 'Works Offline',
       description: 'Continue your session even when internet connection is unstable.',
-      // Placeholder for image
       imageId: 4
     }
   ];
@@ -72,14 +121,36 @@ const WelcomeScreen = ({ navigation }) => {
     }
   };
 
+  // Render welcome image
+  const renderWelcomeImage = (imageId) => {
+    // If the image exists, use it
+    if (imagesExist[imageId] && welcomeImages[imageId]) {
+      return (
+        <FallbackImage
+          source={welcomeImages[imageId]}
+          style={styles.image}
+          fallbackType="welcome"
+          fallbackText={`Welcome ${imageId}`}
+        />
+      );
+    }
+
+    // Otherwise, use SVG placeholder
+    const placeholderKey = `welcome${imageId}`;
+    const svgContent = welcomePlaceholders[placeholderKey];
+
+    return (
+      <View style={styles.image}>
+        <SvgXml xml={svgContent} width="100%" height="100%" />
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.pageContainer}>
-          {/* Placeholder for image - will be replaced with actual images */}
-          <View style={[styles.image, {backgroundColor: '#E0E0E0', justifyContent: 'center', alignItems: 'center'}]}>
-            <Text style={{color: '#666666', fontSize: 16}}>Welcome Image {pages[currentPage].imageId}</Text>
-          </View>
+          {renderWelcomeImage(pages[currentPage].imageId)}
 
           <Text style={styles.title}>{pages[currentPage].title}</Text>
           <Text style={styles.description}>{pages[currentPage].description}</Text>

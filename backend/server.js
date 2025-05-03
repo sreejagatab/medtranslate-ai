@@ -16,10 +16,13 @@ const { v4: uuidv4 } = require('uuid');
 const authHandler = require('./lambda/auth/handler');
 const translationHandler = require('./lambda/translation/handler');
 const storageHandler = require('./lambda/storage/handler');
+const endToEndHandler = require('./lambda/monitoring/end-to-end-handler');
 
 // Import routes
 const monitoringRoutes = require('./routes/monitoring-routes');
 const medicalTerminologyRoutes = require('./routes/medicalTerminologyRoutes');
+const analyticsRoutes = require('./routes/analytics-routes');
+const feedbackRoutes = require('./routes/feedback-routes');
 
 // Create Express app
 const app = express();
@@ -85,6 +88,7 @@ app.post('/sessions/:sessionId/end', lambdaToExpress(authHandler.endSession));
 // Translation routes
 app.post('/translate/text', lambdaToExpress(translationHandler.translateText));
 app.post('/translate/audio', lambdaToExpress(translationHandler.translateAudio));
+app.post('/translate/feedback', lambdaToExpress(translationHandler.processFeedback));
 
 // Storage routes
 app.post('/storage/transcript', lambdaToExpress(storageHandler.storeTranscript));
@@ -93,8 +97,23 @@ app.get('/storage/sessions/:sessionId', lambdaToExpress(storageHandler.getSessio
 // Monitoring routes
 app.use('/monitoring', monitoringRoutes);
 
+// End-to-end monitoring routes
+app.post('/monitoring/transactions', lambdaToExpress(endToEndHandler.startTransaction));
+app.put('/monitoring/transactions/:transactionId', lambdaToExpress(endToEndHandler.updateTransaction));
+app.post('/monitoring/transactions/:transactionId/complete', lambdaToExpress(endToEndHandler.completeTransaction));
+app.get('/monitoring/transactions/:transactionId', lambdaToExpress(endToEndHandler.getTransaction));
+app.get('/monitoring/transactions/user/:userId', lambdaToExpress(endToEndHandler.getTransactionsByUser));
+app.get('/monitoring/transactions/session/:sessionId', lambdaToExpress(endToEndHandler.getTransactionsBySession));
+app.get('/monitoring/transactions/metrics', lambdaToExpress(endToEndHandler.getTransactionMetrics));
+
 // Medical terminology routes
 app.use('/api/medical-terminology', medicalTerminologyRoutes);
+
+// Analytics routes
+app.use('/api/analytics', analyticsRoutes);
+
+// Feedback routes
+app.use('/feedback', feedbackRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -119,7 +138,8 @@ app.get('/', (req, res) => {
       ],
       translation: [
         '/translate/text',
-        '/translate/audio'
+        '/translate/audio',
+        '/translate/feedback'
       ],
       storage: [
         '/storage/transcript',
@@ -129,7 +149,12 @@ app.get('/', (req, res) => {
         '/monitoring/health',
         '/monitoring/performance',
         '/monitoring/resources',
-        '/monitoring/alerts'
+        '/monitoring/alerts',
+        '/monitoring/transactions',
+        '/monitoring/transactions/:transactionId',
+        '/monitoring/transactions/user/:userId',
+        '/monitoring/transactions/session/:sessionId',
+        '/monitoring/transactions/metrics'
       ],
       medicalTerminology: [
         '/api/medical-terminology',
@@ -137,6 +162,19 @@ app.get('/', (req, res) => {
         '/api/medical-terminology/:id/translations',
         '/api/medical-terminology/specialty/:specialty',
         '/api/medical-terminology/category/:category'
+      ],
+      analytics: [
+        '/api/analytics/connection/stats',
+        '/api/analytics/connection/predictions',
+        '/api/analytics/connection/user-profiles',
+        '/api/analytics/connection/recurring-patterns',
+        '/api/analytics/connection/quality-trends',
+        '/api/analytics/connection/issue-types'
+      ],
+      feedback: [
+        '/feedback/submit',
+        '/feedback/translation',
+        '/feedback/translation/stats'
       ],
       system: [
         '/health'

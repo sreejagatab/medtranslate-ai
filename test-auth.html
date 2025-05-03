@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedTranslate AI - Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>MedTranslate AI - Authentication Test</h1>
+    
+    <div class="card">
+        <h2>Test Login with Username</h2>
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" value="demo">
+        </div>
+        <div>
+            <label for="password1">Password:</label>
+            <input type="password" id="password1" value="demo123">
+        </div>
+        <button onclick="testLoginWithUsername()">Test Login with Username</button>
+        <div id="usernameResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Test Login with Email</h2>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="demo@example.com">
+        </div>
+        <div>
+            <label for="password2">Password:</label>
+            <input type="password" id="password2" value="demo123">
+        </div>
+        <button onclick="testLoginWithEmail()">Test Login with Email</button>
+        <div id="emailResult"></div>
+    </div>
+    
+    <script>
+        async function testLoginWithUsername() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password1').value;
+            
+            try {
+                const response = await fetch('http://localhost:4001/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('usernameResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('usernameResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+        
+        async function testLoginWithEmail() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password2').value;
+            
+            try {
+                const response = await fetch('http://localhost:4001/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                document.getElementById('emailResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('emailResult').innerHTML = `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

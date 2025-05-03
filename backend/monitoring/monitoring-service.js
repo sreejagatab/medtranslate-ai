@@ -11,13 +11,17 @@ const { v4: uuidv4 } = require('uuid');
 const CLOUDWATCH_NAMESPACE = process.env.CLOUDWATCH_NAMESPACE || 'MedTranslateAI';
 const ALERTS_TABLE = process.env.ALERTS_TABLE || 'MedTranslateAlerts';
 const IS_OFFLINE = process.env.IS_OFFLINE === 'true';
+const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
+
+// Set global AWS region
+AWS.config.update({ region: AWS_REGION });
 
 // Configure AWS services
 const cloudWatchConfig = {
-  region: process.env.AWS_REGION || 'us-east-1'
+  region: AWS_REGION
 };
 const dynamoDbConfig = {
-  region: process.env.AWS_REGION || 'us-east-1'
+  region: AWS_REGION
 };
 
 if (IS_OFFLINE) {

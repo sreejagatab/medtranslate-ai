@@ -16,18 +16,21 @@ exports.login = async (event) => {
 
     // Parse request body
     const body = JSON.parse(event.body || '{}');
-    const { username, password, mfaToken } = body;
+    const { username, email, password, mfaToken } = body;
+
+    // Support both username and email parameters for flexibility
+    const userIdentifier = username || email;
 
     // Validate required parameters
-    if (!username || !password) {
+    if (!userIdentifier || !password) {
       return formatResponse(400, {
         success: false,
-        error: 'Missing required parameters: username, password'
+        error: 'Email and password are required'
       });
     }
 
     // Authenticate provider
-    const result = await authService.authenticateProvider(username, password, mfaToken);
+    const result = await authService.authenticateProvider(userIdentifier, password, mfaToken);
 
     if (!result.success) {
       return formatResponse(401, result);

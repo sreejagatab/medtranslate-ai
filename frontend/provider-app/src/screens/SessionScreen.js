@@ -28,6 +28,7 @@ import TranslationMessage from '../components/TranslationMessage';
 import VoiceRecordButton from '../components/VoiceRecordButton';
 import ConnectionStatus from '../components/ConnectionStatus';
 import TranslationMonitorPanel from '../components/TranslationMonitorPanel';
+import WebSocketStatus from '../../shared/components/WebSocketStatus';
 import websocketService from '../services/websocket-service';
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
@@ -655,12 +656,11 @@ export default function SessionScreen({ navigation, route }) {
 
       {/* Connection status */}
       <View style={styles.connectionStatusContainer}>
-        <ConnectionStatus
-          isConnected={isConnected}
-          activeEndpoint={API_ENDPOINTS.TRANSLATE.AUDIO}
-          style={{
-            container: styles.connectionStatus
-          }}
+        <WebSocketStatus
+          websocketService={websocketService}
+          showReconnectButton={true}
+          style={styles.connectionStatus}
+          iconSize={16}
         />
       </View>
 

@@ -14,6 +14,9 @@ const { translateLocally, initialize: initTranslation, getSupportedLanguagePairs
 const { syncWithCloud } = require('./sync');
 const { cacheManager } = require('./cache');
 const networkMonitor = require('./network-monitor');
+const cloudConnection = require('./cloud-connection');
+const predictiveCache = require('./predictive-cache');
+const automatedRecoveryManager = require('./automated-recovery-manager');
 
 // Initialize express app
 const app = express();
@@ -318,6 +321,54 @@ wss.on('connection', (ws) => {
           online: isOnline,
           timestamp: new Date().toISOString()
         }));
+      } else if (data.type === 'get_cache_stats') {
+        try {
+          // Get cache statistics
+          const cacheStats = cacheManager.getCacheStats();
+
+          // Get usage statistics from predictive cache
+          const usageStats = predictiveCache.getUsageStats();
+
+          // Calculate offline risk
+          const networkStatus = networkMonitor.getNetworkStatus();
+          const offlineRisk = networkStatus.offlineRisk || 0;
+
+          // Calculate offline readiness based on cache stats and prediction model
+          const offlinePriorityItems = cacheStats.offlinePriorityItems?.total || 0;
+          const totalCacheItems = cacheStats.sizes?.total || 0;
+          const cacheLimit = cacheStats.limit || 1000;
+
+          // Calculate readiness as a percentage (0-100)
+          // Based on: cache utilization, offline priority items, and prediction model quality
+          const cacheUtilization = Math.min(100, (totalCacheItems / cacheLimit) * 100);
+          const priorityScore = Math.min(100, (offlinePriorityItems / 50) * 100); // Assume 50 priority items is optimal
+          const predictionScore = usageStats.predictionModel ?
+            Math.min(100, (Object.keys(usageStats.predictionModel.languagePairCount || {}).length / 10) * 100) : 0;
+
+          // Weighted average of the scores
+          const offlineReadiness = Math.round(
+            (cacheUtilization * 0.4) + (priorityScore * 0.4) + (predictionScore * 0.2)
+          );
+
+          // Send response
+          ws.send(JSON.stringify({
+            type: 'cache_stats',
+            requestId: data.requestId,
+            success: true,
+            stats: cacheStats,
+            usageStats: usageStats,
+            offlineReadiness: offlineReadiness,
+            offlineRisk: offlineRisk
+          }));
+        } catch (error) {
+          console.error('Error getting cache stats:', error);
+          ws.send(JSON.stringify({
+            type: 'cache_stats',
+            requestId: data.requestId,
+            success: false,
+            error: error.message
+          }));
+        }
       }
     } catch (error) {
       console.error('WebSocket error:', error);
@@ -421,6 +472,145 @@ app.post('/cache/clear', (req, res) => {
   }
 });
 
+app.get('/cache/stats', (req, res) => {
+  try {
+    // Get cache statistics
+    const cacheStats = cacheManager.getCacheStats();
+
+    // Get usage statistics from predictive cache
+    const usageStats = predictiveCache.getUsageStats();
+
+    // Calculate offline risk
+    const networkStatus = networkMonitor.getNetworkStatus();
+    const offlineRisk = networkStatus.offlineRisk || 0;
+
+    // Calculate offline readiness based on cache stats and prediction model
+    const offlinePriorityItems = cacheStats.offlinePriorityItems?.total || 0;
+    const totalCacheItems = cacheStats.sizes?.total || 0;
+    const cacheLimit = cacheStats.limit || 1000;
+
+    // Calculate readiness as a percentage (0-100)
+    // Based on: cache utilization, offline priority items, and prediction model quality
+    const cacheUtilization = Math.min(100, (totalCacheItems / cacheLimit) * 100);
+    const priorityScore = Math.min(100, (offlinePriorityItems / 50) * 100); // Assume 50 priority items is optimal
+    const predictionScore = usageStats.predictionModel ?
+      Math.min(100, (Object.keys(usageStats.predictionModel.languagePairCount || {}).length / 10) * 100) : 0;
+
+    // Weighted average of the scores
+    const offlineReadiness = Math.round(
+      (cacheUtilization * 0.4) + (priorityScore * 0.4) + (predictionScore * 0.2)
+    );
+
+    res.json({
+      success: true,
+      stats: cacheStats,
+      usageStats: usageStats,
+      offlineReadiness: offlineReadiness,
+      offlineRisk: offlineRisk
+    });
+  } catch (error) {
+    console.error('Error getting cache stats:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/cache/prepare-offline', async (req, res) => {
+  try {
+    const options = req.body || {};
+    const result = await predictiveCache.prepareForOfflineMode(options);
+    res.json(result);
+  } catch (error) {
+    console.error('Error preparing for offline mode:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Automated recovery manager endpoints
+app.get('/recovery/status', (req, res) => {
+  try {
+    const status = automatedRecoveryManager.getStatus();
+    res.json({
+      success: true,
+      status
+    });
+  } catch (error) {
+    console.error('Error getting recovery status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/recovery/history', (req, res) => {
+  try {
+    const options = {
+      limit: parseInt(req.query.limit) || 50,
+      issueType: req.query.issueType,
+      success: req.query.success !== undefined ? req.query.success === 'true' : undefined
+    };
+
+    const history = automatedRecoveryManager.getRecoveryHistory(options);
+    res.json({
+      success: true,
+      history
+    });
+  } catch (error) {
+    console.error('Error getting recovery history:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/recovery/config', async (req, res) => {
+  try {
+    const config = req.body || {};
+    const result = await automatedRecoveryManager.updateConfig(config);
+    res.json(result);
+  } catch (error) {
+    console.error('Error updating recovery config:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/recovery/trigger', async (req, res) => {
+  try {
+    const { issueType, reason } = req.body || {};
+
+    if (!issueType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter: issueType'
+      });
+    }
+
+    const result = await automatedRecoveryManager.performRecovery(
+      issueType,
+      reason || `Manual recovery for ${issueType}`,
+      false
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error triggering recovery:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Initialize components and start server
 async function startServer() {
   try {
@@ -452,6 +642,48 @@ async function startServer() {
     console.log('Initializing sync module...');
     await syncWithCloud.initialize();
 
+    // Initialize cloud connection service
+    console.log('Initializing cloud connection service...');
+    await cloudConnection.initialize();
+
+    // Initialize predictive cache
+    console.log('Initializing predictive cache...');
+    await predictiveCache.initialize();
+
+    // Initialize automated recovery manager
+    console.log('Initializing automated recovery manager...');
+    const recoveryResult = await automatedRecoveryManager.initialize();
+    if (recoveryResult.success) {
+      console.log(`Automated recovery manager initialized with ${recoveryResult.strategies.length} recovery strategies`);
+      console.log(`Proactive recovery: ${recoveryResult.proactiveEnabled ? 'Enabled' : 'Disabled'}`);
+      console.log(`Adaptive recovery: ${recoveryResult.adaptiveEnabled ? 'Enabled' : 'Disabled'}`);
+    } else {
+      console.error('Failed to initialize automated recovery manager:', recoveryResult.error);
+    }
+
+    // Set up cloud connection event handlers
+    cloudConnection.on('translation_request', async (message) => {
+      try {
+        console.log('Received translation request from cloud:', message.requestId);
+
+        // Process translation request
+        const result = await translateLocally(
+          message.text,
+          message.sourceLanguage,
+          message.targetLanguage,
+          message.context
+        );
+
+        // Send result back to cloud
+        cloudConnection.sendTranslationResult(message.requestId, result);
+      } catch (error) {
+        console.error('Error processing cloud translation request:', error);
+        cloudConnection.sendErrorReport('translation_error', error.message, {
+          requestId: message.requestId
+        });
+      }
+    });
+
     // Start server
     server.listen(PORT, () => {
       console.log(`Edge application server running on port ${PORT}`);
@@ -462,9 +694,17 @@ async function startServer() {
       isOnline = networkStatus.online;
       console.log(`Initial network status: ${isOnline ? 'Online' : 'Offline'}`);
 
-      // If online, sync with cloud
+      // Update cloud connection network status
+      cloudConnection.setNetworkStatus(isOnline);
+
+      // If online, sync with cloud and connect to cloud WebSocket
       if (isOnline) {
         syncWithCloud.syncCachedData();
+
+        // Connect to cloud WebSocket server
+        cloudConnection.connect().catch(error => {
+          console.error('Error connecting to cloud WebSocket server:', error);
+        });
       }
     });
   } catch (error) {
@@ -480,6 +720,16 @@ function handleOnlineStatus(data) {
 
   // Notify connected clients
   broadcastNetworkStatus();
+
+  // Update cloud connection network status
+  cloudConnection.setNetworkStatus(true);
+
+  // Connect to cloud WebSocket server if not already connected
+  if (cloudConnection.getConnectionState() !== 'connected') {
+    cloudConnection.connect().catch(error => {
+      console.error('Error connecting to cloud WebSocket server:', error);
+    });
+  }
 
   // Sync with cloud
   syncWithCloud.syncCachedData()
@@ -502,6 +752,15 @@ function handleOnlineStatus(data) {
     .catch(error => {
       console.error('Error checking for model updates:', error);
     });
+
+  // Send status update to cloud
+  cloudConnection.sendStatusUpdate({
+    online: true,
+    deviceId: DEVICE_ID,
+    timestamp: Date.now(),
+    supportedLanguagePairs: supportedLanguagePairs.length,
+    cacheStats: cacheManager.getCacheStats()
+  });
 }
 
 // Handle offline status
@@ -511,6 +770,9 @@ function handleOfflineStatus(data) {
 
   // Notify connected clients
   broadcastNetworkStatus();
+
+  // Update cloud connection network status
+  cloudConnection.setNetworkStatus(false);
 }
 
 // Broadcast network status to all connected WebSocket clients
@@ -536,8 +798,20 @@ function shutdown() {
   networkMonitor.off('online', handleOnlineStatus);
   networkMonitor.off('offline', handleOfflineStatus);
 
+  // Remove recovery manager event listeners
+  automatedRecoveryManager.off('recovery_start', null);
+  automatedRecoveryManager.off('recovery_end', null);
+  automatedRecoveryManager.off('max_attempts_reached', null);
+
   // Save cache to disk
   cacheManager.saveCacheToDisk();
+
+  // Disconnect from cloud WebSocket server
+  if (cloudConnection) {
+    console.log('Disconnecting from cloud WebSocket server...');
+    cloudConnection.disconnect();
+    cloudConnection.destroy();
+  }
 
   // Close server
   server.close(() => {

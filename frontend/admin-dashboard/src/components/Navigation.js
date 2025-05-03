@@ -30,6 +30,12 @@ const Navigation = ({ onLogout }) => {
               <NavDropdown.Item as={Link} to="/analytics-dashboard">
                 Advanced Dashboard
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/connection-analytics">
+                Connection Analytics
+              </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/recovery-manager">
+                Recovery Manager
+              </NavDropdown.Item>
             </NavDropdown>
 
             <Nav.Link as={Link} to="/users" active={location.pathname === '/users'}>

@@ -1,13 +1,14 @@
 /**
- * Edge Connection Context for MedTranslate AI
- * 
+ * Enhanced Edge Connection Context for MedTranslate AI
+ *
  * This context provides edge device connection state and functions
- * for components throughout the application.
+ * for components throughout the application, with improved edge device discovery.
  */
 
 import React, { createContext, useState, useEffect } from 'react';
 import NetInfo from '@react-native-community/netinfo';
 import * as EdgeService from '../services/edge-service';
+import * as EdgeDiscoveryService from '../services/enhanced-edge-discovery';
 import * as AnalyticsService from '../services/analytics-service';
 
 // Create context
@@ -17,12 +18,15 @@ export const EdgeConnectionContext = createContext({
   lastSyncTime: 0,
   offlineQueueSize: 0,
   availableModels: {},
+  discoveredDevices: [],
+  isDiscovering: false,
   translateText: async () => {},
   translateAudio: async () => {},
   syncOfflineData: async () => {},
   downloadOfflineModel: async () => {},
   toggleOfflineMode: () => {},
-  rediscoverEdgeDevice: async () => {}
+  rediscoverEdgeDevice: async () => {},
+  discoverEdgeDevices: async () => {}
 });
 
 /**
@@ -36,39 +40,60 @@ export const EdgeConnectionProvider = ({ children }) => {
   const [lastSyncTime, setLastSyncTime] = useState(0);
   const [offlineQueueSize, setOfflineQueueSize] = useState(0);
   const [availableModels, setAvailableModels] = useState({});
-  
-  // Initialize edge service
+  const [discoveredDevices, setDiscoveredDevices] = useState([]);
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [preferredDevice, setPreferredDevice] = useState(null);
+
+  // Initialize edge service and discovery service
   useEffect(() => {
-    const initializeEdgeService = async () => {
+    const initialize = async () => {
       try {
-        const state = await EdgeService.initialize();
-        
-        setIsEdgeDevice(state.isEdgeDevice);
-        setLastSyncTime(state.lastSyncTime);
-        setOfflineQueueSize(state.offlineQueue);
+        // Initialize edge service
+        const edgeState = await EdgeService.initialize();
+
+        setIsEdgeDevice(edgeState.isEdgeDevice);
+        setLastSyncTime(edgeState.lastSyncTime);
+        setOfflineQueueSize(edgeState.offlineQueue);
         setAvailableModels(EdgeService.getOfflineModels());
+
+        // Initialize edge discovery service
+        const discoveryState = await EdgeDiscoveryService.initialize();
+
+        setDiscoveredDevices(discoveryState.discoveredDevices || []);
+        setPreferredDevice(discoveryState.preferredDevice || null);
+
+        // If we have a preferred device, update edge service
+        if (discoveryState.preferredDevice) {
+          await EdgeService.setEdgeDeviceEndpoint(
+            `http://${discoveryState.preferredDevice.ipAddress}:${discoveryState.preferredDevice.port || 3000}`
+          );
+          setIsEdgeDevice(true);
+        }
+
         setIsInitialized(true);
-        
+
         // Track initialization
         AnalyticsService.trackEvent(
           AnalyticsService.EVENT_TYPES.SYSTEM,
           'edge_service',
           'initialize',
           {
-            isEdgeDevice: state.isEdgeDevice,
-            offlineQueueSize: state.offlineQueue,
-            endpoint: state.activeEndpoint
+            isEdgeDevice: edgeState.isEdgeDevice,
+            offlineQueueSize: edgeState.offlineQueue,
+            endpoint: edgeState.activeEndpoint,
+            discoveredDevices: discoveryState.discoveredDevices?.length || 0,
+            hasPreferredDevice: !!discoveryState.preferredDevice
           }
         );
       } catch (error) {
-        console.error('Error initializing edge service:', error);
+        console.error('Error initializing edge services:', error);
         setIsInitialized(true);
       }
     };
-    
-    initializeEdgeService();
+
+    initialize();
   }, []);
-  
+
   // Listen for network changes
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -76,18 +101,18 @@ export const EdgeConnectionProvider = ({ children }) => {
       if (state.isConnected && !isOfflineMode) {
         syncOfflineData();
       }
-      
-      // If we're coming back online and on WiFi, try to discover edge device
+
+      // If we're coming back online and on WiFi, try to discover edge devices
       if (state.isConnected && state.type === 'wifi' && !isEdgeDevice) {
-        rediscoverEdgeDevice();
+        discoverEdgeDevices({ background: true });
       }
     });
-    
+
     return () => {
       unsubscribe();
     };
   }, [isEdgeDevice, isOfflineMode]);
-  
+
   // Translate text
   const translateText = async (text, sourceLanguage, targetLanguage, context = 'general') => {
     try {
@@ -104,14 +129,14 @@ export const EdgeConnectionProvider = ({ children }) => {
           isOfflineMode
         }
       );
-      
+
       const result = await EdgeService.translateText(
         text,
         sourceLanguage,
         targetLanguage,
         context
       );
-      
+
       // Track translation result
       AnalyticsService.trackEvent(
         AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
@@ -126,11 +151,11 @@ export const EdgeConnectionProvider = ({ children }) => {
           processingTime: result.processingTime
         }
       );
-      
+
       return result;
     } catch (error) {
       console.error('Error translating text:', error);
-      
+
       // Track translation error
       AnalyticsService.trackEvent(
         AnalyticsService.EVENT_TYPES.ERROR,
@@ -143,11 +168,11 @@ export const EdgeConnectionProvider = ({ children }) => {
           error: error.message
         }
       );
-      
+
       throw error;
     }
   };
-  
+
   // Translate audio
   const translateAudio = async (audioData, sourceLanguage, targetLanguage, context = 'general') => {
     try {
@@ -164,14 +189,14 @@ export const EdgeConnectionProvider = ({ children }) => {
           isOfflineMode
         }
       );
-      
+
       const result = await EdgeService.translateAudio(
         audioData,
         sourceLanguage,
         targetLanguage,
         context
       );
-      
+
       // Track audio translation result
       AnalyticsService.trackEvent(
         AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
@@ -186,11 +211,11 @@ export const EdgeConnectionProvider = ({ children }) => {
           processingTime: result.processingTime
         }
       );
-      
+
       return result;
     } catch (error) {
       console.error('Error translating audio:', error);
-      
+
       // Track audio translation error
       AnalyticsService.trackEvent(
         AnalyticsService.EVENT_TYPES.ERROR,
@@ -203,11 +228,11 @@ export const EdgeConnectionProvider = ({ children }) => {
           error: error.message
         }
       );
-      
+
       throw error;
     }
   };
-  
+
   // Sync offline data
   const syncOfflineData = async () => {
     try {
@@ -220,14 +245,14 @@ export const EdgeConnectionProvider = ({ children }) => {
           offlineQueueSize
         }
       );
-      
+
       const result = await EdgeService.syncOfflineData();
-      
+
       if (result) {
         // Update state
         setLastSyncTime(EdgeService.getLastSyncTime());
         setOfflineQueueSize(EdgeService.getOfflineQueue().length);
-        
+
         // Track sync success
         AnalyticsService.trackEvent(
           AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
@@ -248,11 +273,11 @@ export const EdgeConnectionProvider = ({ children }) => {
           }
         );
       }
-      
+
       return result;
     } catch (error) {
       console.error('Error syncing offline data:', error);
-      
+
       // Track sync error
       AnalyticsService.trackEvent(
         AnalyticsService.EVENT_TYPES.ERROR,
@@ -263,11 +288,11 @@ export const EdgeConnectionProvider = ({ children }) => {
           offlineQueueSize
         }
       );
-      
+
       return false;
     }
   };
-  
+
   // Download offline model
   const downloadOfflineModel = async (sourceLanguage, targetLanguage) => {
     try {
@@ -281,13 +306,13 @@ export const EdgeConnectionProvider = ({ children }) => {
           targetLanguage
         }
       );
-      
+
       const result = await EdgeService.downloadOfflineModel(sourceLanguage, targetLanguage);
-      
+
       if (result) {
         // Update available models
         setAvailableModels(EdgeService.getOfflineModels());
-        
+
         // Track download success
         AnalyticsService.trackEvent(
           AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
@@ -310,11 +335,11 @@ export const EdgeConnectionProvider = ({ children }) => {
           }
         );
       }
-      
+
       return result;
     } catch (error) {
       console.error('Error downloading offline model:', error);
-      
+
       // Track download error
       AnalyticsService.trackEvent(
         AnalyticsService.EVENT_TYPES.ERROR,
@@ -326,15 +351,15 @@ export const EdgeConnectionProvider = ({ children }) => {
           error: error.message
         }
       );
-      
+
       return false;
     }
   };
-  
+
   // Toggle offline mode
   const toggleOfflineMode = (value) => {
     setIsOfflineMode(value);
-    
+
     // Track offline mode toggle
     AnalyticsService.trackEvent(
       AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
@@ -344,61 +369,117 @@ export const EdgeConnectionProvider = ({ children }) => {
         enabled: value
       }
     );
-    
+
     // If turning off offline mode, sync data
     if (!value) {
       syncOfflineData();
     }
   };
-  
-  // Rediscover edge device
-  const rediscoverEdgeDevice = async () => {
+
+  // Discover edge devices using enhanced discovery service
+  const discoverEdgeDevices = async (options = {}) => {
     try {
+      setIsDiscovering(true);
+
       // Track discovery request
-      AnalyticsService.trackEvent(
-        AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
-        'edge_service',
-        'discover_request',
-        {
-          previousState: isEdgeDevice
-        }
-      );
-      
-      const result = await EdgeService.discoverEdgeDevice();
-      
+      if (!options.background) {
+        AnalyticsService.trackEvent(
+          AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
+          'edge_service',
+          'discover_request',
+          {
+            previousState: isEdgeDevice,
+            manual: !options.background
+          }
+        );
+      }
+
+      const result = await EdgeDiscoveryService.discoverEdgeDevices(options);
+
       // Update state
-      setIsEdgeDevice(result);
-      
+      setDiscoveredDevices(result.discoveredDevices || []);
+
+      // Get preferred device
+      const newPreferredDevice = EdgeDiscoveryService.getPreferredDevice();
+      setPreferredDevice(newPreferredDevice);
+
+      // If we have a preferred device, update edge service
+      if (newPreferredDevice) {
+        await EdgeService.setEdgeDeviceEndpoint(
+          `http://${newPreferredDevice.ipAddress}:${newPreferredDevice.port || 3000}`
+        );
+        setIsEdgeDevice(true);
+      } else {
+        setIsEdgeDevice(false);
+      }
+
       // Track discovery result
-      AnalyticsService.trackEvent(
-        AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
-        'edge_service',
-        'discover_result',
-        {
-          success: result,
-          previousState: isEdgeDevice
-        }
-      );
-      
+      if (!options.background) {
+        AnalyticsService.trackEvent(
+          AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
+          'edge_service',
+          'discover_result',
+          {
+            success: result.success,
+            previousState: isEdgeDevice,
+            devicesFound: result.discoveredDevices?.length || 0,
+            manual: !options.background
+          }
+        );
+      }
+
+      setIsDiscovering(false);
       return result;
     } catch (error) {
-      console.error('Error discovering edge device:', error);
-      
+      console.error('Error discovering edge devices:', error);
+
       // Track discovery error
+      if (!options.background) {
+        AnalyticsService.trackEvent(
+          AnalyticsService.EVENT_TYPES.ERROR,
+          'edge_service',
+          'discover_error',
+          {
+            error: error.message,
+            previousState: isEdgeDevice,
+            manual: !options.background
+          }
+        );
+      }
+
+      setIsDiscovering(false);
+      return {
+        success: false,
+        error: error.message,
+        discoveredDevices: []
+      };
+    }
+  };
+
+  // Rediscover edge device (legacy method, uses enhanced discovery)
+  const rediscoverEdgeDevice = async () => {
+    try {
+      // Track legacy discovery request
       AnalyticsService.trackEvent(
-        AnalyticsService.EVENT_TYPES.ERROR,
+        AnalyticsService.EVENT_TYPES.FEATURE_USAGE,
         'edge_service',
-        'discover_error',
+        'legacy_discover_request',
         {
-          error: error.message,
           previousState: isEdgeDevice
         }
       );
-      
+
+      // Use enhanced discovery
+      const result = await discoverEdgeDevices();
+
+      // Return success if we have a preferred device
+      return result.success;
+    } catch (error) {
+      console.error('Error in legacy rediscoverEdgeDevice:', error);
       return false;
     }
   };
-  
+
   // Context value
   const contextValue = {
     isEdgeDevice,
@@ -406,19 +487,23 @@ export const EdgeConnectionProvider = ({ children }) => {
     lastSyncTime,
     offlineQueueSize,
     availableModels,
+    discoveredDevices,
+    isDiscovering,
+    preferredDevice,
     translateText,
     translateAudio,
     syncOfflineData,
     downloadOfflineModel,
     toggleOfflineMode,
-    rediscoverEdgeDevice
+    rediscoverEdgeDevice,
+    discoverEdgeDevices
   };
-  
+
   // Render loading state if not initialized
   if (!isInitialized) {
     return null;
   }
-  
+
   return (
     <EdgeConnectionContext.Provider value={contextValue}>
       {children}

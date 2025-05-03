@@ -1,14 +1,21 @@
 /**
- * Cloud synchronization module for MedTranslate AI Edge Application
+ * Enhanced Cloud Synchronization Module for MedTranslate AI Edge Application
  *
- * This module provides functions for synchronizing data between the edge device
- * and the cloud, including translation results, model updates, and configuration.
+ * This module provides advanced functions for synchronizing data between the edge device
+ * and the cloud, with support for versioning, conflict resolution, and differential sync.
+ * Features:
+ * - Bidirectional sync with version tracking
+ * - Conflict detection and resolution
+ * - Differential sync to reduce bandwidth
+ * - Prioritized sync for critical items
+ * - Robust error handling and retry logic
  */
 
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const { cacheManager } = require('./cache');
 
 // Configuration
@@ -24,20 +31,61 @@ const QUEUE_FILE = path.join(__dirname, '../../sync/sync_queue.json');
 const CONFLICT_DIR = path.join(__dirname, '../../sync/conflicts');
 const MODEL_MANIFEST_FILE = path.join(__dirname, '../../models/model_manifest.json');
 
+// Enhanced sync configuration
+const DIFFERENTIAL_SYNC = process.env.DIFFERENTIAL_SYNC !== 'false'; // Enable differential sync by default
+const COMPRESSION_ENABLED = process.env.SYNC_COMPRESSION !== 'false'; // Enable compression by default
+const COMPRESSION_THRESHOLD = parseInt(process.env.SYNC_COMPRESSION_THRESHOLD || '1024'); // Compress items larger than 1KB
+const SYNC_BATCH_SIZE = parseInt(process.env.SYNC_BATCH_SIZE || '10'); // Number of items to sync in a batch
+const SYNC_PRIORITY_LEVELS = {
+  CRITICAL: 4,
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1
+};
+const VERSION_HISTORY_SIZE = parseInt(process.env.VERSION_HISTORY_SIZE || '5'); // Number of versions to keep
+const SYNC_MANIFEST_FILE = path.join(__dirname, '../../sync/sync_manifest.json'); // Tracks sync state
+const SYNC_METRICS_FILE = path.join(__dirname, '../../sync/sync_metrics.json'); // Tracks sync metrics
+
 // Initialize sync queue and directories
 let syncQueue = [];
 let isInitialized = false;
 let retryCount = 0;
 let lastSyncTime = 0;
 
+// Enhanced sync state
+let syncManifest = {
+  lastFullSync: 0,
+  lastPartialSync: 0,
+  deviceId: DEVICE_ID,
+  serverVersion: '',
+  syncState: 'idle', // idle, syncing, error
+  syncHistory: []
+};
+
+// Sync metrics
+let syncMetrics = {
+  totalSyncs: 0,
+  successfulSyncs: 0,
+  failedSyncs: 0,
+  itemsSynced: 0,
+  itemsFailed: 0,
+  conflicts: 0,
+  conflictsResolved: 0,
+  bytesUploaded: 0,
+  bytesDownloaded: 0,
+  compressionSavings: 0,
+  lastReset: Date.now(),
+  syncDurations: []
+};
+
 /**
- * Initialize the sync module
+ * Initialize the enhanced sync module
  *
  * @returns {Promise<Object>} - Initialization result
  */
 async function initialize() {
   try {
-    console.log('Initializing sync module...');
+    console.log('Initializing enhanced sync module...');
 
     // Create necessary directories
     for (const dir of [SYNC_DIR, CONFLICT_DIR, MODEL_DIR, CONFIG_DIR]) {
@@ -59,15 +107,45 @@ async function initialize() {
       console.log('No sync queue file found, starting with empty queue');
     }
 
+    // Load sync manifest if available
+    if (fs.existsSync(SYNC_MANIFEST_FILE)) {
+      try {
+        const loadedManifest = JSON.parse(fs.readFileSync(SYNC_MANIFEST_FILE, 'utf8'));
+        syncManifest = { ...syncManifest, ...loadedManifest };
+        console.log(`Loaded sync manifest, last full sync: ${new Date(syncManifest.lastFullSync).toISOString()}`);
+      } catch (error) {
+        console.error('Error parsing sync manifest file:', error);
+      }
+    } else {
+      console.log('No sync manifest file found, starting with default values');
+      // Ensure device ID is set
+      syncManifest.deviceId = DEVICE_ID;
+    }
+
+    // Load sync metrics if available
+    if (fs.existsSync(SYNC_METRICS_FILE)) {
+      try {
+        const loadedMetrics = JSON.parse(fs.readFileSync(SYNC_METRICS_FILE, 'utf8'));
+        syncMetrics = { ...syncMetrics, ...loadedMetrics };
+        console.log(`Loaded sync metrics, total syncs: ${syncMetrics.totalSyncs}`);
+      } catch (error) {
+        console.error('Error parsing sync metrics file:', error);
+      }
+    } else {
+      console.log('No sync metrics file found, starting with default values');
+    }
+
     // Start periodic sync
     startPeriodicSync();
 
     isInitialized = true;
-    console.log('Sync module initialized successfully');
+    console.log('Enhanced sync module initialized successfully');
 
     return {
       success: true,
-      queueSize: syncQueue.length
+      queueSize: syncQueue.length,
+      lastSync: syncManifest.lastFullSync,
+      syncState: syncManifest.syncState
     };
   } catch (error) {
     console.error('Error initializing sync module:', error);
@@ -151,15 +229,20 @@ async function testConnection() {
 }
 
 /**
- * Queues a translation for synchronization with the cloud
+ * Queues a translation for synchronization with the cloud with enhanced metadata
  *
  * @param {string} text - The original text
  * @param {string} sourceLanguage - The source language code
  * @param {string} targetLanguage - The target language code
  * @param {string} context - The medical context
  * @param {Object} result - The translation result
+ * @param {Object} options - Additional options
+ * @param {number} options.priority - Sync priority (1-4, higher = more important)
+ * @param {boolean} options.compress - Whether to compress the data
+ * @param {string} options.version - Version identifier
+ * @returns {string} - Unique ID for the queued item
  */
-function queueTranslation(text, sourceLanguage, targetLanguage, context, result) {
+function queueTranslation(text, sourceLanguage, targetLanguage, context, result, options = {}) {
   // Ensure module is initialized
   if (!isInitialized) {
     initialize();
@@ -170,24 +253,84 @@ function queueTranslation(text, sourceLanguage, targetLanguage, context, result)
     .update(`${text}:${sourceLanguage}:${targetLanguage}:${context}:${Date.now()}`)
     .digest('hex');
 
-  // Add to queue
+  // Determine priority based on context and options
+  let priority = options.priority || SYNC_PRIORITY_LEVELS.LOW;
+
+  // Medical contexts are more important
+  if (context === 'emergency' || context === 'critical_care') {
+    priority = SYNC_PRIORITY_LEVELS.CRITICAL;
+  } else if (context === 'diagnosis' || context === 'medication') {
+    priority = SYNC_PRIORITY_LEVELS.HIGH;
+  } else if (context !== 'general' && context !== 'conversation') {
+    priority = SYNC_PRIORITY_LEVELS.MEDIUM;
+  }
+
+  // Generate version if not provided
+  const version = options.version || `v-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+
+  // Prepare data object
+  const data = {
+    originalText: text,
+    translatedText: result.translatedText,
+    confidence: result.confidence,
+    sourceLanguage,
+    targetLanguage,
+    context,
+    isPivotTranslation: result.isPivotTranslation || false,
+    pivotLanguage: result.pivotLanguage,
+    model: result.model || 'unknown',
+    processingTime: result.processingTime,
+    timestamp: Date.now()
+  };
+
+  // Determine if we should compress
+  const shouldCompress = options.compress !== undefined
+    ? options.compress
+    : (COMPRESSION_ENABLED && JSON.stringify(data).length > COMPRESSION_THRESHOLD);
+
+  // Compress if needed
+  let compressedData = null;
+  let originalSize = 0;
+  let compressedSize = 0;
+
+  if (shouldCompress) {
+    try {
+      const serializedData = JSON.stringify(data);
+      originalSize = serializedData.length;
+
+      const compressed = zlib.deflateSync(serializedData, { level: 6 });
+      compressedSize = compressed.length;
+
+      // Only use compression if it actually saves space
+      if (compressedSize < originalSize) {
+        compressedData = compressed.toString('base64');
+        console.log(`Compressed sync item ${id} from ${originalSize} to ${compressedSize} bytes (${Math.round((1 - (compressedSize / originalSize)) * 100)}% saving)`);
+      }
+    } catch (error) {
+      console.error(`Error compressing sync item ${id}:`, error);
+      // Continue with uncompressed data
+    }
+  }
+
+  // Add to queue with enhanced metadata
   syncQueue.push({
     id,
     type: 'translation',
-    data: {
-      originalText: text,
-      translatedText: result.translatedText,
-      confidence: result.confidence,
-      sourceLanguage,
-      targetLanguage,
-      context,
-      isPivotTranslation: result.isPivotTranslation || false,
-      pivotLanguage: result.pivotLanguage
-    },
+    data: compressedData ? null : data,
+    compressedData: compressedData,
+    isCompressed: !!compressedData,
+    originalSize: originalSize || JSON.stringify(data).length,
+    compressedSize: compressedSize,
     deviceId: DEVICE_ID,
     timestamp: Date.now(),
-    retries: 0
+    retries: 0,
+    priority,
+    version,
+    context // Duplicate for easier filtering
   });
+
+  // Sort queue by priority (higher first)
+  syncQueue.sort((a, b) => (b.priority || 1) - (a.priority || 1));
 
   // Save queue to disk periodically
   if (syncQueue.length % 10 === 0) {
@@ -326,44 +469,135 @@ async function syncCachedData() {
 }
 
 /**
- * Handle conflicts between local and server data
+ * Handle conflicts between local and server data with enhanced resolution
  *
  * @param {Array<Object>} conflicts - Conflict items
+ * @param {Object} options - Resolution options
+ * @param {string} options.strategy - Resolution strategy ('local', 'remote', 'merge', 'both')
+ * @returns {Promise<Object>} - Resolution results
  */
-async function handleConflicts(conflicts) {
-  console.log(`Handling ${conflicts.length} conflicts`);
+async function handleConflicts(conflicts, options = {}) {
+  console.log(`Handling ${conflicts.length} conflicts with strategy: ${options.strategy || 'merge'}`);
+
+  // Update metrics
+  syncMetrics.conflicts += conflicts.length;
+
+  const results = {
+    total: conflicts.length,
+    resolved: 0,
+    strategies: {
+      local: 0,
+      remote: 0,
+      merge: 0,
+      both: 0
+    }
+  };
 
   for (const conflict of conflicts) {
     const { index, item, serverData } = conflict;
 
+    // Decompress data if needed
+    let localData = item.data;
+    if (item.isCompressed && item.compressedData) {
+      try {
+        const compressedData = Buffer.from(item.compressedData, 'base64');
+        const decompressedData = zlib.inflateSync(compressedData).toString();
+        localData = JSON.parse(decompressedData);
+      } catch (error) {
+        console.error(`Error decompressing conflict data for ${item.id}:`, error);
+        // Continue with compressed data
+      }
+    }
+
     // Save conflict to file for later analysis
     const conflictFile = path.join(CONFLICT_DIR, `conflict_${item.id}.json`);
     fs.writeFileSync(conflictFile, JSON.stringify({
-      localData: item,
+      localData: localData || item,
       serverData,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      resolution: options.strategy || 'merge'
     }), 'utf8');
 
-    // Simple conflict resolution strategy:
-    // For translations, keep both versions if they're different
+    // Enhanced conflict resolution based on type
     if (item.type === 'translation') {
-      // If server translation is different, add it to the cache
-      if (serverData.translatedText !== item.data.translatedText) {
-        cacheManager.cacheTranslation(
-          item.data.originalText,
-          item.data.sourceLanguage,
-          item.data.targetLanguage,
-          item.data.context,
+      try {
+        // Generate cache key
+        const cacheKey = localData.originalText + localData.sourceLanguage + localData.targetLanguage + localData.context;
+
+        // Prepare local and remote data for resolution
+        const localCacheData = {
+          originalText: localData.originalText,
+          translatedText: localData.translatedText,
+          confidence: localData.confidence,
+          sourceLanguage: localData.sourceLanguage,
+          targetLanguage: localData.targetLanguage,
+          context: localData.context,
+          model: localData.model || 'unknown',
+          processingTime: localData.processingTime || 0,
+          timestamp: localData.timestamp || item.timestamp
+        };
+
+        const remoteCacheData = {
+          originalText: serverData.originalText || localData.originalText,
+          translatedText: serverData.translatedText,
+          confidence: serverData.confidence || 'medium',
+          sourceLanguage: serverData.sourceLanguage || localData.sourceLanguage,
+          targetLanguage: serverData.targetLanguage || localData.targetLanguage,
+          context: serverData.context || localData.context,
+          model: serverData.model || 'cloud',
+          processingTime: serverData.processingTime || 0,
+          timestamp: serverData.timestamp || Date.now()
+        };
+
+        // Determine criticality based on context
+        let criticality = 1; // Default to LOW
+        if (localData.context === 'emergency' || localData.context === 'critical_care') {
+          criticality = 4; // CRITICAL
+        } else if (localData.context === 'diagnosis' || localData.context === 'medication') {
+          criticality = 3; // HIGH
+        } else if (localData.context !== 'general' && localData.context !== 'conversation') {
+          criticality = 2; // MEDIUM
+        }
+
+        // Use enhanced conflict resolution
+        const resolution = await cacheManager.resolveVersionConflict(
+          'translation',
+          cacheKey,
+          localCacheData,
+          remoteCacheData,
           {
-            translatedText: serverData.translatedText,
-            confidence: serverData.confidence || 'medium'
+            strategy: options.strategy || 'merge',
+            localVersion: item.version || `local-${item.timestamp}`,
+            remoteVersion: serverData.version || `remote-${Date.now()}`
           }
         );
 
-        console.log(`Cached server translation for conflict ${item.id}`);
+        console.log(`Resolved conflict for ${item.id} using strategy ${resolution.resolution}`);
+
+        // Update metrics based on resolution
+        results.resolved++;
+        if (resolution.resolution.includes('local')) {
+          results.strategies.local++;
+        } else if (resolution.resolution.includes('remote')) {
+          results.strategies.remote++;
+        } else if (resolution.resolution.includes('merged')) {
+          results.strategies.merge++;
+        } else if (resolution.resolution.includes('both')) {
+          results.strategies.both++;
+        }
+
+        // Update sync metrics
+        syncMetrics.conflictsResolved++;
+      } catch (error) {
+        console.error(`Error resolving conflict for ${item.id}:`, error);
       }
     }
   }
+
+  // Save updated metrics
+  saveMetricsToDisk();
+
+  return results;
 }
 
 /**
@@ -589,31 +823,131 @@ function saveQueueToDisk() {
 }
 
 /**
- * Get sync status information
- *
- * @returns {Object} - Sync status
+ * Save sync manifest to disk
  */
-function getSyncStatus() {
-  return {
-    initialized: isInitialized,
-    queueSize: syncQueue.length,
-    lastSyncTime,
-    retryCount,
-    deviceId: DEVICE_ID
-  };
+function saveManifestToDisk() {
+  try {
+    // Update timestamp
+    syncManifest.lastUpdated = Date.now();
+
+    // Limit history size
+    if (syncManifest.syncHistory.length > 20) {
+      syncManifest.syncHistory = syncManifest.syncHistory.slice(-20);
+    }
+
+    fs.writeFileSync(SYNC_MANIFEST_FILE, JSON.stringify(syncManifest, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Error saving sync manifest to disk:', error);
+  }
 }
 
 /**
- * Queues an audio translation for synchronization with the cloud
+ * Save sync metrics to disk
+ */
+function saveMetricsToDisk() {
+  try {
+    // Update timestamp
+    syncMetrics.lastUpdated = Date.now();
+
+    // Limit sync durations array
+    if (syncMetrics.syncDurations.length > 100) {
+      syncMetrics.syncDurations = syncMetrics.syncDurations.slice(-100);
+    }
+
+    // Calculate averages
+    if (syncMetrics.totalSyncs > 0) {
+      syncMetrics.averageDuration = syncMetrics.syncDurations.reduce((sum, duration) => sum + duration, 0) / syncMetrics.syncDurations.length;
+      syncMetrics.successRate = (syncMetrics.successfulSyncs / syncMetrics.totalSyncs) * 100;
+      syncMetrics.conflictRate = (syncMetrics.conflicts / syncMetrics.itemsSynced) * 100;
+      syncMetrics.resolutionRate = syncMetrics.conflicts > 0 ? (syncMetrics.conflictsResolved / syncMetrics.conflicts) * 100 : 0;
+    }
+
+    fs.writeFileSync(SYNC_METRICS_FILE, JSON.stringify(syncMetrics, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Error saving sync metrics to disk:', error);
+  }
+}
+
+/**
+ * Get enhanced sync status information
+ *
+ * @param {boolean} detailed - Whether to include detailed metrics
+ * @returns {Object} - Sync status
+ */
+function getSyncStatus(detailed = false) {
+  // Basic status
+  const status = {
+    initialized: isInitialized,
+    queueSize: syncQueue.length,
+    lastSyncTime,
+    lastFullSync: syncManifest.lastFullSync,
+    lastPartialSync: syncManifest.lastPartialSync,
+    retryCount,
+    deviceId: DEVICE_ID,
+    syncState: syncManifest.syncState
+  };
+
+  // Add queue breakdown by priority
+  const queueByPriority = {
+    critical: syncQueue.filter(item => item.priority === SYNC_PRIORITY_LEVELS.CRITICAL).length,
+    high: syncQueue.filter(item => item.priority === SYNC_PRIORITY_LEVELS.HIGH).length,
+    medium: syncQueue.filter(item => item.priority === SYNC_PRIORITY_LEVELS.MEDIUM).length,
+    low: syncQueue.filter(item => item.priority === SYNC_PRIORITY_LEVELS.LOW).length
+  };
+
+  status.queueByPriority = queueByPriority;
+
+  // Add basic metrics
+  status.metrics = {
+    totalSyncs: syncMetrics.totalSyncs,
+    successRate: syncMetrics.totalSyncs > 0 ? (syncMetrics.successfulSyncs / syncMetrics.totalSyncs) * 100 : 0,
+    itemsSynced: syncMetrics.itemsSynced,
+    conflicts: syncMetrics.conflicts,
+    conflictsResolved: syncMetrics.conflictsResolved
+  };
+
+  // Add detailed metrics if requested
+  if (detailed) {
+    status.detailedMetrics = {
+      ...syncMetrics,
+      // Don't include large arrays in detailed output
+      syncDurations: syncMetrics.syncDurations.length
+    };
+
+    // Add compression statistics
+    status.compression = {
+      enabled: COMPRESSION_ENABLED,
+      threshold: COMPRESSION_THRESHOLD,
+      compressedItems: syncQueue.filter(item => item.isCompressed).length,
+      compressionSavings: syncMetrics.compressionSavings
+    };
+
+    // Add differential sync statistics
+    status.differentialSync = {
+      enabled: DIFFERENTIAL_SYNC,
+      lastFullSync: new Date(syncManifest.lastFullSync).toISOString(),
+      syncHistory: syncManifest.syncHistory
+    };
+  }
+
+  return status;
+}
+
+/**
+ * Queues an audio translation for synchronization with the cloud with enhanced features
  *
  * @param {string} audioHash - Hash of the audio data
  * @param {string} sourceLanguage - The source language code
  * @param {string} targetLanguage - The target language code
  * @param {string} context - The medical context
  * @param {Object} result - The translation result
+ * @param {Object} options - Additional options
+ * @param {number} options.priority - Sync priority (1-4, higher = more important)
+ * @param {boolean} options.compress - Whether to compress the data
+ * @param {string} options.version - Version identifier
  * @returns {string} - The ID of the queued item
  */
-function queueAudioTranslation(audioHash, sourceLanguage, targetLanguage, context, result) {
+function queueAudioTranslation(audioHash, sourceLanguage, targetLanguage, context, result, options = {}) {
   // Ensure module is initialized
   if (!isInitialized) {
     initialize();
@@ -624,24 +958,83 @@ function queueAudioTranslation(audioHash, sourceLanguage, targetLanguage, contex
     .update(`audio:${audioHash}:${sourceLanguage}:${targetLanguage}:${context}:${Date.now()}`)
     .digest('hex');
 
-  // Add to queue
+  // Determine priority based on context and options
+  let priority = options.priority || SYNC_PRIORITY_LEVELS.LOW;
+
+  // Medical contexts are more important
+  if (context === 'emergency' || context === 'critical_care') {
+    priority = SYNC_PRIORITY_LEVELS.CRITICAL;
+  } else if (context === 'diagnosis' || context === 'medication') {
+    priority = SYNC_PRIORITY_LEVELS.HIGH;
+  } else if (context !== 'general' && context !== 'conversation') {
+    priority = SYNC_PRIORITY_LEVELS.MEDIUM;
+  }
+
+  // Generate version if not provided
+  const version = options.version || `v-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+
+  // Prepare data object
+  const data = {
+    audioHash,
+    originalText: result.originalText,
+    translatedText: result.translatedText,
+    confidence: result.confidence,
+    sourceLanguage,
+    targetLanguage,
+    context,
+    processingTime: result.processingTime,
+    model: result.model || 'unknown',
+    timestamp: Date.now()
+  };
+
+  // Determine if we should compress
+  const shouldCompress = options.compress !== undefined
+    ? options.compress
+    : (COMPRESSION_ENABLED && JSON.stringify(data).length > COMPRESSION_THRESHOLD);
+
+  // Compress if needed
+  let compressedData = null;
+  let originalSize = 0;
+  let compressedSize = 0;
+
+  if (shouldCompress) {
+    try {
+      const serializedData = JSON.stringify(data);
+      originalSize = serializedData.length;
+
+      const compressed = zlib.deflateSync(serializedData, { level: 6 });
+      compressedSize = compressed.length;
+
+      // Only use compression if it actually saves space
+      if (compressedSize < originalSize) {
+        compressedData = compressed.toString('base64');
+        console.log(`Compressed audio sync item ${id} from ${originalSize} to ${compressedSize} bytes (${Math.round((1 - (compressedSize / originalSize)) * 100)}% saving)`);
+      }
+    } catch (error) {
+      console.error(`Error compressing audio sync item ${id}:`, error);
+      // Continue with uncompressed data
+    }
+  }
+
+  // Add to queue with enhanced metadata
   syncQueue.push({
     id,
     type: 'audio_translation',
-    data: {
-      audioHash,
-      originalText: result.originalText,
-      translatedText: result.translatedText,
-      confidence: result.confidence,
-      sourceLanguage,
-      targetLanguage,
-      context,
-      processingTime: result.processingTime
-    },
+    data: compressedData ? null : data,
+    compressedData: compressedData,
+    isCompressed: !!compressedData,
+    originalSize: originalSize || JSON.stringify(data).length,
+    compressedSize: compressedSize,
     deviceId: DEVICE_ID,
     timestamp: Date.now(),
-    retries: 0
+    retries: 0,
+    priority,
+    version,
+    context // Duplicate for easier filtering
   });
+
+  // Sort queue by priority (higher first)
+  syncQueue.sort((a, b) => (b.priority || 1) - (a.priority || 1));
 
   // Save queue to disk periodically
   if (syncQueue.length % 10 === 0) {
@@ -651,7 +1044,7 @@ function queueAudioTranslation(audioHash, sourceLanguage, targetLanguage, contex
   return id;
 }
 
-// Export sync functions
+// Export enhanced sync functions
 const syncWithCloud = {
   initialize,
   testConnection,
@@ -659,12 +1052,17 @@ const syncWithCloud = {
   queueAudioTranslation,
   syncCachedData,
   checkForModelUpdates,
-  getSyncStatus
+  getSyncStatus,
+  handleConflicts,
+  saveManifestToDisk,
+  saveMetricsToDisk
 };
 
-// Save queue to disk on process exit
+// Save state to disk on process exit
 process.on('exit', () => {
   saveQueueToDisk();
+  saveManifestToDisk();
+  saveMetricsToDisk();
 });
 
 // Clean up interval on process exit

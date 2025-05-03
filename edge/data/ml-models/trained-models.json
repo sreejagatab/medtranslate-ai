@@ -1,0 +1,8 @@
+{
+  "lastTrainingTime": 1746137709485,
+  "modelPerformance": {
+    "timeSeries": 0.4,
+    "content": 0.4,
+    "network": 0.2
+  }
+}
