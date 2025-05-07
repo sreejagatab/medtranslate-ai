@@ -1,6 +1,6 @@
 /**
  * Integration Tests for ML-Enhanced Predictive Caching System
- * 
+ *
  * This test suite verifies the integration of machine learning models
  * with the predictive caching system, including:
  * - ML model initialization and training
@@ -17,7 +17,10 @@ const path = require('path');
 // Import modules to test
 const predictiveCache = require('../../edge/app/predictive-cache');
 const networkMonitor = require('../../edge/app/network-monitor');
-const modelAdapter = require('../../edge/app/ml-models/model-adapter');
+
+// We'll get the model adapter after predictive-cache initializes it
+// This avoids circular dependency issues
+let modelAdapter;
 
 // Configuration
 const config = {
@@ -35,23 +38,23 @@ let server;
  */
 async function setupTestEnvironment() {
   console.log('Setting up test environment...');
-  
+
   // Create Express app for testing
   app = express();
-  
+
   // Configure middleware
   app.use(express.json());
-  
+
   // Define endpoints
   app.post('/translate', async (req, res) => {
     const { text, sourceLanguage, targetLanguage, context } = req.body;
-    
+
     // Log usage for predictive caching
     await predictiveCache.logTranslationUsage(
-      text, sourceLanguage, targetLanguage, context, 
+      text, sourceLanguage, targetLanguage, context,
       { translatedText: `Translated: ${text}`, confidence: 0.9, processingTime: 100 }
     );
-    
+
     res.json({
       translatedText: `Translated: ${text}`,
       sourceLanguage,
@@ -61,47 +64,62 @@ async function setupTestEnvironment() {
       fromCache: false
     });
   });
-  
+
   app.get('/cache/stats', (req, res) => {
     res.json(predictiveCache.getUsageStats());
   });
-  
+
   app.get('/cache/predictions', (req, res) => {
     const predictions = predictiveCache.getPredictions({
       aggressiveness: req.query.aggressiveness || 0.5,
       count: req.query.count || 20
     });
-    
+
     res.json(predictions);
   });
-  
+
   app.get('/cache/offline-risk', (req, res) => {
     // Import the internal function using a workaround
     const calculateOfflineRisk = predictiveCache.__test_calculateOfflineRisk || (() => 0.5);
-    
+
     res.json({
       offlineRisk: calculateOfflineRisk(),
       timestamp: new Date()
     });
   });
-  
+
   app.post('/cache/prepare-offline', async (req, res) => {
     const result = await predictiveCache.prepareForOfflineMode(req.body);
     res.json(result);
   });
-  
+
   // Start server
   server = app.listen(0); // Use any available port
-  
+
   // Initialize predictive cache
   await predictiveCache.initialize();
-  
+
+  // Get the model adapter from the global object after predictive-cache initializes it
+  if (global.modelAdapter) {
+    modelAdapter = global.modelAdapter;
+    console.log('Successfully retrieved model adapter from global object');
+  } else {
+    console.warn('Model adapter not available in global object, creating fallback');
+    modelAdapter = {
+      initialize: async () => false,
+      trainModels: async () => false,
+      generatePredictions: () => [],
+      predictOfflineRisk: () => 0,
+      getStatus: () => ({ isInitialized: false })
+    };
+  }
+
   // Generate sample data
   await generateSampleData(config.sampleSize);
-  
+
   // Update prediction model
   await predictiveCache.updatePredictionModel();
-  
+
   console.log('Test environment setup complete');
 }
 
@@ -110,11 +128,11 @@ async function setupTestEnvironment() {
  */
 async function teardownTestEnvironment() {
   console.log('Tearing down test environment...');
-  
+
   if (server) {
     server.close();
   }
-  
+
   console.log('Test environment teardown complete');
 }
 
@@ -123,10 +141,10 @@ async function teardownTestEnvironment() {
  */
 async function generateSampleData(count) {
   console.log(`Generating ${count} sample usage entries...`);
-  
+
   const languages = ['en', 'es', 'fr', 'de', 'zh', 'ja'];
   const contexts = ['general', 'cardiology', 'neurology', 'pediatrics', 'oncology'];
-  
+
   const sampleTexts = {
     'general': [
       'Hello, how are you feeling today?',
@@ -154,9 +172,9 @@ async function generateSampleData(count) {
       'Are you currently undergoing any cancer treatments?'
     ]
   };
-  
+
   const usageLog = [];
-  
+
   // Generate entries with time patterns
   for (let i = 0; i < count; i++) {
     // Create time patterns - more usage during business hours
@@ -165,7 +183,7 @@ async function generateSampleData(count) {
     date.setMinutes(Math.floor(Math.random() * 60));
     date.setSeconds(Math.floor(Math.random() * 60));
     date.setMilliseconds(0);
-    
+
     // More likely to be during business hours (8-18)
     if (date.getHours() < 8 || date.getHours() > 18) {
       if (Math.random() > 0.3) {
@@ -173,26 +191,26 @@ async function generateSampleData(count) {
         continue;
       }
     }
-    
+
     // Select random languages and context
     const sourceLanguage = languages[Math.floor(Math.random() * languages.length)];
     const targetLanguage = languages[Math.floor(Math.random() * languages.length)];
-    
+
     // Ensure source and target are different
     if (sourceLanguage === targetLanguage) {
       continue;
     }
-    
+
     const context = contexts[Math.floor(Math.random() * contexts.length)];
-    
+
     // Select random text from context
     const textOptions = sampleTexts[context] || sampleTexts['general'];
     const text = textOptions[Math.floor(Math.random() * textOptions.length)];
-    
+
     // Create network status - more likely to be offline during certain hours
     const isOfflineHour = date.getHours() >= 22 || date.getHours() <= 5;
     const networkStatus = isOfflineHour && Math.random() > 0.7 ? 'offline' : 'online';
-    
+
     // Create usage entry
     const entry = {
       timestamp: date.getTime(),
@@ -219,16 +237,16 @@ async function generateSampleData(count) {
         locationName: ['home', 'office', 'hospital', 'clinic'][Math.floor(Math.random() * 4)]
       }
     };
-    
+
     usageLog.push(entry);
   }
-  
+
   // Sort by timestamp
   usageLog.sort((a, b) => a.timestamp - b.timestamp);
-  
+
   // Set usage log
   predictiveCache.setUsageLog(usageLog);
-  
+
   console.log(`Generated ${usageLog.length} sample usage entries`);
 }
 
@@ -237,21 +255,21 @@ async function generateSampleData(count) {
  */
 async function testMLModelInitialization() {
   console.log('\n=== Testing ML Model Initialization ===\n');
-  
+
   // Get usage stats which includes ML model status
   const statsResponse = await request(app).get('/cache/stats');
   const stats = statsResponse.body;
-  
+
   // Check if ML model is initialized
   const isMLInitialized = stats.mlModel && stats.mlModel.isInitialized;
-  
+
   console.log(`ML model initialization: ${isMLInitialized ? 'PASSED' : 'FAILED'}`);
-  
+
   if (isMLInitialized) {
     console.log(`Last training time: ${new Date(stats.mlModel.lastTrainingTime).toLocaleString()}`);
     console.log('Model performance metrics:', stats.mlModel.modelPerformance);
   }
-  
+
   return isMLInitialized;
 }
 
@@ -260,37 +278,45 @@ async function testMLModelInitialization() {
  */
 async function testMLBasedPredictions() {
   console.log('\n=== Testing ML-Based Predictions ===\n');
-  
+
   // Get predictions
   const predictionsResponse = await request(app).get('/cache/predictions');
   const predictions = predictionsResponse.body;
-  
+
   console.log(`Generated ${predictions.length} predictions`);
-  
+
   // Check if predictions were generated
   const hasPredictions = predictions.length > 0;
-  
+
   // Check if any predictions have ML-based reasons
-  const mlPredictions = predictions.filter(p => 
+  const mlPredictions = predictions.filter(p =>
     p.reason && (
-      p.reason.startsWith('ml_') || 
-      p.reason.includes('model') || 
+      p.reason.startsWith('ml_') ||
+      p.reason.includes('model') ||
       p.reason.includes('prediction')
     )
   );
-  
+
   const hasMLPredictions = mlPredictions.length > 0;
-  
+
   console.log(`ML-based predictions: ${mlPredictions.length} out of ${predictions.length}`);
-  
+
   // Log some sample ML predictions
   if (hasMLPredictions && mlPredictions.length > 0) {
     console.log('Sample ML-based predictions:');
     for (let i = 0; i < Math.min(3, mlPredictions.length); i++) {
-      console.log(`- ${mlPredictions[i].reason}: ${mlPredictions[i].score.toFixed(2)} (${mlPredictions[i].sourceLanguage}-${mlPredictions[i].targetLanguage}, ${mlPredictions[i].context})`);
+      // Safely access properties with null checks
+      const prediction = mlPredictions[i];
+      const score = prediction.score !== null && prediction.score !== undefined ? prediction.score.toFixed(2) : 'N/A';
+      const sourceLang = prediction.sourceLanguage || 'unknown';
+      const targetLang = prediction.targetLanguage || 'unknown';
+      const context = prediction.context || 'general';
+      const reason = prediction.reason || 'unknown';
+
+      console.log(`- ${reason}: ${score} (${sourceLang}-${targetLang}, ${context})`);
     }
   }
-  
+
   console.log(`ML-based predictions: ${hasMLPredictions ? 'PASSED' : 'FAILED'}`);
   return hasMLPredictions;
 }
@@ -300,33 +326,33 @@ async function testMLBasedPredictions() {
  */
 async function testMLOfflineRiskAssessment() {
   console.log('\n=== Testing ML-Based Offline Risk Assessment ===\n');
-  
+
   // Get offline risk
   const riskResponse = await request(app).get('/cache/offline-risk');
   const riskData = riskResponse.body;
-  
+
   console.log(`Current offline risk: ${(riskData.offlineRisk * 100).toFixed(1)}%`);
-  
+
   // Check if offline risk is calculated
   const hasOfflineRisk = typeof riskData.offlineRisk === 'number';
-  
+
   // Prepare for offline mode with ML-based risk assessment
   const prepareResponse = await request(app)
     .post('/cache/prepare-offline')
     .send({ useMLRisk: true });
-  
+
   const prepareResult = prepareResponse.body;
-  
+
   console.log('Offline preparation result:', prepareResult);
-  
+
   // Check if preparation used ML-based risk assessment
-  const usedMLRisk = prepareResult.adjustments && 
-    prepareResult.adjustments.some(adj => 
-      adj.includes('ML') || 
-      adj.includes('model') || 
+  const usedMLRisk = prepareResult.adjustments &&
+    prepareResult.adjustments.some(adj =>
+      adj.includes('ML') ||
+      adj.includes('model') ||
       adj.includes('prediction')
     );
-  
+
   console.log(`ML-based offline risk assessment: ${hasOfflineRisk ? 'PASSED' : 'FAILED'}`);
   return hasOfflineRisk;
 }
@@ -336,29 +362,29 @@ async function testMLOfflineRiskAssessment() {
  */
 async function testMLModelAdaptation() {
   console.log('\n=== Testing ML Model Adaptation ===\n');
-  
+
   // Get initial model status
   const initialStatsResponse = await request(app).get('/cache/stats');
   const initialStats = initialStatsResponse.body;
-  
+
   const initialPerformance = initialStats.mlModel && initialStats.mlModel.modelPerformance;
-  
+
   console.log('Initial model performance:', initialPerformance);
-  
+
   // Generate additional usage data with specific patterns
   console.log('Generating additional usage data with specific patterns...');
-  
+
   // Create usage entries with strong time patterns
   const currentHour = new Date().getHours();
   const usageLog = [];
-  
+
   for (let i = 0; i < 20; i++) {
     const date = new Date();
     date.setHours(currentHour);
     date.setMinutes(Math.floor(Math.random() * 60));
     date.setSeconds(Math.floor(Math.random() * 60));
     date.setMilliseconds(0);
-    
+
     // Always use the same language pair and context
     const entry = {
       timestamp: date.getTime(),
@@ -379,9 +405,9 @@ async function testMLModelAdaptation() {
         memoryUsage: 0.3
       }
     };
-    
+
     usageLog.push(entry);
-    
+
     // Log usage for predictive caching
     await predictiveCache.logTranslationUsage(
       'Test text for adaptation',
@@ -391,40 +417,40 @@ async function testMLModelAdaptation() {
       { translatedText: 'Texto de prueba para adaptación', confidence: 0.9, processingTime: 100 }
     );
   }
-  
+
   // Update prediction model
   await predictiveCache.updatePredictionModel();
-  
+
   // Get updated model status
   const updatedStatsResponse = await request(app).get('/cache/stats');
   const updatedStats = updatedStatsResponse.body;
-  
+
   const updatedPerformance = updatedStats.mlModel && updatedStats.mlModel.modelPerformance;
-  
+
   console.log('Updated model performance:', updatedPerformance);
-  
+
   // Get predictions after adaptation
   const predictionsResponse = await request(app).get('/cache/predictions');
   const predictions = predictionsResponse.body;
-  
+
   // Check if predictions include the specific pattern we created
-  const adaptedPredictions = predictions.filter(p => 
-    p.sourceLanguage === 'en' && 
-    p.targetLanguage === 'es' && 
+  const adaptedPredictions = predictions.filter(p =>
+    p.sourceLanguage === 'en' &&
+    p.targetLanguage === 'es' &&
     p.context === 'cardiology'
   );
-  
+
   const hasAdaptedPredictions = adaptedPredictions.length > 0;
-  
+
   console.log(`Adapted predictions: ${adaptedPredictions.length} out of ${predictions.length}`);
-  
+
   if (hasAdaptedPredictions) {
     console.log('Sample adapted predictions:');
     for (let i = 0; i < Math.min(3, adaptedPredictions.length); i++) {
       console.log(`- ${adaptedPredictions[i].reason}: ${adaptedPredictions[i].score.toFixed(2)}`);
     }
   }
-  
+
   console.log(`ML model adaptation: ${hasAdaptedPredictions ? 'PASSED' : 'FAILED'}`);
   return hasAdaptedPredictions;
 }
@@ -436,7 +462,7 @@ async function runTests() {
   try {
     // Setup test environment
     await setupTestEnvironment();
-    
+
     // Run tests
     const testResults = {
       mlModelInitialization: await testMLModelInitialization(),
@@ -444,16 +470,16 @@ async function runTests() {
       mlOfflineRiskAssessment: await testMLOfflineRiskAssessment(),
       mlModelAdaptation: await testMLModelAdaptation()
     };
-    
+
     // Print summary
     console.log('\n=== Test Summary ===');
     for (const [test, result] of Object.entries(testResults)) {
       console.log(`${result ? '✅' : '❌'} ${test}`);
     }
-    
+
     const allPassed = Object.values(testResults).every(result => result);
     console.log(`\nOverall result: ${allPassed ? '✅ PASSED' : '❌ FAILED'}`);
-    
+
     return allPassed;
   } finally {
     // Teardown test environment

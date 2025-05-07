@@ -373,6 +373,83 @@ class EnhancedWebSocketClient extends EventEmitter {
         const message = this.messageQueue.shift();
         this.ws.send(message);
       }
+
+      // Process offline queue if available
+      this._processOfflineQueue();
+    }
+  }
+
+  /**
+   * Process offline message queue
+   *
+   * @private
+   */
+  async _processOfflineQueue() {
+    if (!this.isConnected() || !this.offlineQueueInitialized) {
+      return;
+    }
+
+    try {
+      // Get messages from offline queue
+      const offlineMessages = await this.offlineQueue.getMessages();
+
+      if (offlineMessages && offlineMessages.length > 0) {
+        this._log(`Processing ${offlineMessages.length} offline queued messages`);
+
+        let successCount = 0;
+        let failureCount = 0;
+
+        // Process offline messages
+        for (const messageObj of offlineMessages) {
+          try {
+            // Send the message
+            this.ws.send(messageObj.message);
+
+            // Remove from offline queue on success
+            await this.offlineQueue.removeMessage(messageObj.id);
+
+            successCount++;
+
+            // Emit event for successful message delivery
+            this.emit('offlineMessageSent', {
+              messageId: messageObj.id,
+              timestamp: Date.now(),
+              queuedAt: messageObj.timestamp,
+              deliveryDelay: Date.now() - messageObj.timestamp
+            });
+          } catch (error) {
+            // Increment attempt count
+            await this.offlineQueue.incrementAttemptCount(messageObj.id);
+
+            failureCount++;
+            this._log(`Error sending offline queued message: ${error.message}`);
+
+            // Emit event for failed message delivery
+            this.emit('offlineMessageFailed', {
+              messageId: messageObj.id,
+              error: error.message,
+              attempts: messageObj.attempts + 1
+            });
+          }
+        }
+
+        // Log results
+        this._log(`Offline queue processing completed: ${successCount} sent, ${failureCount} failed`);
+
+        // Emit event for queue processing completion
+        this.emit('offlineQueueProcessed', {
+          total: offlineMessages.length,
+          success: successCount,
+          failure: failureCount
+        });
+      }
+    } catch (error) {
+      this._log(`Error processing offline queue: ${error.message}`);
+
+      // Emit event for queue processing error
+      this.emit('offlineQueueError', {
+        error: error.message
+      });
     }
   }
 

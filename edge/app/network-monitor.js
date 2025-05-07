@@ -1123,7 +1123,7 @@ function recordNetworkStatus(status) {
 
   // Add to ML model if available
   try {
-    if (global.modelAdapter) {
+    if (global.modelAdapter && typeof global.modelAdapter.addNetworkSample === 'function') {
       global.modelAdapter.addNetworkSample(
         status.online,
         new Date(),
@@ -1188,7 +1188,7 @@ function recordNetworkQuality(quality) {
 
   // Add to ML model if available
   try {
-    if (global.modelAdapter) {
+    if (global.modelAdapter && typeof global.modelAdapter.addNetworkSample === 'function') {
       global.modelAdapter.addNetworkSample(
         true, // online
         new Date(),
@@ -1559,12 +1559,27 @@ function getConnectionIssuePredictions(options = {}) {
 
     // Use ML model for prediction if available
     try {
-      const { ModelAdapter } = require('./ml-models/model-adapter');
+      let ModelAdapter;
+
+      // Try to load the model adapter, but don't fail if it's not available
+      try {
+        ModelAdapter = require('./ml-models/model-adapter').ModelAdapter;
+      } catch (loadError) {
+        console.warn('ML model adapter not available:', loadError.message);
+        // Fall back to traditional predictions
+        throw new Error('ML model adapter not available');
+      }
 
       // Initialize model adapter if not already done
       if (!global.modelAdapter) {
-        global.modelAdapter = new ModelAdapter();
-        global.modelAdapter.initialize();
+        try {
+          global.modelAdapter = new ModelAdapter();
+          global.modelAdapter.initialize();
+        } catch (initError) {
+          console.warn('Failed to initialize ML model adapter:', initError.message);
+          // Fall back to traditional predictions
+          throw new Error('Failed to initialize ML model adapter');
+        }
       }
 
       // Get predictions for the specified period
@@ -1575,15 +1590,28 @@ function getConnectionIssuePredictions(options = {}) {
         const predictionTime = new Date(now.getTime() + i * 60 * 60 * 1000);
 
         // Get connection issue prediction for this hour with enhanced options
-        const prediction = global.modelAdapter.predictConnectionIssues(predictionTime, {
-          location,
-          connectionType,
-          lookAheadHours: 1, // Just get one hour at a time
-          confidenceThreshold: riskThreshold,
-          userId,
-          includeRecoverySuggestions,
-          currentState
-        });
+        let prediction;
+        try {
+          prediction = global.modelAdapter.predictConnectionIssues(predictionTime, {
+            location,
+            connectionType,
+            lookAheadHours: 1, // Just get one hour at a time
+            confidenceThreshold: riskThreshold,
+            userId,
+            includeRecoverySuggestions,
+            currentState
+          });
+        } catch (predictionError) {
+          console.warn(`Error predicting connection issues for hour ${i}:`, predictionError.message);
+          // Create a default prediction with low risk
+          prediction = {
+            risk: 0.1,
+            confidence: 0.5,
+            reason: 'prediction_error',
+            modelType: 'fallback',
+            modelVersion: '1.0'
+          };
+        }
 
         // Create prediction object with enhanced information
         const predictionObj = {
@@ -1633,31 +1661,40 @@ function getConnectionIssuePredictions(options = {}) {
       predictions.sort((a, b) => b.risk - a.risk);
 
       // Get model status with enhanced information
-      const modelStatus = global.modelAdapter.getStatus();
-
-      // Count predictions by model type
-      const modelTypes = {};
-      predictions.forEach(p => {
-        modelTypes[p.modelType] = (modelTypes[p.modelType] || 0) + 1;
-      });
-
-      // Count predictions by issue type
-      const issueTypes = {};
-      predictions.forEach(p => {
-        if (p.likelyIssueType) {
-          issueTypes[p.likelyIssueType] = (issueTypes[p.likelyIssueType] || 0) + 1;
-        }
-      });
-
-      // Get recurring patterns if available
+      let modelStatus = { useEnhancedConnectionPrediction: false };
+      let modelTypes = {};
+      let issueTypes = {};
       let recurringPatterns = [];
-      if (modelStatus.enhancedModelStatus && modelStatus.enhancedModelStatus.recurringPatternCount > 0) {
-        // In a real implementation, we would get the actual patterns from the model
-        // For now, we'll just indicate that patterns exist
-        recurringPatterns = [{
-          type: 'info',
-          message: `${modelStatus.enhancedModelStatus.recurringPatternCount} recurring patterns detected`
-        }];
+
+      // Only try to get model status if the adapter is available
+      if (global.modelAdapter && typeof global.modelAdapter.getStatus === 'function') {
+        try {
+          modelStatus = global.modelAdapter.getStatus();
+
+          // Count predictions by model type
+          predictions.forEach(p => {
+            modelTypes[p.modelType] = (modelTypes[p.modelType] || 0) + 1;
+          });
+
+          // Count predictions by issue type
+          predictions.forEach(p => {
+            if (p.likelyIssueType) {
+              issueTypes[p.likelyIssueType] = (issueTypes[p.likelyIssueType] || 0) + 1;
+            }
+          });
+
+          // Get recurring patterns if available
+          if (modelStatus.enhancedModelStatus && modelStatus.enhancedModelStatus.recurringPatternCount > 0) {
+            // In a real implementation, we would get the actual patterns from the model
+            // For now, we'll just indicate that patterns exist
+            recurringPatterns = [{
+              type: 'info',
+              message: `${modelStatus.enhancedModelStatus.recurringPatternCount} recurring patterns detected`
+            }];
+          }
+        } catch (error) {
+          console.warn('Error getting model status:', error);
+        }
       }
 
       return {

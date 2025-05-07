@@ -1,0 +1,491 @@
+/**
+ * MedTranslate AI Edge Application Server
+ *
+ * This server provides edge computing capabilities for the MedTranslate AI system,
+ * including local translation, caching, and synchronization with the cloud.
+ * Features enhanced offline mode detection and automatic reconnection.
+ */
+
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const cors = require('cors');
+const { translateLocally, initialize: initTranslation, getSupportedLanguagePairs, processAudio } = require('./translation');
+const { syncWithCloud } = require('./sync');
+const { cacheManager } = require('./cache');
+const networkMonitor = require('./network-monitor');
+const cloudConnection = require('./cloud-connection');
+const predictiveCache = require('./predictive-cache');
+const automatedRecoveryManager = require('./automated-recovery-manager');
+const autoSyncManager = require('./auto-sync-manager');
+const syncAnalyticsRoutes = require('./routes/sync-analytics-routes');
+
+// Initialize express app
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Configuration
+const PORT = process.env.PORT || 3000;
+const VERSION = process.env.VERSION || '1.0.0';
+const DEVICE_ID = process.env.DEVICE_ID || `medtranslate-edge-${Math.random().toString(36).substring(2, 10)}`;
+
+// Application state
+let isOnline = false;
+let isInitialized = false;
+let supportedLanguagePairs = [];
+let connectionCheckInterval;
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(cors());
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Use sync analytics routes
+app.use('/sync', syncAnalyticsRoutes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const networkStatus = networkMonitor.getNetworkStatus();
+
+  res.json({
+    status: 'healthy',
+    onlineStatus: isOnline ? 'connected' : 'offline',
+    initialized: isInitialized,
+    modelStatus: isInitialized ? 'loaded' : 'loading',
+    supportedLanguagePairs,
+    deviceId: DEVICE_ID,
+    version: VERSION,
+    timestamp: new Date().toISOString(),
+    network: {
+      online: networkStatus.online,
+      lastOnlineTime: networkStatus.lastOnlineTime ? new Date(networkStatus.lastOnlineTime).toISOString() : null,
+      lastOfflineTime: networkStatus.lastOfflineTime ? new Date(networkStatus.lastOfflineTime).toISOString() : null,
+      reconnecting: networkStatus.reconnecting,
+      connectionAttempts: networkStatus.connectionAttempts
+    },
+    cache: cacheManager.getCacheStats()
+  });
+});
+
+// Get supported languages
+app.get('/languages', (req, res) => {
+  res.json({
+    supportedLanguagePairs,
+    count: supportedLanguagePairs.length
+  });
+});
+
+// Translation endpoint
+app.post('/translate', async (req, res) => {
+  try {
+    const { text, sourceLanguage, targetLanguage, context, useCache = true } = req.body;
+
+    if (!text || !sourceLanguage || !targetLanguage) {
+      return res.status(400).json({
+        error: 'Missing required parameters: text, sourceLanguage, targetLanguage'
+      });
+    }
+
+    // Generate cache key
+    const cacheKey = `${sourceLanguage}:${targetLanguage}:${context || 'general'}:${text}`;
+
+    // Check cache if enabled
+    if (useCache) {
+      const cachedResult = await cacheManager.get('translation', cacheKey);
+      if (cachedResult) {
+        console.log(`Cache hit for: ${cacheKey}`);
+        return res.json({
+          ...cachedResult,
+          source: 'cache'
+        });
+      }
+    }
+
+    // Perform local translation
+    const result = await translateLocally(text, sourceLanguage, targetLanguage, context);
+
+    // Cache the result
+    if (useCache) {
+      await cacheManager.set('translation', cacheKey, result);
+    }
+
+    // Try to sync with cloud if online
+    if (isOnline) {
+      syncWithCloud.queueTranslation(text, sourceLanguage, targetLanguage, context, result);
+    }
+
+    res.json({
+      ...result,
+      source: 'local'
+    });
+  } catch (error) {
+    console.error('Translation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Audio translation endpoint
+app.post('/translate-audio', async (req, res) => {
+  try {
+    const { audioData, sourceLanguage, targetLanguage, context, useCache = true } = req.body;
+
+    if (!audioData || !sourceLanguage || !targetLanguage) {
+      return res.status(400).json({
+        error: 'Missing required parameters: audioData, sourceLanguage, targetLanguage'
+      });
+    }
+
+    // Generate audio hash for caching
+    const crypto = require('crypto');
+    const audioHash = crypto.createHash('sha256').update(audioData).digest('hex');
+    const cacheKey = `${sourceLanguage}:${targetLanguage}:${context || 'general'}:${audioHash}`;
+
+    // Check cache if enabled
+    if (useCache) {
+      const cachedResult = await cacheManager.get('audio', cacheKey);
+      if (cachedResult) {
+        console.log(`Cache hit for audio: ${cacheKey}`);
+        return res.json({
+          ...cachedResult,
+          source: 'cache'
+        });
+      }
+    }
+
+    // Process audio locally
+    const result = await processAudio(audioData, sourceLanguage, targetLanguage, context);
+
+    // Cache the result
+    if (useCache) {
+      const audioTtl = 3600; // 1 hour TTL for audio translations
+      await cacheManager.set('audio', cacheKey, result, audioTtl);
+    }
+
+    // Queue for sync with cloud if online
+    if (isOnline) {
+      syncWithCloud.queueAudioTranslation(
+        audioHash, sourceLanguage, targetLanguage, context, result
+      );
+    }
+
+    res.json({
+      ...result,
+      source: 'local',
+      networkStatus: {
+        online: isOnline
+      }
+    });
+  } catch (error) {
+    console.error('Audio translation error:', error);
+    res.status(500).json({
+      error: error.message,
+      networkStatus: {
+        online: isOnline
+      }
+    });
+  }
+});
+
+// Audio file upload endpoint
+app.post('/translate-audio/upload', async (req, res) => {
+  try {
+    const multer = require('multer');
+    const upload = multer({ dest: 'temp/' });
+
+    // Handle file upload
+    upload.single('audioFile')(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No audio file provided' });
+      }
+
+      const { sourceLanguage, targetLanguage, context } = req.body;
+
+      if (!sourceLanguage || !targetLanguage) {
+        return res.status(400).json({
+          error: 'Missing required parameters: sourceLanguage, targetLanguage'
+        });
+      }
+
+      // Read file
+      const fs = require('fs');
+      const audioData = fs.readFileSync(req.file.path);
+
+      // Process audio
+      const result = await processAudio(audioData, sourceLanguage, targetLanguage, context);
+
+      // Clean up temporary file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        ...result,
+        source: 'local',
+        networkStatus: {
+          online: isOnline
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Audio file upload error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Cache status endpoint
+app.get('/cache/status', async (req, res) => {
+  try {
+    const cacheStats = await cacheManager.getCacheStats();
+    const usageStats = await cacheManager.getUsageStats();
+    const cacheLimit = cacheManager.getCacheLimit();
+    const totalCacheItems = cacheStats.translationCount + cacheStats.audioCount;
+    const offlinePriorityItems = usageStats.offlinePriorityItems || 0;
+    const offlineRisk = networkMonitor.getConnectionIssuePredictions();
+
+    // Calculate readiness as a percentage (0-100)
+    // Based on: cache utilization, offline priority items, and prediction model quality
+    const cacheUtilization = Math.min(100, (totalCacheItems / cacheLimit) * 100);
+    const priorityScore = Math.min(100, (offlinePriorityItems / 50) * 100); // Assume 50 priority items is optimal
+    const predictionScore = usageStats.predictionModel ?
+      Math.min(100, (Object.keys(usageStats.predictionModel.languagePairCount || {}).length / 10) * 100) : 0;
+
+    // Weighted average of the scores
+    const offlineReadiness = Math.round(
+      (cacheUtilization * 0.4) + (priorityScore * 0.4) + (predictionScore * 0.2)
+    );
+
+    res.json({
+      success: true,
+      stats: cacheStats,
+      usageStats: usageStats,
+      offlineReadiness: offlineReadiness,
+      offlineRisk: offlineRisk
+    });
+  } catch (error) {
+    console.error('Error getting cache status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Clear cache endpoint
+app.post('/cache/clear', async (req, res) => {
+  try {
+    const result = await cacheManager.clearCache();
+    res.json(result);
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Initialize edge application
+async function initialize() {
+  try {
+    // Initialize translation module
+    console.log('Initializing translation module...');
+    const translationResult = await initTranslation();
+    if (!translationResult.success) {
+      console.error('Error initializing translation module:', translationResult.error);
+      return false;
+    }
+
+    // Get supported language pairs
+    supportedLanguagePairs = getSupportedLanguagePairs();
+    console.log(`Loaded ${supportedLanguagePairs.length} supported language pairs`);
+
+    // Initialize cache manager
+    console.log('Initializing cache manager...');
+    await cacheManager.initialize();
+
+    // Initialize network monitor
+    console.log('Initializing network monitor...');
+    await networkMonitor.initialize();
+
+    // Register network event listeners
+    networkMonitor.on('online', handleOnlineStatus);
+    networkMonitor.on('offline', handleOfflineStatus);
+
+    // Initialize sync module
+    console.log('Initializing sync module...');
+    await syncWithCloud.initialize();
+
+    // Initialize cloud connection service
+    console.log('Initializing cloud connection service...');
+    await cloudConnection.initialize();
+
+    // Initialize predictive cache
+    console.log('Initializing predictive cache...');
+    await predictiveCache.initialize();
+
+    // Initialize automated recovery manager
+    console.log('Initializing automated recovery manager...');
+    await automatedRecoveryManager.initialize();
+
+    // Initialize auto-sync manager
+    console.log('Initializing auto-sync manager...');
+    await autoSyncManager.initialize();
+
+    return true;
+  } catch (error) {
+    console.error('Error initializing edge application:', error);
+    return false;
+  }
+}
+
+// Handle online status change
+function handleOnlineStatus() {
+  console.log('Network status changed: Online');
+  isOnline = true;
+
+  // Update cloud connection status
+  cloudConnection.setNetworkStatus(true);
+
+  // Sync cached data with cloud
+  syncWithCloud.syncCachedData().catch(error => {
+    console.error('Error syncing cached data:', error);
+  });
+
+  // Connect to cloud WebSocket server
+  cloudConnection.connect().catch(error => {
+    console.error('Error connecting to cloud WebSocket server:', error);
+  });
+}
+
+// Handle offline status change
+function handleOfflineStatus() {
+  console.log('Network status changed: Offline');
+  isOnline = false;
+
+  // Update cloud connection status
+  cloudConnection.setNetworkStatus(false);
+}
+
+// WebSocket for real-time translation
+wss.on('connection', (ws) => {
+  console.log('WebSocket client connected');
+
+  // Send initial network status
+  ws.send(JSON.stringify({
+    type: 'network_status',
+    online: isOnline,
+    timestamp: new Date().toISOString()
+  }));
+
+  ws.on('message', async (message) => {
+    try {
+      const data = JSON.parse(message);
+
+      // Handle different message types
+      switch (data.type) {
+        case 'translate':
+          // Handle translation request
+          const result = await translateLocally(
+            data.text,
+            data.sourceLanguage,
+            data.targetLanguage,
+            data.context
+          );
+
+          // Send result back to client
+          ws.send(JSON.stringify({
+            type: 'translation_result',
+            requestId: data.requestId,
+            result,
+            timestamp: new Date().toISOString()
+          }));
+          break;
+
+        case 'ping':
+          // Handle ping request
+          ws.send(JSON.stringify({
+            type: 'pong',
+            timestamp: new Date().toISOString()
+          }));
+          break;
+
+        default:
+          console.warn('Unknown WebSocket message type:', data.type);
+          break;
+      }
+    } catch (error) {
+      console.error('Error processing WebSocket message:', error);
+
+      // Send error back to client
+      ws.send(JSON.stringify({
+        type: 'error',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  });
+
+  // Handle disconnection
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+  });
+});
+
+// Set up cloud connection event handlers
+cloudConnection.on('translation_request', async (message) => {
+  try {
+    console.log('Received translation request from cloud:', message.requestId);
+
+    // Process translation request
+    const result = await translateLocally(
+      message.text,
+      message.sourceLanguage,
+      message.targetLanguage,
+      message.context
+    );
+
+    // Send result back to cloud
+    cloudConnection.sendTranslationResult(message.requestId, result);
+  } catch (error) {
+    console.error('Error processing cloud translation request:', error);
+    cloudConnection.sendErrorReport('translation_error', error.message, {
+      requestId: message.requestId
+    });
+  }
+});
+
+// Start server
+server.listen(PORT, () => {
+  console.log(`Edge application server running on port ${PORT}`);
+  isInitialized = true;
+
+  // Get initial network status
+  const networkStatus = networkMonitor.getNetworkStatus();
+  isOnline = networkStatus.online;
+  console.log(`Initial network status: ${isOnline ? 'Online' : 'Offline'}`);
+
+  // Update cloud connection network status
+  cloudConnection.setNetworkStatus(isOnline);
+
+  // If online, sync with cloud and connect to cloud WebSocket
+  if (isOnline) {
+    syncWithCloud.syncCachedData();
+
+    // Connect to cloud WebSocket server
+    cloudConnection.connect().catch(error => {
+      console.error('Error connecting to cloud WebSocket server:', error);
+    });
+  }
+});
+
+// Initialize edge application
+initialize().then(success => {
+  if (!success) {
+    console.error('Failed to initialize edge application');
+  }
+});
+
+// Export app for testing
+module.exports = app;

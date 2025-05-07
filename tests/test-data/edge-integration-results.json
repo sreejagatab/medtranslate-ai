@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-05-07T08:11:34.059Z",
+  "config": {
+    "edgeUrl": "http://localhost:4000",
+    "backendUrl": "http://localhost:4001",
+    "testDataDir": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\tests\\test-data"
+  },
+  "results": {
+    "connection": false,
+    "offlineTranslation": false,
+    "queueAccumulation": false,
+    "synchronization": false,
+    "performanceComparison": false
+  }
+}

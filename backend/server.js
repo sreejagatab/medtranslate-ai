@@ -23,6 +23,10 @@ const monitoringRoutes = require('./routes/monitoring-routes');
 const medicalTerminologyRoutes = require('./routes/medicalTerminologyRoutes');
 const analyticsRoutes = require('./routes/analytics-routes');
 const feedbackRoutes = require('./routes/feedback-routes');
+const syncAnalyticsRoutes = require('./routes/sync-analytics-routes');
+const cacheStatusRoutes = require('./routes/cache-status');
+const systemStatusRoutes = require('./routes/system-status-routes');
+const healthCheckRoutes = require('./routes/health-check-routes');
 
 // Create Express app
 const app = express();
@@ -112,8 +116,20 @@ app.use('/api/medical-terminology', medicalTerminologyRoutes);
 // Analytics routes
 app.use('/api/analytics', analyticsRoutes);
 
+// Sync analytics routes
+app.use('/api/sync-analytics', syncAnalyticsRoutes);
+
+// Cache status routes
+app.use('/api/cache', cacheStatusRoutes);
+
+// System status routes
+app.use('/api/system', systemStatusRoutes);
+
 // Feedback routes
 app.use('/feedback', feedbackRoutes);
+
+// Health check routes
+app.use('/api/health', healthCheckRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -171,6 +187,34 @@ app.get('/', (req, res) => {
         '/api/analytics/connection/quality-trends',
         '/api/analytics/connection/issue-types'
       ],
+      syncAnalytics: [
+        '/api/sync-analytics/status',
+        '/api/sync-analytics/metrics',
+        '/api/sync-analytics/quality',
+        '/api/sync-analytics/trends',
+        '/api/sync-analytics/anomalies',
+        '/api/sync-analytics/manual-sync/:deviceId'
+      ],
+      cacheStatus: [
+        '/api/cache/status',
+        '/api/cache/metrics',
+        '/api/cache/optimize'
+      ],
+      systemStatus: [
+        '/api/system/cache/stats',
+        '/api/system/ml/performance',
+        '/api/system/ml/performance/history',
+        '/api/system/storage/info',
+        '/api/system/sync/status',
+        '/api/system/sync/history',
+        '/api/system/device/performance',
+        '/api/system/ml/train',
+        '/api/system/ml/configure',
+        '/api/system/storage/optimize',
+        '/api/system/sync/manual',
+        '/api/system/sync/toggle',
+        '/api/system/offline/prepare'
+      ],
       feedback: [
         '/feedback/submit',
         '/feedback/translation',
@@ -178,6 +222,11 @@ app.get('/', (req, res) => {
       ],
       system: [
         '/health'
+      ],
+      health: [
+        '/api/health',
+        '/api/health/components/:component',
+        '/api/health/history'
       ]
     }
   });

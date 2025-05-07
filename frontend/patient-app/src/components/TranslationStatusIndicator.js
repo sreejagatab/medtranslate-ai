@@ -60,6 +60,35 @@ const CONFIDENCE_DESCRIPTIONS = {
   [CONFIDENCE_LEVELS.LOW]: 'Low confidence indicates potential issues with the translation accuracy.'
 };
 
+// Context-specific confidence descriptions
+const CONTEXT_CONFIDENCE_DESCRIPTIONS = {
+  'general': {
+    [CONFIDENCE_LEVELS.HIGH]: 'High confidence indicates a reliable translation with high accuracy for general medical communication.',
+    [CONFIDENCE_LEVELS.MEDIUM]: 'Medium confidence suggests a generally accurate translation with possible minor issues in general medical terms.',
+    [CONFIDENCE_LEVELS.LOW]: 'Low confidence indicates potential issues with the translation accuracy of general medical information.'
+  },
+  'cardiology': {
+    [CONFIDENCE_LEVELS.HIGH]: 'High confidence indicates a reliable translation with high accuracy for cardiology terminology and concepts.',
+    [CONFIDENCE_LEVELS.MEDIUM]: 'Medium confidence suggests a generally accurate translation with possible minor issues in cardiology-specific terms.',
+    [CONFIDENCE_LEVELS.LOW]: 'Low confidence indicates potential issues with the translation accuracy of cardiology-specific information.'
+  },
+  'neurology': {
+    [CONFIDENCE_LEVELS.HIGH]: 'High confidence indicates a reliable translation with high accuracy for neurology terminology and concepts.',
+    [CONFIDENCE_LEVELS.MEDIUM]: 'Medium confidence suggests a generally accurate translation with possible minor issues in neurology-specific terms.',
+    [CONFIDENCE_LEVELS.LOW]: 'Low confidence indicates potential issues with the translation accuracy of neurology-specific information.'
+  },
+  'oncology': {
+    [CONFIDENCE_LEVELS.HIGH]: 'High confidence indicates a reliable translation with high accuracy for oncology terminology and concepts.',
+    [CONFIDENCE_LEVELS.MEDIUM]: 'Medium confidence suggests a generally accurate translation with possible minor issues in oncology-specific terms.',
+    [CONFIDENCE_LEVELS.LOW]: 'Low confidence indicates potential issues with the translation accuracy of oncology-specific information.'
+  },
+  'emergency': {
+    [CONFIDENCE_LEVELS.HIGH]: 'High confidence indicates a reliable translation with high accuracy for emergency medical terminology and concepts.',
+    [CONFIDENCE_LEVELS.MEDIUM]: 'Medium confidence suggests a generally accurate translation with possible minor issues in emergency-specific terms.',
+    [CONFIDENCE_LEVELS.LOW]: 'Low confidence indicates potential issues with the translation accuracy of emergency medical information.'
+  }
+};
+
 // Confidence factors
 const CONFIDENCE_FACTORS = {
   [CONFIDENCE_LEVELS.HIGH]: [
@@ -79,6 +108,78 @@ const CONFIDENCE_FACTORS = {
   ]
 };
 
+// Context-specific confidence factors
+const CONTEXT_CONFIDENCE_FACTORS = {
+  'cardiology': {
+    [CONFIDENCE_LEVELS.HIGH]: [
+      'Cardiac terminology correctly translated',
+      'Critical heart-related terms preserved',
+      'Appropriate medical context maintained'
+    ],
+    [CONFIDENCE_LEVELS.MEDIUM]: [
+      'Some cardiac terms may need verification',
+      'Check accuracy of heart condition descriptions',
+      'Verify medication dosages and instructions'
+    ],
+    [CONFIDENCE_LEVELS.LOW]: [
+      'Cardiac terminology may be inaccurate',
+      'Critical heart-related terms may be mistranslated',
+      'Consider requesting specialist verification'
+    ]
+  },
+  'neurology': {
+    [CONFIDENCE_LEVELS.HIGH]: [
+      'Neurological terminology correctly translated',
+      'Brain and nervous system terms preserved',
+      'Appropriate medical context maintained'
+    ],
+    [CONFIDENCE_LEVELS.MEDIUM]: [
+      'Some neurological terms may need verification',
+      'Check accuracy of neurological condition descriptions',
+      'Verify symptom descriptions and severity'
+    ],
+    [CONFIDENCE_LEVELS.LOW]: [
+      'Neurological terminology may be inaccurate',
+      'Critical nervous system terms may be mistranslated',
+      'Consider requesting specialist verification'
+    ]
+  },
+  'oncology': {
+    [CONFIDENCE_LEVELS.HIGH]: [
+      'Cancer-related terminology correctly translated',
+      'Treatment and staging terms preserved',
+      'Appropriate medical context maintained'
+    ],
+    [CONFIDENCE_LEVELS.MEDIUM]: [
+      'Some oncology terms may need verification',
+      'Check accuracy of cancer type and stage descriptions',
+      'Verify treatment options and side effects'
+    ],
+    [CONFIDENCE_LEVELS.LOW]: [
+      'Cancer-related terminology may be inaccurate',
+      'Critical oncology terms may be mistranslated',
+      'Consider requesting specialist verification'
+    ]
+  },
+  'emergency': {
+    [CONFIDENCE_LEVELS.HIGH]: [
+      'Emergency terminology correctly translated',
+      'Critical urgent care terms preserved',
+      'Time-sensitive instructions maintained'
+    ],
+    [CONFIDENCE_LEVELS.MEDIUM]: [
+      'Some emergency terms may need verification',
+      'Check accuracy of urgent care instructions',
+      'Verify symptom descriptions and severity'
+    ],
+    [CONFIDENCE_LEVELS.LOW]: [
+      'Emergency terminology may be inaccurate',
+      'Critical urgent care terms may be mistranslated',
+      'Consider requesting immediate human verification'
+    ]
+  }
+};
+
 export default function TranslationStatusIndicator({
   status = STATUS_TYPES.IDLE,
   confidence = null,
@@ -88,7 +189,9 @@ export default function TranslationStatusIndicator({
   processingTime = null,
   onRetry = null,
   showDetails = false,
-  translationModel = null
+  translationModel = null,
+  medicalContext = 'general',
+  adaptiveThresholds = null
 }) {
   // State for confidence info modal
   const [infoModalVisible, setInfoModalVisible] = useState(false);
@@ -205,10 +308,19 @@ export default function TranslationStatusIndicator({
     if (!confidence) return null;
 
     const color = CONFIDENCE_COLORS[confidence] || CONFIDENCE_COLORS.MEDIUM;
-    const description = CONFIDENCE_DESCRIPTIONS[confidence] || '';
+
+    // Get context-specific description if available, otherwise use general description
+    const description =
+      (CONTEXT_CONFIDENCE_DESCRIPTIONS[medicalContext] &&
+       CONTEXT_CONFIDENCE_DESCRIPTIONS[medicalContext][confidence]) ||
+      CONFIDENCE_DESCRIPTIONS[confidence] || '';
+
+    // Get context-specific factors if available, otherwise use provided factors or general factors
     const factors = confidenceFactors.length > 0
       ? confidenceFactors
-      : CONFIDENCE_FACTORS[confidence] || [];
+      : (CONTEXT_CONFIDENCE_FACTORS[medicalContext] &&
+         CONTEXT_CONFIDENCE_FACTORS[medicalContext][confidence]) ||
+        CONFIDENCE_FACTORS[confidence] || [];
 
     return (
       <Modal
@@ -222,6 +334,7 @@ export default function TranslationStatusIndicator({
             <View style={[styles.modalHeader, { backgroundColor: color }]}>
               <Text style={styles.modalTitle}>
                 {confidence.charAt(0).toUpperCase() + confidence.slice(1)} Confidence
+                {medicalContext !== 'general' && ` (${medicalContext.charAt(0).toUpperCase() + medicalContext.slice(1)})`}
               </Text>
               <TouchableOpacity
                 style={styles.closeButton}
@@ -247,6 +360,40 @@ export default function TranslationStatusIndicator({
                 </View>
               ))}
 
+              {adaptiveThresholds && (
+                <>
+                  <Text style={styles.modalSectionTitle}>Adaptive Thresholds:</Text>
+                  <View style={styles.thresholdsContainer}>
+                    <View style={styles.thresholdItem}>
+                      <Text style={styles.thresholdLabel}>High:</Text>
+                      <Text style={styles.thresholdValue}>{adaptiveThresholds.high}</Text>
+                    </View>
+                    <View style={styles.thresholdItem}>
+                      <Text style={styles.thresholdLabel}>Medium:</Text>
+                      <Text style={styles.thresholdValue}>{adaptiveThresholds.medium}</Text>
+                    </View>
+                    <View style={styles.thresholdItem}>
+                      <Text style={styles.thresholdLabel}>Low:</Text>
+                      <Text style={styles.thresholdValue}>{adaptiveThresholds.low}</Text>
+                    </View>
+                  </View>
+
+                  {adaptiveThresholds.analysis && (
+                    <View style={styles.analysisContainer}>
+                      <Text style={styles.analysisTitle}>Analysis Factors:</Text>
+                      {Object.entries(adaptiveThresholds.analysis).map(([key, value]) => (
+                        <View key={key} style={styles.analysisItem}>
+                          <Text style={styles.analysisLabel}>{key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}:</Text>
+                          <Text style={styles.analysisValue}>
+                            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </>
+              )}
+
               {translationModel && (
                 <>
                   <Text style={styles.modalSectionTitle}>Translation Model:</Text>
@@ -265,10 +412,10 @@ export default function TranslationStatusIndicator({
                 <Ionicons name="bulb" size={20} color="#FFC107" style={styles.tipIcon} />
                 <Text style={styles.tipText}>
                   {confidence === CONFIDENCE_LEVELS.HIGH
-                    ? 'This translation is highly reliable for medical communication.'
+                    ? `This translation is highly reliable for ${medicalContext} medical communication.`
                     : confidence === CONFIDENCE_LEVELS.MEDIUM
-                      ? 'Verify critical medical terms before making decisions.'
-                      : 'Consider requesting a new translation for critical information.'}
+                      ? `Verify critical ${medicalContext} terms before making decisions.`
+                      : `Consider requesting a new translation for critical ${medicalContext} information.`}
                 </Text>
               </View>
             </ScrollView>
@@ -371,8 +518,17 @@ export default function TranslationStatusIndicator({
               )}
 
               <View style={styles.factorsSummary}>
-                <Text style={styles.factorsSummaryTitle}>Key Factors:</Text>
-                {(confidenceFactors.length > 0 ? confidenceFactors : CONFIDENCE_FACTORS[confidence] || [])
+                <Text style={styles.factorsSummaryTitle}>
+                  Key Factors:
+                  {medicalContext !== 'general' &&
+                    <Text style={styles.contextLabel}> ({medicalContext.charAt(0).toUpperCase() + medicalContext.slice(1)})</Text>
+                  }
+                </Text>
+                {(confidenceFactors.length > 0
+                  ? confidenceFactors
+                  : (CONTEXT_CONFIDENCE_FACTORS[medicalContext] &&
+                     CONTEXT_CONFIDENCE_FACTORS[medicalContext][confidence]) ||
+                    CONFIDENCE_FACTORS[confidence] || [])
                   .slice(0, 2)
                   .map((factor, index) => (
                     <View key={index} style={styles.factorSummaryItem}>
@@ -385,6 +541,21 @@ export default function TranslationStatusIndicator({
                       <Text style={styles.factorSummaryText}>{factor}</Text>
                     </View>
                   ))}
+
+                {adaptiveThresholds && (
+                  <View style={styles.adaptiveIndicator}>
+                    <Ionicons
+                      name="analytics"
+                      size={14}
+                      color="#2196F3"
+                      style={styles.adaptiveIcon}
+                    />
+                    <Text style={styles.adaptiveText}>
+                      Using adaptive thresholds for {medicalContext} context
+                    </Text>
+                  </View>
+                )}
+
                 <TouchableOpacity
                   style={styles.viewMoreButton}
                   onPress={() => setInfoModalVisible(true)}
@@ -721,5 +892,77 @@ const styles = StyleSheet.create({
     color: '#333333',
     flex: 1,
     lineHeight: 20
+  },
+  // Adaptive thresholds styles
+  thresholdsContainer: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 12
+  },
+  thresholdItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6
+  },
+  thresholdLabel: {
+    fontSize: 14,
+    color: '#757575'
+  },
+  thresholdValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333'
+  },
+  analysisContainer: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 12
+  },
+  analysisTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#2196F3',
+    marginBottom: 8
+  },
+  analysisItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6
+  },
+  analysisLabel: {
+    fontSize: 13,
+    color: '#757575',
+    flex: 1
+  },
+  analysisValue: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#333333',
+    textAlign: 'right',
+    flex: 1
+  },
+  contextLabel: {
+    fontSize: 12,
+    color: '#757575',
+    fontStyle: 'italic'
+  },
+  adaptiveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    borderRadius: 4,
+    padding: 6,
+    marginTop: 8,
+    marginBottom: 8
+  },
+  adaptiveIcon: {
+    marginRight: 6
+  },
+  adaptiveText: {
+    fontSize: 12,
+    color: '#2196F3',
+    flex: 1
   }
 });

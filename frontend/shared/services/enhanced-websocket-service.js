@@ -895,82 +895,122 @@ class EnhancedWebSocketService {
       this._recordMetric('queue_messages_failed', failureCount);
     }
 
-    // Process offline queue if available
-    if (this.offlineQueueInitialized && this.sessionId) {
-      try {
-        // Get messages from offline queue
-        const offlineMessages = await offlineMessageQueue.getMessages(this.sessionId);
+    // Process offline queue
+    await this._processOfflineQueue();
+  }
 
-        if (offlineMessages.length > 0) {
-          this._log(`Processing offline queued messages`, {
-            queueLength: offlineMessages.length,
-            connectionState: this.connectionState,
-            sessionId: this.sessionId
-          }, 'info', 'queue');
+  /**
+   * Process offline message queue
+   *
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _processOfflineQueue() {
+    if (!this.isConnected() || !this.offlineQueueInitialized || !this.sessionId) {
+      return;
+    }
 
-          // Record queue processing metric
-          this._recordMetric('queue_processing_started', 1, {
-            queueSize: offlineMessages.length,
-            queueType: 'offline'
-          });
+    try {
+      // Get messages from offline queue
+      const offlineMessages = await offlineMessageQueue.getMessages(this.sessionId);
 
-          let successCount = 0;
-          let failureCount = 0;
-
-          // Process offline messages
-          for (const messageObj of offlineMessages) {
-            try {
-              // Send the message
-              this.socket.send(messageObj.message);
-
-              // Remove from offline queue on success
-              await offlineMessageQueue.removeMessage(messageObj.id);
-
-              successCount++;
-            } catch (error) {
-              // Increment attempt count
-              await offlineMessageQueue.incrementAttemptCount(messageObj.id);
-
-              failureCount++;
-              this._log('Error sending offline queued message', {
-                error: error.message,
-                messageId: messageObj.id,
-                attempts: messageObj.attempts + 1,
-                messagePreview: messageObj.message.substring(0, 100) + (messageObj.message.length > 100 ? '...' : '')
-              }, 'error', 'queue');
-            }
-          }
-
-          // Log results
-          this._log('Offline queue processing completed', {
-            total: offlineMessages.length,
-            success: successCount,
-            failure: failureCount,
-            sessionId: this.sessionId
-          }, 'info', 'queue');
-
-          // Record queue processing metrics
-          this._recordMetric('queue_processing_completed', 1, {
-            total: offlineMessages.length,
-            success: successCount,
-            failure: failureCount,
-            queueType: 'offline'
-          });
-          this._recordMetric('offline_queue_messages_sent', successCount);
-          this._recordMetric('offline_queue_messages_failed', failureCount);
-
-          // Get updated queue stats
-          const stats = await offlineMessageQueue.getStats();
-          this._recordMetric('offline_queue_size', stats.totalMessages);
-        }
-      } catch (error) {
-        this._log('Error processing offline queue', {
-          error: error.message,
+      if (offlineMessages.length > 0) {
+        this._log(`Processing offline queued messages`, {
+          queueLength: offlineMessages.length,
+          connectionState: this.connectionState,
           sessionId: this.sessionId
-        }, 'error', 'queue');
+        }, 'info', 'queue');
 
-        this._recordMetric('offline_queue_processing_error', 1);
+        // Record queue processing metric
+        this._recordMetric('queue_processing_started', 1, {
+          queueSize: offlineMessages.length,
+          queueType: 'offline'
+        });
+
+        let successCount = 0;
+        let failureCount = 0;
+
+        // Process offline messages
+        for (const messageObj of offlineMessages) {
+          try {
+            // Send the message
+            this.socket.send(messageObj.message);
+
+            // Remove from offline queue on success
+            await offlineMessageQueue.removeMessage(messageObj.id);
+
+            successCount++;
+
+            // Notify application about successful message delivery
+            this._notifyConnectionHandlers('onOfflineMessageSent', {
+              messageId: messageObj.id,
+              timestamp: Date.now(),
+              queuedAt: messageObj.timestamp,
+              deliveryDelay: Date.now() - messageObj.timestamp
+            });
+          } catch (error) {
+            // Increment attempt count
+            await offlineMessageQueue.incrementAttemptCount(messageObj.id);
+
+            failureCount++;
+            this._log('Error sending offline queued message', {
+              error: error.message,
+              messageId: messageObj.id,
+              attempts: messageObj.attempts + 1,
+              messagePreview: messageObj.message.substring(0, 100) + (messageObj.message.length > 100 ? '...' : '')
+            }, 'error', 'queue');
+
+            // Notify application about failed message delivery
+            this._notifyConnectionHandlers('onOfflineMessageFailed', {
+              messageId: messageObj.id,
+              error: error.message,
+              attempts: messageObj.attempts + 1
+            });
+          }
+        }
+
+        // Log results
+        this._log('Offline queue processing completed', {
+          total: offlineMessages.length,
+          success: successCount,
+          failure: failureCount,
+          sessionId: this.sessionId
+        }, 'info', 'queue');
+
+        // Record queue processing metrics
+        this._recordMetric('queue_processing_completed', 1, {
+          total: offlineMessages.length,
+          success: successCount,
+          failure: failureCount,
+          queueType: 'offline'
+        });
+        this._recordMetric('offline_queue_messages_sent', successCount);
+        this._recordMetric('offline_queue_messages_failed', failureCount);
+
+        // Get updated queue stats
+        const stats = await offlineMessageQueue.getStats();
+        this._recordMetric('offline_queue_size', stats.totalMessages);
+
+        // Notify application about queue processing completion
+        this._notifyConnectionHandlers('onOfflineQueueProcessed', {
+          total: offlineMessages.length,
+          success: successCount,
+          failure: failureCount,
+          remainingMessages: stats.totalMessages
+        });
       }
+    } catch (error) {
+      this._log('Error processing offline queue', {
+        error: error.message,
+        sessionId: this.sessionId
+      }, 'error', 'queue');
+
+      this._recordMetric('offline_queue_processing_error', 1);
+
+      // Notify application about queue processing error
+      this._notifyConnectionHandlers('onOfflineQueueError', {
+        error: error.message
+      });
     }
   }
 
@@ -1129,6 +1169,50 @@ class EnhancedWebSocketService {
   }
 
   /**
+   * Notify all connection handlers about an event
+   *
+   * @private
+   * @param {string} eventName - Event name
+   * @param {Object} data - Event data
+   */
+  _notifyConnectionHandlers(eventName, data = {}) {
+    this.connectionHandlers.forEach(handler => {
+      try {
+        if (typeof handler === 'function') {
+          // If handler is a function, call it with connection state and data
+          handler(this.connectionState, {
+            ...data,
+            state: this.connectionState,
+            reason: this.connectionStateReason,
+            timestamp: Date.now(),
+            sessionId: this.sessionId
+          });
+        } else if (handler && typeof handler[eventName] === 'function') {
+          // If handler is an object with the event method, call it with data
+          handler[eventName]({
+            ...data,
+            state: this.connectionState,
+            reason: this.connectionStateReason,
+            timestamp: Date.now(),
+            sessionId: this.sessionId
+          });
+        }
+      } catch (error) {
+        this._log(`Error in connection handler for event ${eventName}`, {
+          error: error.message,
+          handler: typeof handler,
+          eventName
+        }, 'error', 'handler');
+
+        this._recordMetric('handler_error', 1, {
+          eventName,
+          handlerType: typeof handler
+        });
+      }
+    });
+  }
+
+  /**
    * Attempt to reconnect to WebSocket server
    *
    * @private
@@ -1183,6 +1267,12 @@ class EnhancedWebSocketService {
 
       this._recordMetric('max_reconnect_attempts_reached', 1);
       this._updateConnectionState('failed', 'Max reconnect attempts reached');
+
+      // Notify application about max reconnect attempts reached
+      this._notifyConnectionHandlers('onMaxReconnectAttemptsReached', {
+        attempts: this.reconnectAttempts,
+        max: this.maxReconnectAttempts
+      });
 
       // Emit a custom event for max reconnect attempts reached
       if (typeof window !== 'undefined' && window.dispatchEvent) {
@@ -1582,6 +1672,12 @@ class EnhancedWebSocketService {
       online: this.networkOnline
     });
 
+    // Notify application about network status change
+    this._notifyConnectionHandlers('onNetworkStatusChange', {
+      online: this.networkOnline,
+      timestamp: Date.now()
+    });
+
     // If network is back online
     if (this.networkOnline) {
       // Trigger network quality measurement
@@ -1592,6 +1688,12 @@ class EnhancedWebSocketService {
               quality: measurement.networkQuality,
               metrics: measurement.metrics
             }, 'info', 'network');
+
+            // Notify application about network quality measurement
+            this._notifyConnectionHandlers('onNetworkQualityMeasured', {
+              quality: measurement.networkQuality,
+              metrics: measurement.metrics
+            });
           }
         })
         .catch(error => {

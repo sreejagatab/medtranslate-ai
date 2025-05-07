@@ -1,0 +1,72 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd backend && npm ci
+        cd ../frontend/admin-dashboard && npm ci
+
+    - name: Run backend unit tests
+      run: cd backend && npm test -- --testPathPattern=tests/unit/sync-analytics-controller.test.js
+
+    - name: Run backend integration tests
+      run: cd backend && npm test -- --testPathPattern=tests/integration/sync-analytics-websocket.test.js
+
+    - name: Run frontend component tests
+      run: cd frontend/admin-dashboard && npm test -- --testPathPattern=src/components/__tests__/SyncAnalyticsDashboard.test.js
+
+    - name: Run end-to-end tests
+      uses: cypress-io/github-action@v5
+      with:
+        working-directory: frontend/admin-dashboard
+        build: npm run build
+        start: npm start
+        wait-on: 'http://localhost:3000'
+        spec: cypress/e2e/sync-analytics.cy.js
+
+    - name: Run visual regression tests
+      uses: cypress-io/github-action@v5
+      with:
+        working-directory: frontend/admin-dashboard
+        spec: cypress/e2e/visual-regression.cy.js
+        install: false
+
+    - name: Run accessibility tests
+      uses: cypress-io/github-action@v5
+      with:
+        working-directory: frontend/admin-dashboard
+        spec: cypress/e2e/accessibility.cy.js
+        install: false
+        reporter: json
+        reporter-options: "output=cypress/results/accessibility-results.json"
+
+    - name: Generate accessibility report
+      run: cd frontend/admin-dashboard && node generate-a11y-report.js
+
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-artifacts
+        path: |
+          frontend/admin-dashboard/cypress/screenshots
+          frontend/admin-dashboard/reports

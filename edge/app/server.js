@@ -17,6 +17,13 @@ const networkMonitor = require('./network-monitor');
 const cloudConnection = require('./cloud-connection');
 const predictiveCache = require('./predictive-cache');
 const automatedRecoveryManager = require('./automated-recovery-manager');
+const autoSyncManager = require('./auto-sync-manager');
+const syncAnalyticsRoutes = require('./routes/sync-analytics-routes');
+const systemStatusRoutes = require('./routes/system-status-routes');
+
+// Initialize performance metrics service
+const performanceMetricsService = require('./services/performance-metrics-service');
+performanceMetricsService.startMetricsRecording();
 
 // Initialize express app
 const app = express();
@@ -44,28 +51,72 @@ app.use((req, res, next) => {
   next();
 });
 
+// Use sync analytics routes
+app.use('/sync', syncAnalyticsRoutes);
+
+// Use system status routes
+app.use('/api', systemStatusRoutes);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  const networkStatus = networkMonitor.getNetworkStatus();
+  try {
+    const networkStatus = networkMonitor.getNetworkStatus();
+    const syncStatus = syncWithCloud.getSyncStatus();
+    const cacheStats = cacheManager.getCacheStats();
 
-  res.json({
-    status: 'healthy',
-    onlineStatus: isOnline ? 'connected' : 'offline',
-    initialized: isInitialized,
-    modelStatus: isInitialized ? 'loaded' : 'loading',
-    supportedLanguagePairs,
-    deviceId: DEVICE_ID,
-    version: VERSION,
-    timestamp: new Date().toISOString(),
-    network: {
-      online: networkStatus.online,
-      lastOnlineTime: networkStatus.lastOnlineTime ? new Date(networkStatus.lastOnlineTime).toISOString() : null,
-      lastOfflineTime: networkStatus.lastOfflineTime ? new Date(networkStatus.lastOfflineTime).toISOString() : null,
-      reconnecting: networkStatus.reconnecting,
-      connectionAttempts: networkStatus.connectionAttempts
-    },
-    cache: cacheManager.getCacheStats()
-  });
+    // Get predictive cache stats if available
+    let predictiveCacheStats = {};
+    try {
+      predictiveCacheStats = predictiveCache.getUsageStats();
+    } catch (error) {
+      console.warn('Error getting predictive cache stats:', error.message);
+    }
+
+    // Get auto-sync manager status if available
+    let autoSyncStatus = {};
+    try {
+      if (autoSyncManager && typeof autoSyncManager.getStatus === 'function') {
+        autoSyncStatus = autoSyncManager.getStatus();
+      }
+    } catch (error) {
+      console.warn('Error getting auto-sync manager status:', error.message);
+    }
+
+    res.json({
+      status: 'healthy',
+      onlineStatus: isOnline ? 'connected' : 'offline',
+      initialized: isInitialized,
+      modelStatus: isInitialized ? 'loaded' : 'loading',
+      supportedLanguagePairs,
+      deviceId: DEVICE_ID,
+      version: VERSION,
+      timestamp: new Date().toISOString(),
+      network: {
+        online: networkStatus.online,
+        lastOnlineTime: networkStatus.lastOnlineTime ? new Date(networkStatus.lastOnlineTime).toISOString() : null,
+        lastOfflineTime: networkStatus.lastOfflineTime ? new Date(networkStatus.lastOfflineTime).toISOString() : null,
+        reconnecting: networkStatus.reconnecting,
+        connectionAttempts: networkStatus.connectionAttempts
+      },
+      sync: {
+        enabled: syncStatus.enabled,
+        inProgress: syncStatus.inProgress,
+        lastSyncTime: syncStatus.lastSyncTime ? new Date(syncStatus.lastSyncTime).toISOString() : null,
+        lastSyncStatus: syncStatus.lastSyncStatus,
+        queueSize: syncStatus.queueSize || 0
+      },
+      cache: cacheStats,
+      predictiveCache: predictiveCacheStats,
+      autoSync: autoSyncStatus
+    });
+  } catch (error) {
+    console.error('Error in health check endpoint:', error);
+    res.status(500).json({
+      status: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Translation endpoint
@@ -424,10 +475,59 @@ app.post('/network/reconnect', (req, res) => {
 });
 
 app.get('/sync/status', (req, res) => {
-  res.json({
-    ...syncWithCloud.getSyncStatus(),
-    isOnline
-  });
+  try {
+    const syncStatus = syncWithCloud.getSyncStatus();
+    const networkStatus = networkMonitor.getNetworkStatus();
+
+    // Get auto-sync manager status if available
+    let autoSyncStatus = {};
+    try {
+      if (autoSyncManager && typeof autoSyncManager.getStatus === 'function') {
+        autoSyncStatus = autoSyncManager.getStatus();
+      }
+    } catch (error) {
+      console.warn('Error getting auto-sync manager status:', error.message);
+    }
+
+    // Check connection to backend
+    let connected = false;
+    if (isOnline) {
+      try {
+        // Use a non-blocking check to avoid hanging the request
+        syncWithCloud.testConnection()
+          .then(connectionStatus => {
+            // This will happen after the response is sent, but we'll update the internal state
+            connected = connectionStatus.connected;
+          })
+          .catch(error => {
+            console.error('Error testing connection in sync status endpoint:', error);
+          });
+      } catch (error) {
+        console.error('Error testing connection in sync status endpoint:', error);
+      }
+    }
+
+    res.json({
+      ...syncStatus,
+      isOnline,
+      connected,
+      network: {
+        online: networkStatus.online,
+        lastOnlineTime: networkStatus.lastOnlineTime ? new Date(networkStatus.lastOnlineTime).toISOString() : null,
+        lastOfflineTime: networkStatus.lastOfflineTime ? new Date(networkStatus.lastOfflineTime).toISOString() : null,
+        reconnecting: networkStatus.reconnecting,
+        connectionAttempts: networkStatus.connectionAttempts
+      },
+      autoSync: autoSyncStatus,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error in sync status endpoint:', error);
+    res.status(500).json({
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 app.post('/sync/force', async (req, res) => {
@@ -437,6 +537,31 @@ app.post('/sync/force', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       error: error.message
+    });
+  }
+});
+
+// Get sync queue
+app.get('/sync/queue', (req, res) => {
+  try {
+    // Load sync queue
+    syncWithCloud.loadSyncQueue();
+
+    // Get queue status
+    const queueStatus = syncWithCloud.getSyncQueueStatus();
+
+    res.json({
+      success: true,
+      queueSize: queueStatus.queueSize,
+      queueItems: queueStatus.queueItems,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting sync queue:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -659,6 +784,15 @@ async function startServer() {
       console.log(`Adaptive recovery: ${recoveryResult.adaptiveEnabled ? 'Enabled' : 'Disabled'}`);
     } else {
       console.error('Failed to initialize automated recovery manager:', recoveryResult.error);
+    }
+
+    // Initialize auto-sync manager
+    console.log('Initializing auto-sync manager...');
+    const autoSyncResult = await autoSyncManager.initialize();
+    if (autoSyncResult.success) {
+      console.log('Auto-sync manager initialized successfully');
+    } else {
+      console.error('Failed to initialize auto-sync manager:', autoSyncResult.error);
     }
 
     // Set up cloud connection event handlers

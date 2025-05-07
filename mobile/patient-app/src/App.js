@@ -31,6 +31,7 @@ import NotificationsScreen from './screens/NotificationsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import OfflineQueueScreen from './screens/OfflineQueueScreen';
 import EdgeDeviceScreen from './screens/EdgeDeviceScreen';
+import SystemStatusScreen from './screens/SystemStatusScreen';
 
 // Create navigators
 const Stack = createStackNavigator();
@@ -144,6 +145,8 @@ export default function App() {
             iconName = focused ? 'cloud-offline' : 'cloud-offline-outline';
           } else if (route.name === 'EdgeDevice') {
             iconName = focused ? 'wifi' : 'wifi-outline';
+          } else if (route.name === 'SystemStatus') {
+            iconName = focused ? 'speedometer' : 'speedometer-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -174,6 +177,11 @@ export default function App() {
         name="EdgeDevice"
         component={EdgeDeviceScreen}
         options={{ headerShown: false, title: 'Edge Device' }}
+      />
+      <Tab.Screen
+        name="SystemStatus"
+        component={SystemStatusScreen}
+        options={{ headerShown: false, title: 'System Status' }}
       />
       <Tab.Screen
         name="Settings"

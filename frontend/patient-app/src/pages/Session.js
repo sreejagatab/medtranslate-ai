@@ -31,6 +31,7 @@ import {
   VolumeOff as VolumeOffIcon
 } from '@mui/icons-material';
 import { API_URL, WS_URL, LANGUAGES } from '../config';
+import OfflineStatusIndicator from '../components/OfflineStatusIndicator';
 
 /**
  * Patient session page
@@ -38,7 +39,7 @@ import { API_URL, WS_URL, LANGUAGES } from '../config';
 const Session = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  
+
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -49,23 +50,23 @@ const Session = () => {
   const [micActive, setMicActive] = useState(false);
   const [speakerActive, setSpeakerActive] = useState(true);
   const [patientLanguage, setPatientLanguage] = useState('');
-  
+
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
-  
+
   // Initialize session
   useEffect(() => {
     const token = localStorage.getItem('patientToken');
     const language = localStorage.getItem('language');
-    
+
     if (!token || !sessionId) {
       navigate('/');
       return;
     }
-    
+
     setPatientLanguage(language);
     initializeWebSocket(token);
-    
+
     return () => {
       // Clean up WebSocket connection
       if (ws.current) {
@@ -73,12 +74,12 @@ const Session = () => {
       }
     };
   }, [sessionId]);
-  
+
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
+
   /**
    * Initialize WebSocket connection
    */
@@ -87,34 +88,34 @@ const Session = () => {
     if (ws.current) {
       ws.current.close();
     }
-    
+
     // Create new WebSocket connection
     ws.current = new WebSocket(`${WS_URL}/${sessionId}?token=${token}`);
-    
+
     // Connection opened
     ws.current.addEventListener('open', (event) => {
       console.log('WebSocket connection established');
       setConnected(true);
       setLoading(false);
-      
+
       // Join session
       ws.current.send(JSON.stringify({
         type: 'join_session',
         sessionId
       }));
     });
-    
+
     // Listen for messages
     ws.current.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
       handleWebSocketMessage(data);
     });
-    
+
     // Connection closed
     ws.current.addEventListener('close', (event) => {
       console.log('WebSocket connection closed');
       setConnected(false);
-      
+
       // Try to reconnect after a delay
       setTimeout(() => {
         if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
@@ -122,14 +123,14 @@ const Session = () => {
         }
       }, 3000);
     });
-    
+
     // Connection error
     ws.current.addEventListener('error', (event) => {
       console.error('WebSocket error:', event);
       setError('Connection error. Trying to reconnect...');
     });
   };
-  
+
   /**
    * Handle WebSocket messages
    */
@@ -138,82 +139,82 @@ const Session = () => {
       case 'connected':
         console.log('Connected to session:', data);
         break;
-      
+
       case 'session_joined':
         console.log('Joined session:', data);
         setParticipants(data.participants);
         break;
-      
+
       case 'participant_joined':
         console.log('Participant joined:', data);
         setParticipants(prev => [...prev, data.participant]);
-        
+
         // Add system message
         addSystemMessage(`${data.participant.userName} joined the session`);
         break;
-      
+
       case 'participant_left':
         console.log('Participant left:', data);
-        setParticipants(prev => 
+        setParticipants(prev =>
           prev.filter(p => p.userId !== data.participant.userId)
         );
-        
+
         // Add system message
         addSystemMessage(`${data.participant.userName} left the session`);
         break;
-      
+
       case 'message':
         console.log('Received message:', data);
         setMessages(prev => [...prev, data.message]);
-        
+
         // Read message aloud if speaker is active and message is from provider
         if (speakerActive && data.message.senderType === 'provider') {
           speakText(data.message.text);
         }
         break;
-      
+
       case 'translation':
         console.log('Received translation:', data);
-        
+
         // Update message with translation
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === data.messageId 
-              ? { ...msg, translation: data.translation } 
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === data.messageId
+              ? { ...msg, translation: data.translation }
               : msg
           )
         );
-        
+
         // Read translation aloud if speaker is active and original message is from provider
         const originalMessage = messages.find(msg => msg.id === data.messageId);
         if (speakerActive && originalMessage?.senderType === 'provider') {
           speakText(data.translation.text);
         }
         break;
-      
+
       case 'session_closed':
         console.log('Session closed:', data);
-        
+
         // Add system message
         addSystemMessage(`Session ended: ${data.reason}`);
-        
+
         // Redirect to home after a delay
         setTimeout(() => {
           navigate('/');
         }, 3000);
         break;
-      
+
       case 'error':
         console.error('WebSocket error:', data);
         setError(data.error || 'An error occurred');
         break;
-      
+
       default:
         console.log('Unknown message type:', data);
         break;
     }
   };
-  
+
   /**
    * Add a system message
    */
@@ -224,10 +225,10 @@ const Session = () => {
       timestamp: new Date().toISOString(),
       isSystem: true
     };
-    
+
     setMessages(prev => [...prev, systemMessage]);
   };
-  
+
   /**
    * Send a message
    */
@@ -235,7 +236,7 @@ const Session = () => {
     if (!inputText.trim() || !connected) {
       return;
     }
-    
+
     // Create message object
     const message = {
       type: 'message',
@@ -243,14 +244,14 @@ const Session = () => {
       text: inputText,
       targetLanguage: 'en' // Provider language is English
     };
-    
+
     // Send message
     ws.current.send(JSON.stringify(message));
-    
+
     // Clear input
     setInputText('');
   };
-  
+
   /**
    * Handle input key press
    */
@@ -260,7 +261,7 @@ const Session = () => {
       sendMessage();
     }
   };
-  
+
   /**
    * Leave the session
    */
@@ -269,29 +270,29 @@ const Session = () => {
     if (ws.current) {
       ws.current.close();
     }
-    
+
     // Clear session data
     localStorage.removeItem('patientToken');
     localStorage.removeItem('sessionId');
     localStorage.removeItem('language');
-    
+
     // Redirect to home
     navigate('/');
   };
-  
+
   /**
    * Scroll to bottom of messages
    */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   /**
    * Toggle microphone
    */
   const toggleMicrophone = () => {
     setMicActive(!micActive);
-    
+
     if (!micActive) {
       // Start speech recognition
       startSpeechRecognition();
@@ -300,20 +301,20 @@ const Session = () => {
       stopSpeechRecognition();
     }
   };
-  
+
   /**
    * Start speech recognition
    */
   const startSpeechRecognition = () => {
     // This would be implemented with the Web Speech API
     console.log('Starting speech recognition');
-    
+
     // Mock implementation
     setTimeout(() => {
       setInputText(prev => prev + ' This is a simulated speech recognition result.');
     }, 3000);
   };
-  
+
   /**
    * Stop speech recognition
    */
@@ -321,21 +322,21 @@ const Session = () => {
     // This would be implemented with the Web Speech API
     console.log('Stopping speech recognition');
   };
-  
+
   /**
    * Toggle speaker
    */
   const toggleSpeaker = () => {
     setSpeakerActive(!speakerActive);
   };
-  
+
   /**
    * Speak text using text-to-speech
    */
   const speakText = (text) => {
     // This would be implemented with the Web Speech API
     console.log('Speaking text:', text);
-    
+
     // Mock implementation
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -343,7 +344,7 @@ const Session = () => {
       window.speechSynthesis.speak(utterance);
     }
   };
-  
+
   /**
    * Format date for display
    */
@@ -351,7 +352,7 @@ const Session = () => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-  
+
   /**
    * Get language name from code
    */
@@ -359,17 +360,17 @@ const Session = () => {
     const language = LANGUAGES.find(lang => lang.code === code);
     return language ? language.name : code;
   };
-  
+
   /**
    * Get user ID from localStorage
    */
   const getUserId = () => {
     const token = localStorage.getItem('patientToken');
-    
+
     if (!token) {
       return null;
     }
-    
+
     try {
       // Decode JWT token (this is a simplified version)
       const base64Url = token.split('.')[1];
@@ -377,16 +378,16 @@ const Session = () => {
       const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
-      
+
       return JSON.parse(jsonPayload).sub;
     } catch (error) {
       console.error('Error decoding token:', error);
       return null;
     }
   };
-  
+
   const userId = getUserId();
-  
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Header */}
@@ -395,13 +396,13 @@ const Session = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             MedTranslate AI - Patient View
           </Typography>
-          
+
           {patientLanguage && (
             <Typography variant="body1" sx={{ mr: 2 }}>
               Language: {getLanguageName(patientLanguage)}
             </Typography>
           )}
-          
+
           <Button
             variant="contained"
             color="error"
@@ -412,9 +413,14 @@ const Session = () => {
           </Button>
         </Toolbar>
       </AppBar>
-      
+
+      {/* Connection Status */}
+      <Box sx={{ p: 2, pb: 0 }}>
+        <OfflineStatusIndicator />
+      </Box>
+
       {/* Main content */}
-      <Box sx={{ flexGrow: 1, overflow: 'hidden', p: 2 }}>
+      <Box sx={{ flexGrow: 1, overflow: 'hidden', p: 2, pt: 1 }}>
         <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
@@ -455,7 +461,7 @@ const Session = () => {
                         </Avatar>
                       </ListItemAvatar>
                     )}
-                    
+
                     <ListItemText
                       primary={
                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -469,7 +475,7 @@ const Session = () => {
                               {message.senderName}
                             </Typography>
                           )}
-                          
+
                           <Paper
                             elevation={1}
                             sx={{
@@ -493,7 +499,7 @@ const Session = () => {
                                 ? message.translation.text
                                 : message.text}
                             </Typography>
-                            
+
                             {message.translation && message.senderType !== 'provider' && (
                               <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
                                 <Typography variant="body2" color="textSecondary">
@@ -526,7 +532,7 @@ const Session = () => {
               </List>
             </Box>
           )}
-          
+
           {/* Input area */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton
@@ -535,14 +541,14 @@ const Session = () => {
             >
               {micActive ? <MicIcon /> : <MicOffIcon />}
             </IconButton>
-            
+
             <IconButton
               color={speakerActive ? 'primary' : 'default'}
               onClick={toggleSpeaker}
             >
               {speakerActive ? <VolumeUpIcon /> : <VolumeOffIcon />}
             </IconButton>
-            
+
             <TextField
               fullWidth
               variant="outlined"
@@ -553,7 +559,7 @@ const Session = () => {
               disabled={!connected}
               sx={{ mx: 1 }}
             />
-            
+
             <Button
               variant="contained"
               color="primary"
@@ -566,25 +572,25 @@ const Session = () => {
           </Box>
         </Paper>
       </Box>
-      
+
       {/* Leave Session Dialog */}
       <Dialog
         open={openLeaveDialog}
         onClose={() => setOpenLeaveDialog(false)}
       >
         <DialogTitle>Leave Translation Session</DialogTitle>
-        
+
         <DialogContent>
           <DialogContentText>
             Are you sure you want to leave this translation session? You will need a new session code to rejoin.
           </DialogContentText>
         </DialogContent>
-        
+
         <DialogActions>
           <Button onClick={() => setOpenLeaveDialog(false)}>
             Cancel
           </Button>
-          
+
           <Button
             onClick={leaveSession}
             color="error"

@@ -1,0 +1,76 @@
+{
+  "success": true,
+  "devices": [
+    {
+      "deviceId": "edge-device-1",
+      "deviceName": "Hospital Wing A",
+      "anomalies": {
+        "anomalyHistory": [
+          {
+            "timestamp": 1746135909337,
+            "type": "confidence_drop",
+            "value": 0.75,
+            "threshold": 0.85,
+            "severity": "high",
+            "context": "cardiology",
+            "model": "claude-3-sonnet"
+          },
+          {
+            "timestamp": 1746136909337,
+            "type": "feedback_negative_spike",
+            "value": 0.25,
+            "threshold": 0.15,
+            "severity": "medium",
+            "context": "general",
+            "model": "claude-3-haiku"
+          }
+        ],
+        "anomalyDetection": {
+          "confidenceThreshold": 0.2,
+          "feedbackThreshold": 0.3,
+          "lastAnalysisTime": 1746138009497,
+          "baselineConfidence": 0.92,
+          "baselineFeedback": 0.95
+        }
+      },
+      "online": true,
+      "lastUpdated": "2023-05-01T12:00:00.000Z"
+    },
+    {
+      "deviceId": "edge-device-2",
+      "deviceName": "Hospital Wing B",
+      "anomalies": {
+        "anomalyHistory": [
+          {
+            "timestamp": 1746134909337,
+            "type": "sync_failure_rate_increase",
+            "value": 0.15,
+            "threshold": 0.10,
+            "severity": "medium",
+            "context": "neurology",
+            "model": "claude-3-sonnet"
+          },
+          {
+            "timestamp": 1746135909337,
+            "type": "latency_spike",
+            "value": 2500,
+            "threshold": 2000,
+            "severity": "low",
+            "context": "general",
+            "model": "claude-3-haiku"
+          }
+        ],
+        "anomalyDetection": {
+          "confidenceThreshold": 0.2,
+          "feedbackThreshold": 0.3,
+          "lastAnalysisTime": 1746137009497,
+          "baselineConfidence": 0.90,
+          "baselineFeedback": 0.93
+        }
+      },
+      "online": true,
+      "lastUpdated": "2023-05-01T12:00:00.000Z"
+    }
+  ],
+  "timestamp": "2023-05-01T12:00:00.000Z"
+}

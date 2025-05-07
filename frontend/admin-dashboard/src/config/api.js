@@ -13,7 +13,7 @@ export const API_ENDPOINTS = {
     REGISTER: `${API_BASE_URL}/auth/register`,
     VERIFY: `${API_BASE_URL}/auth/verify`
   },
-  
+
   // User endpoints
   USERS: {
     LIST: `${API_BASE_URL}/users`,
@@ -22,7 +22,7 @@ export const API_ENDPOINTS = {
     UPDATE: (userId) => `${API_BASE_URL}/users/${userId}`,
     DELETE: (userId) => `${API_BASE_URL}/users/${userId}`
   },
-  
+
   // Session endpoints
   SESSIONS: {
     LIST: `${API_BASE_URL}/sessions`,
@@ -30,13 +30,13 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/sessions`,
     END: (sessionId) => `${API_BASE_URL}/sessions/${sessionId}/end`
   },
-  
+
   // Storage endpoints
   STORAGE: {
     TRANSCRIPT: `${API_BASE_URL}/storage/transcript`,
     SESSION_DATA: (sessionId) => `${API_BASE_URL}/storage/sessions/${sessionId}`
   },
-  
+
   // Monitoring endpoints
   MONITORING: {
     HEALTH: `${API_BASE_URL}/monitoring/health`,
@@ -45,10 +45,20 @@ export const API_ENDPOINTS = {
     ALERTS: `${API_BASE_URL}/monitoring/alerts`,
     UPDATE_ALERT: (alertId) => `${API_BASE_URL}/monitoring/alerts/${alertId}`
   },
-  
+
   // System endpoints
   SYSTEM: {
     HEALTH: `${API_BASE_URL}/health`
+  },
+
+  // Sync analytics endpoints
+  SYNC_ANALYTICS: {
+    STATUS: `${API_BASE_URL}/api/sync-analytics/status`,
+    METRICS: `${API_BASE_URL}/api/sync-analytics/metrics`,
+    QUALITY: `${API_BASE_URL}/api/sync-analytics/quality`,
+    TRENDS: `${API_BASE_URL}/api/sync-analytics/trends`,
+    ANOMALIES: `${API_BASE_URL}/api/sync-analytics/anomalies`,
+    MANUAL_SYNC: `${API_BASE_URL}/api/sync-analytics/manual-sync`
   }
 };
 
@@ -60,27 +70,27 @@ export const apiRequest = async (url, options = {}) => {
       'Content-Type': 'application/json',
       ...options.headers
     };
-    
+
     // Add auth token if available
     const token = localStorage.getItem('medtranslate_admin_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     // Make request
     const response = await fetch(url, {
       ...options,
       headers
     });
-    
+
     // Parse response
     const data = await response.json();
-    
+
     // Handle error responses
     if (!response.ok) {
       throw new Error(data.message || 'API request failed');
     }
-    
+
     return data;
   } catch (error) {
     console.error(`API request failed: ${url}`, error);

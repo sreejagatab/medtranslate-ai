@@ -140,7 +140,8 @@ export default function TranslationSessionScreen({ navigation, route }) {
           sender: message.sender.type,
           senderName: message.sender.name,
           timestamp: new Date(message.timestamp),
-          confidence: message.confidence
+          confidence: message.confidence,
+          adaptiveThresholds: message.adaptiveThresholds
         });
       });
 
@@ -357,6 +358,7 @@ export default function TranslationSessionScreen({ navigation, route }) {
         sourceLanguage: selectedLanguage.code,
         targetLanguage: 'en',
         confidence: translationResult.confidence,
+        adaptiveThresholds: translationResult.adaptiveThresholds,
         timestamp: new Date().toISOString()
       });
 
@@ -364,6 +366,13 @@ export default function TranslationSessionScreen({ navigation, route }) {
       setTranslationStatus('completed');
       setTranslationProgress(1.0);
       setTranslationConfidence(translationResult.confidence || 'medium');
+
+      // Store adaptive thresholds if available
+      if (translationResult.adaptiveThresholds) {
+        updateMessage(patientMessageId, {
+          adaptiveThresholds: translationResult.adaptiveThresholds
+        });
+      }
 
       // Play the translation audio if available
       if (translationResult.audioResponse) {
@@ -561,6 +570,9 @@ export default function TranslationSessionScreen({ navigation, route }) {
         progress={translationProgress}
         onRetry={translationStatus === 'error' ? () => setTranslationStatus('idle') : null}
         showDetails={translationStatus === 'error' || translationStatus === 'completed'}
+        medicalContext={medicalContext || 'general'}
+        adaptiveThresholds={translationStatus === 'completed' && messages.length > 0 ?
+          messages[messages.length - 1].adaptiveThresholds : null}
       />
 
       {/* Controls */}

@@ -1,0 +1,366 @@
+
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MedTranslate AI Localization Test Report</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+          }
+          h1, h2, h3 {
+            color: #0077CC;
+          }
+          .summary {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+          }
+          .summary-item {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+          }
+          .complete {
+            background-color: #DFF0D8;
+            color: #3C763D;
+          }
+          .incomplete {
+            background-color: #F2DEDE;
+            color: #A94442;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+          }
+          th {
+            background-color: #f5f5f5;
+          }
+          .progress-bar {
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            height: 20px;
+            width: 100%;
+          }
+          .progress {
+            background-color: #0077CC;
+            border-radius: 4px;
+            height: 20px;
+          }
+          .rtl {
+            background-color: #FCF8E3;
+          }
+          .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+          }
+          .screenshot-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+          }
+          .screenshot-item img {
+            width: 100%;
+            height: auto;
+          }
+          .screenshot-caption {
+            padding: 10px;
+            background-color: #f5f5f5;
+            text-align: center;
+          }
+          .issue-list {
+            list-style-type: none;
+            padding: 0;
+          }
+          .issue-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #F2DEDE;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>MedTranslate AI Localization Test Report</h1>
+        <p>Generated: 07/05/2025, 09:12:54</p>
+        
+        <h2>Translation Files Analysis</h2>
+        <div class="summary">
+          <div class="summary-item">
+            <h3>Total Languages</h3>
+            <p>12</p>
+          </div>
+          <div class="summary-item">
+            <h3>Total Keys</h3>
+            <p>447</p>
+          </div>
+          <div class="summary-item incomplete">
+            <h3>Complete Languages</h3>
+            <p>2 / 12</p>
+          </div>
+        </div>
+        
+        <h3>Language Completeness</h3>
+        <table>
+          <tr>
+            <th>Language</th>
+            <th>Native Name</th>
+            <th>RTL</th>
+            <th>Exists</th>
+            <th>Keys</th>
+            <th>Missing</th>
+            <th>Completeness</th>
+          </tr>
+    
+        <tr >
+          <td>English (en)</td>
+          <td>English</td>
+          <td>No</td>
+          <td>Yes</td>
+          <td>447 / 447</td>
+          <td>0</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 100%"></div>
+            </div>
+            100%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Spanish (es)</td>
+          <td>Español</td>
+          <td>No</td>
+          <td>Yes</td>
+          <td>447 / 447</td>
+          <td>0</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 100%"></div>
+            </div>
+            100%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>French (fr)</td>
+          <td>Français</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>German (de)</td>
+          <td>Deutsch</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Chinese (Simplified) (zh)</td>
+          <td>中文</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr class="rtl">
+          <td>Arabic (ar)</td>
+          <td>العربية</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Russian (ru)</td>
+          <td>Русский</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Portuguese (pt)</td>
+          <td>Português</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Japanese (ja)</td>
+          <td>日本語</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Korean (ko)</td>
+          <td>한국어</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Hindi (hi)</td>
+          <td>हिन्दी</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      
+        <tr >
+          <td>Italian (it)</td>
+          <td>Italiano</td>
+          <td>No</td>
+          <td>No</td>
+          <td>0 / 447</td>
+          <td>447</td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress" style="width: 0%"></div>
+            </div>
+            0%
+          </td>
+        </tr>
+      </table><h3>Missing Keys</h3>
+        <h4>French (fr) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>German (de) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Chinese (Simplified) (zh) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Arabic (ar) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Russian (ru) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Portuguese (pt) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Japanese (ja) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Korean (ko) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Hindi (hi) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+        <h4>Italian (it) - 447 missing keys</h4>
+        <ul>
+      <li>common.app_name</li><li>common.loading</li><li>common.error</li><li>common.success</li><li>common.cancel</li><li>common.ok</li><li>common.yes</li><li>common.no</li><li>common.save</li><li>common.delete</li><li>common.edit</li><li>common.back</li><li>common.next</li><li>common.previous</li><li>common.continue</li><li>common.retry</li><li>common.submit</li><li>common.search</li><li>common.filter</li><li>common.sort</li><li>... and 427 more</li></ul>
+      <h2>Screenshots</h2>
+      <p>Screenshots were taken for each language and screen to verify the UI adaptation.</p>
+    
+        <h2>RTL Layout Testing</h2>
+        <p>Testing the right-to-left layout for RTL languages.</p>
+      <h3>Arabic (ar)</h3><ul class="issue-list">
+              <li class="issue-item">
+                <strong>Login:</strong> Error: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login?lang=ar
+              </li>
+            
+              <li class="issue-item">
+                <strong>Dashboard:</strong> Error: net::ERR_CONNECTION_REFUSED at http://localhost:3000/dashboard?lang=ar
+              </li>
+            
+              <li class="issue-item">
+                <strong>Translation:</strong> Error: net::ERR_CONNECTION_REFUSED at http://localhost:3000/translation?lang=ar
+              </li>
+            
+              <li class="issue-item">
+                <strong>Settings:</strong> Error: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings?lang=ar
+              </li>
+            
+              <li class="issue-item">
+                <strong>Profile:</strong> Error: net::ERR_CONNECTION_REFUSED at http://localhost:3000/profile?lang=ar
+              </li>
+            </ul>
+      </body>
+      </html>
+    

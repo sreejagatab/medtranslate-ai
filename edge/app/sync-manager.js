@@ -232,6 +232,8 @@ async function syncWithCloud() {
 
 /**
  * Load sync queue from files
+ *
+ * @returns {Object} - Load result
  */
 function loadSyncQueue() {
   try {
@@ -254,8 +256,63 @@ function loadSyncQueue() {
     }
 
     console.log(`Loaded ${syncQueue.length} items from sync queue`);
+
+    return {
+      success: true,
+      queueSize: syncQueue.length
+    };
   } catch (error) {
     console.error('Error loading sync queue:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Get sync queue status
+ *
+ * @returns {Object} - Queue status
+ */
+function getSyncQueueStatus() {
+  try {
+    // Group queue items by type
+    const queueItemsByType = {};
+
+    for (const item of syncQueue) {
+      const type = item.type || 'unknown';
+
+      if (!queueItemsByType[type]) {
+        queueItemsByType[type] = [];
+      }
+
+      queueItemsByType[type].push({
+        id: item.id,
+        timestamp: item.timestamp,
+        type: item.type
+      });
+    }
+
+    return {
+      queueSize: syncQueue.length,
+      queueTypes: Object.keys(queueItemsByType),
+      queueItemsByType,
+      queueItems: syncQueue.map(item => ({
+        id: item.id,
+        timestamp: item.timestamp,
+        type: item.type
+      }))
+    };
+  } catch (error) {
+    console.error('Error getting sync queue status:', error);
+    return {
+      queueSize: 0,
+      queueTypes: [],
+      queueItemsByType: {},
+      queueItems: [],
+      error: error.message
+    };
   }
 }
 
@@ -671,5 +728,7 @@ module.exports = {
   setSyncEnabled,
   clearSyncQueue,
   testConnection,
-  syncMedicalTerminology
+  syncMedicalTerminology,
+  loadSyncQueue,
+  getSyncQueueStatus
 };

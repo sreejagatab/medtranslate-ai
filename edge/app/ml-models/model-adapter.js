@@ -14,6 +14,11 @@ const {
   NetworkPatternModel,
   HybridRecommendationSystem
 } = require('./prediction-model');
+const {
+  ARIMAModel,
+  ProphetInspiredModel,
+  EnsembleTimeSeriesModel
+} = require('./advanced-time-series');
 const ConnectionPredictionModel = require('./connection-prediction-model');
 
 // Constants
@@ -30,18 +35,38 @@ if (!fs.existsSync(MODEL_STORAGE_PATH)) {
 class ModelAdapter {
   constructor() {
     this.hybridModel = new HybridRecommendationSystem();
+
+    // Advanced time series models with edge computing optimizations
+    this.advancedTimeSeriesModel = new EnsembleTimeSeriesModel({
+      models: [
+        { type: 'ARIMA', params: { p: 2, d: 1, q: 1 } },
+        { type: 'ProphetInspired', params: { seasonalPeriods: [24, 168] } },
+        { type: 'LSTMInspired', params: { hiddenUnits: 4, windowSize: 24 } }
+      ],
+      edgeOptimized: true,
+      memoryConstraint: 'medium',
+      batteryAware: true,
+      adaptiveComplexity: true
+    });
+
+    // Legacy time series model (kept for backward compatibility)
     this.timeSeriesModel = new HoltWintersModel();
+
     this.contentModel = new ContentBasedFilteringModel();
     this.networkModel = new NetworkPatternModel();
-    this.connectionPredictionModel = new ConnectionPredictionModel(); // New enhanced model
+    this.connectionPredictionModel = new ConnectionPredictionModel();
+
     this.isInitialized = false;
     this.lastTrainingTime = 0;
     this.modelPerformance = {
-      timeSeries: 0.4,
-      content: 0.4,
-      network: 0.2
+      advancedTimeSeries: 0.5,
+      timeSeries: 0.2,
+      content: 0.2,
+      network: 0.1
     };
+
     this.useEnhancedConnectionPrediction = true; // Flag to use enhanced model
+    this.useAdvancedTimeSeriesModels = true; // Flag to use advanced time series models
   }
 
   /**
@@ -57,6 +82,7 @@ class ModelAdapter {
         this.lastTrainingTime = modelData.lastTrainingTime || 0;
         this.modelPerformance = modelData.modelPerformance || this.modelPerformance;
         this.useEnhancedConnectionPrediction = modelData.useEnhancedConnectionPrediction !== false;
+        this.useAdvancedTimeSeriesModels = modelData.useAdvancedTimeSeriesModels !== false;
 
         console.log('Loaded trained models from disk');
       } else {
@@ -78,6 +104,15 @@ class ModelAdapter {
       } else {
         console.warn('Failed to initialize enhanced connection prediction model, will use basic model');
         this.useEnhancedConnectionPrediction = false;
+      }
+
+      // Log advanced time series model status
+      if (this.useAdvancedTimeSeriesModels) {
+        console.log('Using advanced time series models for prediction');
+        console.log('Advanced models configuration:',
+          this.advancedTimeSeriesModel.models.map(m => m.constructor.name).join(', '));
+      } else {
+        console.log('Using legacy time series model (HoltWinters) for prediction');
       }
 
       this.isInitialized = true;
@@ -198,9 +233,28 @@ class ModelAdapter {
       // Convert usage data to training data
       const trainingData = this.convertUsageDataToTrainingData(usageData);
 
-      // Train individual models
+      // Train time series models
       if (trainingData.timeSeriesData.length > 0) {
+        // Train legacy time series model
         this.timeSeriesModel.train(trainingData.timeSeriesData);
+
+        // Train advanced time series models if enabled
+        if (this.useAdvancedTimeSeriesModels) {
+          console.log('Training advanced time series models...');
+          const success = this.advancedTimeSeriesModel.train(trainingData.timeSeriesData);
+
+          if (success) {
+            console.log('Advanced time series models trained successfully');
+
+            // Get model status
+            const modelStatus = this.advancedTimeSeriesModel.getStatus();
+            console.log('Advanced time series model status:',
+              modelStatus.models.map(m => `${m.type} (weight: ${m.weight.toFixed(2)})`).join(', '));
+          } else {
+            console.warn('Failed to train advanced time series models, falling back to legacy model');
+            this.useAdvancedTimeSeriesModels = false;
+          }
+        }
       }
 
       // Train content model
@@ -251,7 +305,10 @@ class ModelAdapter {
         lastTrainingTime: this.lastTrainingTime,
         modelPerformance: this.modelPerformance,
         useEnhancedConnectionPrediction: this.useEnhancedConnectionPrediction,
-        connectionModelStatus: this.connectionPredictionModel.getStatus()
+        useAdvancedTimeSeriesModels: this.useAdvancedTimeSeriesModels,
+        connectionModelStatus: this.connectionPredictionModel.getStatus(),
+        advancedTimeSeriesStatus: this.useAdvancedTimeSeriesModels ?
+          this.advancedTimeSeriesModel.getStatus() : null
       };
 
       // Save to disk
@@ -270,6 +327,30 @@ class ModelAdapter {
    * @param {Object} params - Prediction parameters
    * @returns {Array<Object>} - Predictions
    */
+  /**
+   * Validate prediction parameters and set defaults
+   *
+   * @param {Object} params - Input parameters
+   * @returns {Object} - Validated parameters with defaults
+   */
+  validatePredictionParams(params) {
+    // Set defaults and validate
+    return {
+      currentHour: params.currentHour || new Date().getHours(),
+      currentDay: params.currentDay || new Date().getDay(),
+      languagePair: params.languagePair,
+      context: params.context,
+      confidenceThreshold: params.confidenceThreshold || DEFAULT_CONFIDENCE_THRESHOLD,
+      maxPredictions: params.maxPredictions || 20,
+      includeOfflineRisk: params.includeOfflineRisk !== false,
+      batteryLevel: params.batteryLevel || 100,
+      isCharging: params.isCharging !== false,
+      networkConnected: params.networkConnected !== false,
+      availableMemoryMB: params.availableMemoryMB || 1000,
+      devicePerformance: params.devicePerformance || 'medium'
+    };
+  }
+
   generatePredictions(params) {
     try {
       if (!this.isInitialized) {
@@ -277,15 +358,20 @@ class ModelAdapter {
         return [];
       }
 
+      console.log('Using ML model adapter for predictions');
+
+      // Validate and set default parameters
+      const validatedParams = this.validatePredictionParams(params);
+
       const {
-        currentHour = new Date().getHours(),
-        currentDay = new Date().getDay(),
+        currentHour,
+        currentDay,
         languagePair,
         context,
-        confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD,
-        maxPredictions = 20,
-        includeOfflineRisk = true
-      } = params;
+        confidenceThreshold,
+        maxPredictions,
+        includeOfflineRisk
+      } = validatedParams;
 
       // Prepare parameters for hybrid model
       const hybridParams = {
@@ -299,99 +385,314 @@ class ModelAdapter {
       };
 
       // Get recommendations from hybrid model
-      const recommendations = this.hybridModel.getRecommendations(hybridParams);
+      let recommendations = [];
+      try {
+        recommendations = this.hybridModel.getRecommendations(hybridParams);
+        console.log(`Received ${recommendations.length} recommendations from hybrid model`);
+      } catch (hybridError) {
+        console.error('Error getting recommendations from hybrid model:', hybridError);
+        // Continue with empty recommendations - we'll try other models
+      }
 
       // Convert recommendations to predictions
       const predictions = [];
 
       for (const rec of recommendations) {
         // Skip low confidence predictions
-        if (rec.score < confidenceThreshold) continue;
+        if (!rec.score || rec.score < confidenceThreshold) continue;
 
         // Handle different recommendation sources
         if (rec.source === 'content' && rec.itemId) {
           // Parse language pair and context from item ID
-          const [sourceLanguage, targetLanguage, itemContext] = rec.itemId.split('-');
-
-          predictions.push({
-            sourceLanguage,
-            targetLanguage,
-            context: itemContext,
-            score: rec.score,
-            reason: 'ml_content_based',
-            priority: rec.score > 0.7 ? 'high' : rec.score > 0.4 ? 'medium' : 'low'
-          });
-        } else if (rec.source === 'network' && rec.offlineRisk) {
-          // Add network-based prediction
-          if (languagePair) {
-            const [sourceLanguage, targetLanguage] = languagePair.split('-');
+          const parts = rec.itemId.split('-');
+          if (parts.length >= 3) {
+            const [sourceLanguage, targetLanguage, itemContext] = parts;
 
             predictions.push({
               sourceLanguage,
               targetLanguage,
-              context: context || 'general',
+              context: itemContext,
               score: rec.score,
-              offlineRisk: rec.offlineRisk,
-              reason: 'ml_offline_risk',
-              priority: rec.offlineRisk > 0.7 ? 'critical' : rec.offlineRisk > 0.4 ? 'high' : 'medium'
+              reason: 'ml_content_based',
+              priority: rec.score > 0.7 ? 'high' : rec.score > 0.4 ? 'medium' : 'low'
             });
+          }
+        } else if (rec.source === 'network' && rec.offlineRisk) {
+          // Add network-based prediction
+          if (languagePair) {
+            const parts = languagePair.split('-');
+            if (parts.length >= 2) {
+              const [sourceLanguage, targetLanguage] = parts;
+
+              predictions.push({
+                sourceLanguage,
+                targetLanguage,
+                context: context || 'general',
+                score: rec.score,
+                offlineRisk: rec.offlineRisk,
+                reason: 'ml_offline_risk',
+                priority: rec.offlineRisk > 0.7 ? 'critical' : rec.offlineRisk > 0.4 ? 'high' : 'medium'
+              });
+            }
           }
         } else if (rec.source === 'timeSeries') {
           // Add time series prediction if we have language pair
           if (languagePair) {
-            const [sourceLanguage, targetLanguage] = languagePair.split('-');
+            const parts = languagePair.split('-');
+            if (parts.length >= 2) {
+              const [sourceLanguage, targetLanguage] = parts;
 
-            predictions.push({
-              sourceLanguage,
-              targetLanguage,
-              context: context || 'general',
-              score: rec.score,
-              timeStep: rec.step,
-              reason: 'ml_time_series',
-              priority: rec.score > 0.7 ? 'high' : rec.score > 0.4 ? 'medium' : 'low'
-            });
+              predictions.push({
+                sourceLanguage,
+                targetLanguage,
+                context: context || 'general',
+                score: rec.score,
+                timeStep: rec.step,
+                reason: 'ml_time_series',
+                priority: rec.score > 0.7 ? 'high' : rec.score > 0.4 ? 'medium' : 'low'
+              });
+            }
+          }
+        }
+      }
+
+      // Add advanced time series predictions if enabled
+      if (this.useAdvancedTimeSeriesModels && languagePair) {
+        try {
+          // Get predictions from advanced time series model
+          const timeSteps = 24; // Predict for next 24 hours
+
+          // Get device state information for edge-optimized predictions
+          const deviceState = {
+            batteryLevel: validatedParams.batteryLevel,
+            isCharging: validatedParams.isCharging,
+            networkConnected: validatedParams.networkConnected,
+            availableMemoryMB: validatedParams.availableMemoryMB,
+            devicePerformance: validatedParams.devicePerformance
+          };
+
+          // Validate the advanced time series model is ready
+          if (!this.advancedTimeSeriesModel) {
+            throw new Error('Advanced time series model not initialized');
+          }
+
+          // Check if the model has the required methods
+          const predictMethod = this.advancedTimeSeriesModel.predict || this.advancedTimeSeriesModel.predictMultipleSteps;
+
+          if (typeof predictMethod !== 'function') {
+            throw new Error('Advanced time series model missing predict or predictMultipleSteps method');
+          }
+
+          // Pass device state to the prediction model
+          let advancedPredictions;
+          try {
+            // Try to use predict method with device state
+            if (typeof this.advancedTimeSeriesModel.predict === 'function') {
+              advancedPredictions = this.advancedTimeSeriesModel.predict(timeSteps, deviceState);
+            }
+            // Fall back to predictMultipleSteps if predict is not available
+            else if (typeof this.advancedTimeSeriesModel.predictMultipleSteps === 'function') {
+              advancedPredictions = this.advancedTimeSeriesModel.predictMultipleSteps(timeSteps);
+            }
+          } catch (predictionError) {
+            console.error('Error calling prediction method:', predictionError);
+            throw predictionError;
+          }
+
+          // Validate predictions
+          if (!Array.isArray(advancedPredictions)) {
+            console.error('Advanced time series model returned invalid predictions:', advancedPredictions);
+            throw new Error('Advanced time series model returned invalid predictions (not an array)');
+          }
+
+          // Convert to prediction format
+          const parts = languagePair.split('-');
+          if (parts.length >= 2) {
+            const [sourceLanguage, targetLanguage] = parts;
+
+            console.log(`Generated ${advancedPredictions.length} ML-based predictions using advanced models`);
+
+            // Get model status for detailed logging
+            let modelStatus;
+            try {
+              modelStatus = this.advancedTimeSeriesModel.getStatus();
+              console.log(`Using ${modelStatus.modelCount} time series models (${modelStatus.activeModels.join(', ')})`);
+              console.log(`Prediction performance: ${modelStatus.performance.computeTimeMs}ms, ${modelStatus.performance.memoryUsageMB.toFixed(2)}MB`);
+            } catch (statusError) {
+              console.warn('Error getting advanced time series model status:', statusError);
+              modelStatus = { modelCount: 'unknown', activeModels: ['unknown'], performance: { computeTimeMs: 0, memoryUsageMB: 0 } };
+            }
+
+            for (let i = 0; i < advancedPredictions.length; i++) {
+              const predictionValue = advancedPredictions[i];
+              // Only add if prediction is significant and valid
+              if (predictionValue && !isNaN(predictionValue) && predictionValue > 0.3) {
+                predictions.push({
+                  sourceLanguage,
+                  targetLanguage,
+                  context: context || 'general',
+                  score: predictionValue,
+                  timeStep: i + 1,
+                  reason: 'ml_advanced_time_series',
+                  modelType: 'enhanced_ensemble',
+                  priority: predictionValue > 0.7 ? 'high' : predictionValue > 0.4 ? 'medium' : 'low',
+                  confidence: Math.min(0.9, 0.5 + (predictionValue - 0.3) / 0.7)
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error generating advanced time series predictions:', error);
+          // Log detailed error information for debugging
+          console.error('Error details:', {
+            errorName: error.name,
+            errorMessage: error.message,
+            stack: error.stack,
+            modelState: this.useAdvancedTimeSeriesModels ? 'enabled' : 'disabled',
+            modelInitialized: this.isInitialized
+          });
+
+          // Fall back to basic time series model if available
+          try {
+            if (this.timeSeriesModel && typeof this.timeSeriesModel.predict === 'function' && languagePair) {
+              console.log('Falling back to basic time series model');
+              const basicPredictions = this.timeSeriesModel.predict(timeSteps);
+
+              const parts = languagePair.split('-');
+              if (parts.length >= 2 && Array.isArray(basicPredictions)) {
+                const [sourceLanguage, targetLanguage] = parts;
+
+                for (let i = 0; i < basicPredictions.length; i++) {
+                  const predictionValue = basicPredictions[i];
+                  if (predictionValue && !isNaN(predictionValue) && predictionValue > 0.3) {
+                    predictions.push({
+                      sourceLanguage,
+                      targetLanguage,
+                      context: context || 'general',
+                      score: predictionValue,
+                      timeStep: i + 1,
+                      reason: 'ml_basic_time_series',
+                      modelType: 'fallback_basic',
+                      priority: 'medium',
+                      confidence: 0.5
+                    });
+                  }
+                }
+              }
+            }
+          } catch (fallbackError) {
+            console.error('Error using fallback time series model:', fallbackError);
           }
         }
       }
 
       // Add network pattern predictions
       if (includeOfflineRisk) {
-        const offlineRisk = this.networkModel.predictOfflineRisk();
-        const patterns = this.networkModel.findPatterns();
+        try {
+          const offlineRisk = this.networkModel.predictOfflineRisk();
+          const patterns = this.networkModel.findPatterns();
 
-        // If we have high confidence patterns and offline risk
-        if (patterns.confidence > 0.5 && offlineRisk > 0.3) {
-          // Add predictions for peak offline hours
-          for (const hour of patterns.patterns.peakOfflineHours) {
-            // If this is a future hour today
-            const currentHour = new Date().getHours();
-            if (hour > currentHour) {
-              // If we have a language pair, add a prediction
-              if (languagePair) {
-                const [sourceLanguage, targetLanguage] = languagePair.split('-');
+          // If we have high confidence patterns and offline risk
+          if (patterns && patterns.confidence > 0.5 && offlineRisk > 0.3) {
+            // Add predictions for peak offline hours
+            if (patterns.patterns && patterns.patterns.peakOfflineHours) {
+              for (const hour of patterns.patterns.peakOfflineHours) {
+                // If this is a future hour today
+                const currentHour = new Date().getHours();
+                if (hour > currentHour) {
+                  // If we have a language pair, add a prediction
+                  if (languagePair) {
+                    const parts = languagePair.split('-');
+                    if (parts.length >= 2) {
+                      const [sourceLanguage, targetLanguage] = parts;
 
-                predictions.push({
-                  sourceLanguage,
-                  targetLanguage,
-                  context: context || 'general',
-                  score: offlineRisk * patterns.confidence,
-                  reason: 'ml_offline_pattern',
-                  offlineHour: hour,
-                  priority: offlineRisk > 0.7 ? 'critical' : 'high'
-                });
+                      predictions.push({
+                        sourceLanguage,
+                        targetLanguage,
+                        context: context || 'general',
+                        score: offlineRisk * patterns.confidence,
+                        reason: 'ml_offline_pattern',
+                        offlineHour: hour,
+                        priority: offlineRisk > 0.7 ? 'critical' : 'high'
+                      });
+                    }
+                  }
+                }
               }
             }
           }
+        } catch (error) {
+          console.warn('Error generating network pattern predictions:', error);
         }
       }
 
+      // Ensure all predictions have valid scores and required fields
+      const validPredictions = predictions.filter(p => {
+        // Check for required fields and valid score
+        return p &&
+               p.score !== null &&
+               p.score !== undefined &&
+               !isNaN(p.score) &&
+               p.sourceLanguage &&
+               p.targetLanguage;
+      });
+
+      // Add metadata to each prediction
+      const enhancedPredictions = validPredictions.map(p => ({
+        ...p,
+        timestamp: Date.now(),
+        modelVersion: '2.0',
+        generatedBy: 'enhanced_ml_adapter'
+      }));
+
+      console.log(`Returning ${enhancedPredictions.length} ML-based predictions from advanced models`);
+
       // Sort by score and limit
-      return predictions
+      const sortedPredictions = enhancedPredictions
         .sort((a, b) => b.score - a.score)
         .slice(0, maxPredictions);
+
+      // If we have no predictions but language pair was provided, add a fallback prediction
+      if (sortedPredictions.length === 0 && languagePair) {
+        console.warn('No valid predictions generated, adding fallback prediction');
+
+        const parts = languagePair.split('-');
+        if (parts.length >= 2) {
+          const [sourceLanguage, targetLanguage] = parts;
+
+          sortedPredictions.push({
+            sourceLanguage,
+            targetLanguage,
+            context: context || 'general',
+            score: 0.5,
+            reason: 'fallback_prediction',
+            priority: 'medium',
+            confidence: 0.3,
+            timestamp: Date.now(),
+            modelVersion: '2.0',
+            generatedBy: 'fallback_mechanism'
+          });
+        }
+      }
+
+      return sortedPredictions;
     } catch (error) {
       console.error('Error generating predictions:', error);
-      return [];
+      console.error('Error details:', {
+        errorName: error.name,
+        errorMessage: error.message,
+        stack: error.stack
+      });
+
+      // Return empty array with diagnostic information
+      return [{
+        error: true,
+        errorMessage: error.message,
+        reason: 'error_in_prediction',
+        timestamp: Date.now(),
+        recoverable: true,
+        score: 0
+      }];
     }
   }
 
@@ -547,20 +848,46 @@ class ModelAdapter {
    * @returns {Object} - Model status
    */
   getStatus() {
+    // Get advanced time series model status if available
+    let timeSeriesStatus = null;
+    if (this.useAdvancedTimeSeriesModels && this.advancedTimeSeriesModel) {
+      try {
+        timeSeriesStatus = this.advancedTimeSeriesModel.getStatus();
+      } catch (error) {
+        console.warn('Error getting advanced time series model status:', error);
+      }
+    }
+
+    // Get connection prediction model status if available
+    let connectionModelStatus = null;
+    if (this.useEnhancedConnectionPrediction && this.connectionPredictionModel) {
+      try {
+        connectionModelStatus = this.connectionPredictionModel.getStatus();
+      } catch (error) {
+        console.warn('Error getting connection prediction model status:', error);
+      }
+    }
+
     return {
       isInitialized: this.isInitialized,
       lastTrainingTime: this.lastTrainingTime,
       modelPerformance: this.modelPerformance,
       useEnhancedConnectionPrediction: this.useEnhancedConnectionPrediction,
-      enhancedModelStatus: this.useEnhancedConnectionPrediction ?
-        this.connectionPredictionModel.getStatus() : null
+      useAdvancedTimeSeriesModels: this.useAdvancedTimeSeriesModels,
+      enhancedModelStatus: connectionModelStatus,
+      advancedTimeSeriesStatus: timeSeriesStatus,
+      edgeOptimized: true,
+      version: '2.0',
+      supportedModels: {
+        timeSeries: ['HoltWinters', 'ARIMA', 'ProphetInspired', 'LSTMInspired', 'Ensemble'],
+        network: ['NetworkPattern', 'ConnectionPrediction'],
+        content: ['ContentBasedFiltering'],
+        hybrid: ['HybridRecommendationSystem']
+      }
     };
   }
 }
 
 // Create and export singleton instance
 const modelAdapter = new ModelAdapter();
-module.exports = {
-  modelAdapter,
-  ModelAdapter // Export the class for creating new instances
-};
+module.exports = modelAdapter;

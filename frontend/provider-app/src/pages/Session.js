@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { API_URL, WS_URL, LANGUAGES } from '../config';
+import OfflineStatusIndicator from '../components/OfflineStatusIndicator';
 
 /**
  * Translation session page
@@ -45,7 +46,7 @@ const Session = () => {
   const { sessionId } = useParams();
   const { user, token } = useAuth();
   const navigate = useNavigate();
-  
+
   const [session, setSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -57,15 +58,15 @@ const Session = () => {
   const [endingSession, setEndingSession] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const [speakerActive, setSpeakerActive] = useState(true);
-  
+
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
-  
+
   // Initialize session
   useEffect(() => {
     fetchSessionDetails();
     initializeWebSocket();
-    
+
     return () => {
       // Clean up WebSocket connection
       if (ws.current) {
@@ -73,12 +74,12 @@ const Session = () => {
       }
     };
   }, [sessionId, token]);
-  
+
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
+
   /**
    * Fetch session details
    */
@@ -86,7 +87,7 @@ const Session = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       // This would be a real API call in production
       // For now, we'll use mock data
       const mockSession = {
@@ -97,7 +98,7 @@ const Session = () => {
         status: 'active',
         sessionCode: '123456'
       };
-      
+
       setSession(mockSession);
     } catch (err) {
       setError('Failed to load session details. Please try again.');
@@ -106,7 +107,7 @@ const Session = () => {
       setLoading(false);
     }
   };
-  
+
   /**
    * Initialize WebSocket connection
    */
@@ -115,33 +116,33 @@ const Session = () => {
     if (ws.current) {
       ws.current.close();
     }
-    
+
     // Create new WebSocket connection
     ws.current = new WebSocket(`${WS_URL}/${sessionId}?token=${token}`);
-    
+
     // Connection opened
     ws.current.addEventListener('open', (event) => {
       console.log('WebSocket connection established');
       setConnected(true);
-      
+
       // Join session
       ws.current.send(JSON.stringify({
         type: 'join_session',
         sessionId
       }));
     });
-    
+
     // Listen for messages
     ws.current.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
       handleWebSocketMessage(data);
     });
-    
+
     // Connection closed
     ws.current.addEventListener('close', (event) => {
       console.log('WebSocket connection closed');
       setConnected(false);
-      
+
       // Try to reconnect after a delay
       setTimeout(() => {
         if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
@@ -149,14 +150,14 @@ const Session = () => {
         }
       }, 3000);
     });
-    
+
     // Connection error
     ws.current.addEventListener('error', (event) => {
       console.error('WebSocket error:', event);
       setError('Connection error. Trying to reconnect...');
     });
   };
-  
+
   /**
    * Handle WebSocket messages
    */
@@ -165,76 +166,76 @@ const Session = () => {
       case 'connected':
         console.log('Connected to session:', data);
         break;
-      
+
       case 'session_joined':
         console.log('Joined session:', data);
         setParticipants(data.participants);
         break;
-      
+
       case 'participant_joined':
         console.log('Participant joined:', data);
         setParticipants(prev => [...prev, data.participant]);
-        
+
         // Add system message
         addSystemMessage(`${data.participant.userName} joined the session`);
         break;
-      
+
       case 'participant_left':
         console.log('Participant left:', data);
-        setParticipants(prev => 
+        setParticipants(prev =>
           prev.filter(p => p.userId !== data.participant.userId)
         );
-        
+
         // Add system message
         addSystemMessage(`${data.participant.userName} left the session`);
         break;
-      
+
       case 'message':
         console.log('Received message:', data);
         setMessages(prev => [...prev, data.message]);
-        
+
         // Read message aloud if speaker is active and message is from patient
         if (speakerActive && data.message.senderType === 'patient') {
           speakText(data.message.text);
         }
         break;
-      
+
       case 'translation':
         console.log('Received translation:', data);
-        
+
         // Update message with translation
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === data.messageId 
-              ? { ...msg, translation: data.translation } 
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === data.messageId
+              ? { ...msg, translation: data.translation }
               : msg
           )
         );
         break;
-      
+
       case 'session_closed':
         console.log('Session closed:', data);
-        
+
         // Add system message
         addSystemMessage(`Session ended: ${data.reason}`);
-        
+
         // Redirect to dashboard after a delay
         setTimeout(() => {
           navigate('/dashboard');
         }, 3000);
         break;
-      
+
       case 'error':
         console.error('WebSocket error:', data);
         setError(data.error || 'An error occurred');
         break;
-      
+
       default:
         console.log('Unknown message type:', data);
         break;
     }
   };
-  
+
   /**
    * Add a system message
    */
@@ -245,10 +246,10 @@ const Session = () => {
       timestamp: new Date().toISOString(),
       isSystem: true
     };
-    
+
     setMessages(prev => [...prev, systemMessage]);
   };
-  
+
   /**
    * Send a message
    */
@@ -256,7 +257,7 @@ const Session = () => {
     if (!inputText.trim() || !connected) {
       return;
     }
-    
+
     // Create message object
     const message = {
       type: 'message',
@@ -264,14 +265,14 @@ const Session = () => {
       text: inputText,
       targetLanguage: session?.patientLanguage
     };
-    
+
     // Send message
     ws.current.send(JSON.stringify(message));
-    
+
     // Clear input
     setInputText('');
   };
-  
+
   /**
    * Handle input key press
    */
@@ -281,14 +282,14 @@ const Session = () => {
       sendMessage();
     }
   };
-  
+
   /**
    * End the session
    */
   const endSession = async () => {
     try {
       setEndingSession(true);
-      
+
       // Call API to end session
       const response = await fetch(`${API_URL}/auth/sessions/${sessionId}/end`, {
         method: 'POST',
@@ -297,18 +298,18 @@ const Session = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Failed to end session');
       }
-      
+
       // Close WebSocket connection
       if (ws.current) {
         ws.current.close();
       }
-      
+
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (err) {
@@ -319,7 +320,7 @@ const Session = () => {
       setOpenEndDialog(false);
     }
   };
-  
+
   /**
    * Copy session code to clipboard
    */
@@ -328,20 +329,20 @@ const Session = () => {
       navigator.clipboard.writeText(session.sessionCode);
     }
   };
-  
+
   /**
    * Scroll to bottom of messages
    */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   /**
    * Toggle microphone
    */
   const toggleMicrophone = () => {
     setMicActive(!micActive);
-    
+
     if (!micActive) {
       // Start speech recognition
       startSpeechRecognition();
@@ -350,20 +351,20 @@ const Session = () => {
       stopSpeechRecognition();
     }
   };
-  
+
   /**
    * Start speech recognition
    */
   const startSpeechRecognition = () => {
     // This would be implemented with the Web Speech API
     console.log('Starting speech recognition');
-    
+
     // Mock implementation
     setTimeout(() => {
       setInputText(prev => prev + ' This is a simulated speech recognition result.');
     }, 3000);
   };
-  
+
   /**
    * Stop speech recognition
    */
@@ -371,21 +372,21 @@ const Session = () => {
     // This would be implemented with the Web Speech API
     console.log('Stopping speech recognition');
   };
-  
+
   /**
    * Toggle speaker
    */
   const toggleSpeaker = () => {
     setSpeakerActive(!speakerActive);
   };
-  
+
   /**
    * Speak text using text-to-speech
    */
   const speakText = (text) => {
     // This would be implemented with the Web Speech API
     console.log('Speaking text:', text);
-    
+
     // Mock implementation
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -393,7 +394,7 @@ const Session = () => {
       window.speechSynthesis.speak(utterance);
     }
   };
-  
+
   /**
    * Format date for display
    */
@@ -401,7 +402,7 @@ const Session = () => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-  
+
   /**
    * Get language name from code
    */
@@ -409,7 +410,7 @@ const Session = () => {
     const language = LANGUAGES.find(lang => lang.code === code);
     return language ? language.name : code;
   };
-  
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Header */}
@@ -423,11 +424,11 @@ const Session = () => {
           >
             <ArrowBackIcon />
           </IconButton>
-          
+
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Translation Session
           </Typography>
-          
+
           {session && (
             <>
               <Chip
@@ -438,13 +439,13 @@ const Session = () => {
                 deleteIcon={<CopyIcon />}
                 sx={{ mr: 2 }}
               />
-              
+
               <Chip
                 label={`Patient: ${getLanguageName(session.patientLanguage)}`}
                 color="primary"
                 sx={{ mr: 2 }}
               />
-              
+
               <Button
                 variant="contained"
                 color="error"
@@ -456,7 +457,7 @@ const Session = () => {
           )}
         </Toolbar>
       </AppBar>
-      
+
       {/* Main content */}
       <Box sx={{ flexGrow: 1, overflow: 'hidden', p: 2 }}>
         <Grid container spacing={2} sx={{ height: '100%' }}>
@@ -502,7 +503,7 @@ const Session = () => {
                             </Avatar>
                           </ListItemAvatar>
                         )}
-                        
+
                         <ListItemText
                           primary={
                             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -516,7 +517,7 @@ const Session = () => {
                                   {message.senderName}
                                 </Typography>
                               )}
-                              
+
                               <Paper
                                 elevation={1}
                                 sx={{
@@ -538,13 +539,13 @@ const Session = () => {
                                 <Typography variant={message.isSystem ? 'body2' : 'body1'}>
                                   {message.text}
                                 </Typography>
-                                
+
                                 {message.translation && (
                                   <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
                                     <Typography variant="body2" color="textSecondary">
                                       {message.translation.text}
                                     </Typography>
-                                    
+
                                     <Typography variant="caption" color="textSecondary">
                                       Confidence: {message.translation.confidence}
                                     </Typography>
@@ -575,7 +576,7 @@ const Session = () => {
                   </List>
                 </Box>
               )}
-              
+
               {/* Input area */}
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <IconButton
@@ -584,14 +585,14 @@ const Session = () => {
                 >
                   {micActive ? <MicIcon /> : <MicOffIcon />}
                 </IconButton>
-                
+
                 <IconButton
                   color={speakerActive ? 'primary' : 'default'}
                   onClick={toggleSpeaker}
                 >
                   {speakerActive ? <VolumeUpIcon /> : <VolumeOffIcon />}
                 </IconButton>
-                
+
                 <TextField
                   fullWidth
                   variant="outlined"
@@ -602,7 +603,7 @@ const Session = () => {
                   disabled={!connected}
                   sx={{ mx: 1 }}
                 />
-                
+
                 <Button
                   variant="contained"
                   color="primary"
@@ -615,14 +616,14 @@ const Session = () => {
               </Box>
             </Paper>
           </Grid>
-          
+
           {/* Participants */}
           <Grid item xs={12} md={3} sx={{ height: '100%' }}>
             <Paper sx={{ p: 2, height: '100%' }}>
               <Typography variant="h6" gutterBottom>
                 Participants
               </Typography>
-              
+
               <List>
                 {participants.map((participant) => (
                   <ListItem key={participant.userId}>
@@ -635,14 +636,14 @@ const Session = () => {
                         {participant.userName?.charAt(0) || '?'}
                       </Avatar>
                     </ListItemAvatar>
-                    
+
                     <ListItemText
                       primary={participant.userName}
                       secondary={participant.userType === 'provider' ? 'Provider' : 'Patient'}
                     />
                   </ListItem>
                 ))}
-                
+
                 {participants.length === 0 && (
                   <ListItem>
                     <ListItemText
@@ -652,25 +653,25 @@ const Session = () => {
                   </ListItem>
                 )}
               </List>
-              
+
               {session && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
                     Session Information
                   </Typography>
-                  
+
                   <Typography variant="body2">
                     <strong>Session ID:</strong> {session.id}
                   </Typography>
-                  
+
                   <Typography variant="body2">
                     <strong>Patient Language:</strong> {getLanguageName(session.patientLanguage)}
                   </Typography>
-                  
+
                   <Typography variant="body2">
                     <strong>Started:</strong> {new Date(session.startTime).toLocaleString()}
                   </Typography>
-                  
+
                   <Box sx={{ mt: 2 }}>
                     <Button
                       variant="outlined"
@@ -682,31 +683,39 @@ const Session = () => {
                       Copy Session Code
                     </Button>
                   </Box>
+
+                  {/* Offline Status */}
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Connection Status
+                    </Typography>
+                    <OfflineStatusIndicator />
+                  </Box>
                 </Box>
               )}
             </Paper>
           </Grid>
         </Grid>
       </Box>
-      
+
       {/* End Session Dialog */}
       <Dialog
         open={openEndDialog}
         onClose={() => setOpenEndDialog(false)}
       >
         <DialogTitle>End Translation Session</DialogTitle>
-        
+
         <DialogContent>
           <DialogContentText>
             Are you sure you want to end this translation session? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
-        
+
         <DialogActions>
           <Button onClick={() => setOpenEndDialog(false)}>
             Cancel
           </Button>
-          
+
           <Button
             onClick={endSession}
             color="error"

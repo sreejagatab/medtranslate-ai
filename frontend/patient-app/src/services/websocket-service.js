@@ -20,11 +20,14 @@ class WebSocketService {
       reconnectBackoffFactor: 1.5,
       heartbeatInterval: 30000,
       heartbeatTimeout: 5000,
-      debug: true
+      debug: true,
+      adaptiveReconnection: true,
+      adaptiveHeartbeat: true
     });
 
     this.sessionId = null;
     this.token = null;
+    this.offlineMessageHandlers = [];
 
     // Set up heartbeat response handler
     this.enhancedWs.onMessage('heartbeat', (message) => {
@@ -33,6 +36,65 @@ class WebSocketService {
         timestamp: Date.now(),
         originalTimestamp: message.timestamp
       });
+    });
+
+    // Set up connection state handlers for offline mode
+    this.enhancedWs.onConnectionState({
+      onMaxReconnectAttemptsReached: (data) => {
+        console.warn('Max reconnect attempts reached:', data);
+        this._notifyOfflineMessageHandlers('maxReconnectAttemptsReached', data);
+      },
+
+      onWaitingForNetwork: (data) => {
+        console.warn('Waiting for network:', data);
+        this._notifyOfflineMessageHandlers('waitingForNetwork', data);
+      },
+
+      onNetworkStatusChange: (data) => {
+        console.log('Network status changed:', data.online ? 'online' : 'offline');
+        this._notifyOfflineMessageHandlers('networkStatusChange', data);
+      },
+
+      onOfflineMessageSent: (data) => {
+        console.log('Offline message sent:', data);
+        this._notifyOfflineMessageHandlers('offlineMessageSent', data);
+      },
+
+      onOfflineMessageFailed: (data) => {
+        console.warn('Offline message failed:', data);
+        this._notifyOfflineMessageHandlers('offlineMessageFailed', data);
+      },
+
+      onOfflineQueueProcessed: (data) => {
+        console.log('Offline queue processed:', data);
+        this._notifyOfflineMessageHandlers('offlineQueueProcessed', data);
+      },
+
+      onOfflineQueueError: (data) => {
+        console.error('Offline queue error:', data);
+        this._notifyOfflineMessageHandlers('offlineQueueError', data);
+      }
+    });
+  }
+
+  /**
+   * Notify offline message handlers
+   *
+   * @private
+   * @param {string} event - Event name
+   * @param {Object} data - Event data
+   */
+  _notifyOfflineMessageHandlers(event, data) {
+    this.offlineMessageHandlers.forEach(handler => {
+      try {
+        if (typeof handler === 'function') {
+          handler(event, data);
+        } else if (handler && typeof handler[event] === 'function') {
+          handler[event](data);
+        }
+      } catch (error) {
+        console.error(`Error in offline message handler for event ${event}:`, error);
+      }
     });
   }
 
@@ -131,9 +193,60 @@ class WebSocketService {
   }
 
   /**
+   * Register an offline message handler
+   *
+   * @param {Function|Object} handler - Handler function or object with event methods
+   */
+  onOfflineMessage(handler) {
+    if (handler && !this.offlineMessageHandlers.includes(handler)) {
+      this.offlineMessageHandlers.push(handler);
+    }
+  }
+
+  /**
+   * Unregister an offline message handler
+   *
+   * @param {Function|Object} handler - Handler function or object
+   */
+  offOfflineMessage(handler) {
+    const index = this.offlineMessageHandlers.indexOf(handler);
+    if (index !== -1) {
+      this.offlineMessageHandlers.splice(index, 1);
+    }
+  }
+
+  /**
+   * Get offline queue statistics
+   *
+   * @returns {Promise<Object>} - Queue statistics
+   */
+  async getOfflineQueueStats() {
+    return this.enhancedWs.getOfflineQueueStats();
+  }
+
+  /**
+   * Get network quality information
+   *
+   * @returns {Object} - Network quality information
+   */
+  getNetworkQualityInfo() {
+    return this.enhancedWs.getNetworkQualityInfo();
+  }
+
+  /**
+   * Manually trigger network quality measurement
+   *
+   * @returns {Promise<Object>} - Network quality measurement
+   */
+  async measureNetworkQuality() {
+    return this.enhancedWs.measureNetworkQuality();
+  }
+
+  /**
    * Clean up resources
    */
   destroy() {
+    this.offlineMessageHandlers = [];
     this.enhancedWs.destroy();
   }
 }

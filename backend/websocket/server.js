@@ -1,8 +1,12 @@
 /**
- * WebSocket Server for MedTranslate AI
+ * Enhanced WebSocket Server for MedTranslate AI
  *
  * This server handles real-time communication between providers and patients
- * during translation sessions.
+ * during translation sessions with improved:
+ * - Reconnection handling
+ * - Message queuing for offline mode
+ * - Session continuity across network changes
+ * - Comprehensive error handling
  */
 
 const WebSocket = require('ws');
@@ -13,9 +17,276 @@ const translationService = require('../translation/translation-service');
 const { v4: uuidv4 } = require('uuid');
 const analyticsService = require('../monitoring/analytics-service');
 const logger = require('../utils/cloudwatch-logger');
+const syncAnalyticsEvents = require('./sync-analytics-events');
+const fs = require('fs');
+const path = require('path');
+
+// Create message queue directory if it doesn't exist
+const MESSAGE_QUEUE_DIR = path.join(__dirname, '../data/message-queue');
+if (!fs.existsSync(MESSAGE_QUEUE_DIR)) {
+  try {
+    fs.mkdirSync(MESSAGE_QUEUE_DIR, { recursive: true });
+    console.log(`Created message queue directory: ${MESSAGE_QUEUE_DIR}`);
+  } catch (error) {
+    console.error(`Failed to create message queue directory: ${error.message}`);
+  }
+}
 
 // Session connections map
 const sessions = new Map();
+
+// Message queue for offline users
+const messageQueues = new Map();
+
+/**
+ * Queue a message for an offline user
+ *
+ * @param {string} sessionId - Session ID
+ * @param {string} userId - User ID
+ * @param {Object} message - Message to queue
+ * @returns {boolean} - Success indicator
+ */
+function queueMessageForOfflineUser(sessionId, userId, message) {
+  try {
+    // Create session queue if it doesn't exist
+    if (!messageQueues.has(sessionId)) {
+      messageQueues.set(sessionId, new Map());
+    }
+
+    const sessionQueue = messageQueues.get(sessionId);
+
+    // Create user queue if it doesn't exist
+    if (!sessionQueue.has(userId)) {
+      sessionQueue.set(userId, []);
+    }
+
+    const userQueue = sessionQueue.get(userId);
+
+    // Add message to queue with timestamp
+    const queuedMessage = {
+      ...message,
+      queuedAt: Date.now()
+    };
+
+    userQueue.push(queuedMessage);
+
+    // Limit queue size to prevent memory issues
+    const MAX_QUEUE_SIZE = 100;
+    if (userQueue.length > MAX_QUEUE_SIZE) {
+      userQueue.shift(); // Remove oldest message
+    }
+
+    // Persist message to disk for recovery
+    persistMessageQueue(sessionId, userId, userQueue);
+
+    // Log queue status
+    logger.info('Message queued for offline user', {
+      sessionId,
+      userId,
+      messageType: message.type,
+      queueSize: userQueue.length
+    }, 'websocket');
+
+    return true;
+  } catch (error) {
+    logger.error('Error queuing message for offline user', {
+      sessionId,
+      userId,
+      messageType: message ? message.type : 'unknown',
+      error: error.message,
+      stack: error.stack
+    }, 'websocket');
+
+    return false;
+  }
+}
+
+/**
+ * Persist message queue to disk
+ *
+ * @param {string} sessionId - Session ID
+ * @param {string} userId - User ID
+ * @param {Array} queue - Message queue
+ */
+function persistMessageQueue(sessionId, userId, queue) {
+  try {
+    // Create session directory if it doesn't exist
+    const sessionDir = path.join(MESSAGE_QUEUE_DIR, sessionId);
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true });
+    }
+
+    // Write queue to file
+    const queueFile = path.join(sessionDir, `${userId}.json`);
+    fs.writeFileSync(queueFile, JSON.stringify(queue), 'utf8');
+  } catch (error) {
+    logger.error('Error persisting message queue', {
+      sessionId,
+      userId,
+      error: error.message,
+      stack: error.stack
+    }, 'websocket');
+  }
+}
+
+/**
+ * Load message queue from disk
+ *
+ * @param {string} sessionId - Session ID
+ * @param {string} userId - User ID
+ * @returns {Array} - Message queue
+ */
+function loadMessageQueue(sessionId, userId) {
+  try {
+    const queueFile = path.join(MESSAGE_QUEUE_DIR, sessionId, `${userId}.json`);
+
+    if (fs.existsSync(queueFile)) {
+      const queueData = fs.readFileSync(queueFile, 'utf8');
+      return JSON.parse(queueData);
+    }
+
+    return [];
+  } catch (error) {
+    logger.error('Error loading message queue', {
+      sessionId,
+      userId,
+      error: error.message,
+      stack: error.stack
+    }, 'websocket');
+
+    return [];
+  }
+}
+
+/**
+ * Process queued messages for a user
+ *
+ * @param {string} sessionId - Session ID
+ * @param {string} userId - User ID
+ * @returns {number} - Number of messages processed
+ */
+function processQueuedMessages(sessionId, userId) {
+  try {
+    // Check if session queue exists
+    if (!messageQueues.has(sessionId)) {
+      // Try to load from disk
+      const queue = loadMessageQueue(sessionId, userId);
+
+      if (queue.length > 0) {
+        // Create session queue
+        messageQueues.set(sessionId, new Map());
+        messageQueues.get(sessionId).set(userId, queue);
+      } else {
+        return 0;
+      }
+    }
+
+    const sessionQueue = messageQueues.get(sessionId);
+
+    // Check if user queue exists
+    if (!sessionQueue.has(userId)) {
+      // Try to load from disk
+      const queue = loadMessageQueue(sessionId, userId);
+
+      if (queue.length > 0) {
+        sessionQueue.set(userId, queue);
+      } else {
+        return 0;
+      }
+    }
+
+    const userQueue = sessionQueue.get(userId);
+
+    if (userQueue.length === 0) {
+      return 0;
+    }
+
+    // Log queue processing
+    logger.info('Processing queued messages for user', {
+      sessionId,
+      userId,
+      queueSize: userQueue.length
+    }, 'websocket');
+
+    // Get session connections
+    const sessionConnections = sessions.get(sessionId);
+    if (!sessionConnections) {
+      return 0;
+    }
+
+    // Get user connection
+    const connection = sessionConnections.get(userId);
+    if (!connection || connection.ws.readyState !== WebSocket.OPEN) {
+      return 0;
+    }
+
+    // Send all queued messages
+    let sentCount = 0;
+
+    while (userQueue.length > 0) {
+      const queuedMessage = userQueue.shift();
+
+      // Add queued info to message
+      queuedMessage.queued = true;
+      queuedMessage.queuedAt = queuedMessage.queuedAt || Date.now();
+      queuedMessage.deliveredAt = Date.now();
+
+      try {
+        connection.ws.send(JSON.stringify(queuedMessage));
+        sentCount++;
+      } catch (error) {
+        logger.error('Error sending queued message', {
+          sessionId,
+          userId,
+          messageType: queuedMessage.type,
+          error: error.message
+        }, 'websocket');
+
+        // Put message back in queue
+        userQueue.unshift(queuedMessage);
+        break;
+      }
+    }
+
+    // Update persisted queue
+    if (userQueue.length > 0) {
+      persistMessageQueue(sessionId, userId, userQueue);
+    } else {
+      // Remove empty queue file
+      try {
+        const queueFile = path.join(MESSAGE_QUEUE_DIR, sessionId, `${userId}.json`);
+        if (fs.existsSync(queueFile)) {
+          fs.unlinkSync(queueFile);
+        }
+      } catch (error) {
+        logger.error('Error removing empty queue file', {
+          sessionId,
+          userId,
+          error: error.message
+        }, 'websocket');
+      }
+    }
+
+    // Log queue processing result
+    logger.info('Processed queued messages for user', {
+      sessionId,
+      userId,
+      sentCount,
+      remainingQueueSize: userQueue.length
+    }, 'websocket');
+
+    return sentCount;
+  } catch (error) {
+    logger.error('Error processing queued messages', {
+      sessionId,
+      userId,
+      error: error.message,
+      stack: error.stack
+    }, 'websocket');
+
+    return 0;
+  }
+}
 
 /**
  * Initialize WebSocket server
@@ -182,7 +453,10 @@ function initializeWebSocketServer(server) {
     });
   }, HEARTBEAT_INTERVAL);
 
-  console.log('WebSocket server initialized');
+  // Register sync analytics events
+  syncAnalyticsEvents.registerSyncAnalyticsEvents(wss, sessions);
+
+  console.log('WebSocket server initialized with sync analytics events');
   return wss;
 }
 
@@ -270,19 +544,24 @@ async function handleConnection(ws, req) {
     const userId = decodedToken.sub;
     const userType = decodedToken.type;
     const userName = decodedToken.name;
+    const clientId = parsedUrl.query.clientId || ws.connectionId; // Use client ID if provided for reconnection
 
     // Store user info for reference
     ws.userId = userId;
     ws.userType = userType;
     ws.userName = userName;
+    ws.clientId = clientId;
+    ws.reconnect = parsedUrl.query.reconnect === 'true';
 
     // Log user info
     logger.info('WebSocket user authenticated', {
       connectionId: ws.connectionId,
+      clientId: clientId,
       sessionId: sessionId,
       userId: userId,
       userType: userType,
-      userName: userName
+      userName: userName,
+      isReconnect: ws.reconnect
     }, 'websocket');
 
     // Create session if it doesn't exist
@@ -301,18 +580,47 @@ async function handleConnection(ws, req) {
 
     // Check if user is already connected
     const existingConnection = sessionConnections.get(userId);
+    let isReconnection = false;
+
     if (existingConnection) {
-      // Log duplicate connection
-      logger.warn('User already connected to session, replacing connection', {
-        connectionId: ws.connectionId,
-        sessionId: sessionId,
-        userId: userId,
-        userType: userType
-      }, 'websocket');
+      // Check if this is a reconnection from the same client
+      if (existingConnection.clientId === clientId) {
+        isReconnection = true;
+
+        // Log reconnection
+        logger.info('User reconnected to session', {
+          connectionId: ws.connectionId,
+          clientId: clientId,
+          sessionId: sessionId,
+          userId: userId,
+          userType: userType,
+          previousConnectionId: existingConnection.connectionId
+        }, 'websocket');
+
+        // Record reconnection metric
+        analyticsService.recordPerformanceMetrics({
+          component: 'websocket',
+          operation: 'reconnection',
+          responseTime: 0,
+          cpuUsage: 0,
+          memoryUsage: 0,
+          successRate: 100
+        });
+      } else {
+        // Log duplicate connection from different client
+        logger.warn('User already connected to session from different client, replacing connection', {
+          connectionId: ws.connectionId,
+          clientId: clientId,
+          sessionId: sessionId,
+          userId: userId,
+          userType: userType,
+          existingClientId: existingConnection.clientId
+        }, 'websocket');
+      }
 
       // Close existing connection
       if (existingConnection.ws.readyState === WebSocket.OPEN) {
-        existingConnection.ws.close(4003, 'User connected from another location');
+        existingConnection.ws.close(4003, isReconnection ? 'Reconnected from same client' : 'User connected from another location');
       }
     }
 
@@ -323,7 +631,9 @@ async function handleConnection(ws, req) {
       userName,
       userId,
       connectionId: ws.connectionId,
-      connectedAt: new Date().toISOString()
+      clientId: clientId,
+      connectedAt: new Date().toISOString(),
+      isReconnection: isReconnection || ws.reconnect
     });
 
     // Log successful connection
@@ -346,6 +656,22 @@ async function handleConnection(ws, req) {
       medicalContext: decodedToken.context || 'general'
     });
 
+    // Process any queued messages for reconnecting users
+    let queuedMessageCount = 0;
+    const connection = sessionConnections.get(userId);
+
+    if (connection.isReconnection) {
+      // Process queued messages
+      queuedMessageCount = processQueuedMessages(sessionId, userId);
+
+      logger.info('Processed queued messages on reconnection', {
+        connectionId: ws.connectionId,
+        sessionId: sessionId,
+        userId: userId,
+        queuedMessageCount
+      }, 'websocket');
+    }
+
     // Send welcome message
     const welcomeMessage = {
       type: 'connected',
@@ -353,7 +679,10 @@ async function handleConnection(ws, req) {
       userId,
       userType,
       timestamp: new Date().toISOString(),
-      participantCount: sessionConnections.size
+      participantCount: sessionConnections.size,
+      isReconnection: connection.isReconnection,
+      queuedMessageCount,
+      clientId: connection.clientId
     };
 
     ws.send(JSON.stringify(welcomeMessage));
@@ -363,18 +692,31 @@ async function handleConnection(ws, req) {
       connectionId: ws.connectionId,
       sessionId: sessionId,
       userId: userId,
-      messageType: 'connected'
+      messageType: 'connected',
+      isReconnection: connection.isReconnection
     }, 'websocket');
 
-    // Notify other participants
-    broadcastToSession(sessionId, {
-      type: 'user_joined',
-      userId,
-      userName,
-      userType,
-      timestamp: new Date().toISOString(),
-      participantCount: sessionConnections.size
-    }, userId);
+    // Notify other participants only for new connections, not reconnections
+    if (!connection.isReconnection) {
+      broadcastToSession(sessionId, {
+        type: 'user_joined',
+        userId,
+        userName,
+        userType,
+        timestamp: new Date().toISOString(),
+        participantCount: sessionConnections.size
+      }, userId);
+    } else {
+      // For reconnections, just notify that the user is back online
+      broadcastToSession(sessionId, {
+        type: 'user_reconnected',
+        userId,
+        userName,
+        userType,
+        timestamp: new Date().toISOString(),
+        participantCount: sessionConnections.size
+      }, userId);
+    }
 
     // Set up heartbeat handling
     ws.isAlive = true;
@@ -814,9 +1156,10 @@ function handleDisconnection(sessionId, userId, userName, userType) {
  * @param {string} excludeUserId - User ID to exclude from broadcast
  * @returns {number} - Number of recipients the message was sent to
  */
-function broadcastToSession(sessionId, message, excludeUserId = null) {
+function broadcastToSession(sessionId, message, excludeUserId = null, queueForOffline = true) {
   const startTime = Date.now();
   let recipientCount = 0;
+  let queuedCount = 0;
 
   try {
     // Get session connections
@@ -839,12 +1182,20 @@ function broadcastToSession(sessionId, message, excludeUserId = null) {
       messageType: message.type,
       excludeUserId: excludeUserId,
       potentialRecipients: sessionConnections.size - (excludeUserId ? 1 : 0),
-      messageSize: messageSize
+      messageSize: messageSize,
+      queueForOffline: queueForOffline
     }, 'websocket');
+
+    // Get all participants in the session
+    const participants = getSessionParticipants(sessionId);
 
     // Send to all participants except excluded user
     for (const [userId, connection] of sessionConnections.entries()) {
-      if (userId !== excludeUserId && connection.ws.readyState === WebSocket.OPEN) {
+      if (userId === excludeUserId) {
+        continue; // Skip excluded user
+      }
+
+      if (connection.ws.readyState === WebSocket.OPEN) {
         try {
           connection.ws.send(messageString);
           recipientCount++;
@@ -870,6 +1221,33 @@ function broadcastToSession(sessionId, message, excludeUserId = null) {
             sessionId: sessionId,
             userId: userId
           });
+
+          // Queue message for this user if send failed
+          if (queueForOffline && shouldQueueMessageType(message.type)) {
+            if (queueMessageForOfflineUser(sessionId, userId, message)) {
+              queuedCount++;
+            }
+          }
+        }
+      } else if (queueForOffline && shouldQueueMessageType(message.type)) {
+        // User is offline or connection is not ready, queue message
+        if (queueMessageForOfflineUser(sessionId, userId, message)) {
+          queuedCount++;
+        }
+      }
+    }
+
+    // Check for participants who are in the session but not connected
+    // This handles users who have joined before but are currently offline
+    if (queueForOffline && shouldQueueMessageType(message.type)) {
+      const connectedUserIds = new Set(sessionConnections.keys());
+
+      for (const participant of participants) {
+        if (!connectedUserIds.has(participant.userId) && participant.userId !== excludeUserId) {
+          // Participant is not currently connected, queue message
+          if (queueMessageForOfflineUser(sessionId, participant.userId, message)) {
+            queuedCount++;
+          }
         }
       }
     }
@@ -882,7 +1260,8 @@ function broadcastToSession(sessionId, message, excludeUserId = null) {
         sessionId: sessionId,
         messageType: message.type,
         duration: duration,
-        recipientCount: recipientCount
+        recipientCount: recipientCount,
+        queuedCount: queuedCount
       }, 'websocket');
     }
 
@@ -895,6 +1274,19 @@ function broadcastToSession(sessionId, message, excludeUserId = null) {
       memoryUsage: 0,
       successRate: sessionConnections.size > 0 ? (recipientCount / (sessionConnections.size - (excludeUserId ? 1 : 0))) * 100 : 100
     });
+
+    // Record queued message metrics if any
+    if (queuedCount > 0) {
+      analyticsService.recordPerformanceMetrics({
+        component: 'websocket',
+        operation: 'message_queued',
+        responseTime: 0,
+        cpuUsage: 0,
+        memoryUsage: 0,
+        successRate: 100,
+        count: queuedCount
+      });
+    }
 
     return recipientCount;
   } catch (error) {
@@ -926,7 +1318,7 @@ function broadcastToSession(sessionId, message, excludeUserId = null) {
  * @param {Object} message - Message to send
  * @returns {boolean} - Success indicator
  */
-function sendToUser(sessionId, userId, message) {
+function sendToUser(sessionId, userId, message, queueIfOffline = true) {
   const startTime = Date.now();
 
   try {
@@ -938,6 +1330,12 @@ function sendToUser(sessionId, userId, message) {
         userId: userId,
         messageType: message.type
       }, 'websocket');
+
+      // Try to queue message even if session is unknown
+      if (queueIfOffline && shouldQueueMessageType(message.type)) {
+        return queueMessageForOfflineUser(sessionId, userId, message);
+      }
+
       return false;
     }
 
@@ -949,8 +1347,15 @@ function sendToUser(sessionId, userId, message) {
         userId: userId,
         messageType: message.type,
         connectionExists: !!connection,
-        readyState: connection ? connection.ws.readyState : 'no connection'
+        readyState: connection ? connection.ws.readyState : 'no connection',
+        queueIfOffline: queueIfOffline
       }, 'websocket');
+
+      // Queue message for offline user
+      if (queueIfOffline && shouldQueueMessageType(message.type)) {
+        return queueMessageForOfflineUser(sessionId, userId, message);
+      }
+
       return false;
     }
 
@@ -1091,10 +1496,45 @@ function closeSession(sessionId, reason = 'Session ended') {
   }
 }
 
+/**
+ * Determine if a message type should be queued for offline users
+ *
+ * @param {string} messageType - Message type
+ * @returns {boolean} - Whether the message should be queued
+ */
+function shouldQueueMessageType(messageType) {
+  // Define message types that should be queued
+  const queueableTypes = [
+    'translation',
+    'message',
+    'audio_translation',
+    'medical_term',
+    'session_update',
+    'important_notification'
+  ];
+
+  // Define message types that should never be queued
+  const nonQueueableTypes = [
+    'typing',
+    'heartbeat',
+    'heartbeat_response',
+    'connected',
+    'user_joined',
+    'user_left',
+    'user_reconnected',
+    'session_closed'
+  ];
+
+  // Queue by default for types not explicitly excluded
+  return !nonQueueableTypes.includes(messageType);
+}
+
 module.exports = {
   initializeWebSocketServer,
   broadcastToSession,
   sendToUser,
   getSessionParticipants,
-  closeSession
+  closeSession,
+  queueMessageForOfflineUser,
+  processQueuedMessages
 };

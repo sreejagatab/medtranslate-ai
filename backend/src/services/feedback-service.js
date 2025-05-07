@@ -1,6 +1,6 @@
 /**
  * Feedback Service for MedTranslate AI
- * 
+ *
  * This service handles the processing of user feedback on translation quality
  * and updates the adaptive confidence thresholds accordingly.
  */
@@ -10,14 +10,15 @@ const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const { processTranslationFeedback } = require('../../lambda/translation/feedback-adapter');
 
 // Path to confidence thresholds configuration
-const THRESHOLDS_CONFIG_PATH = process.env.THRESHOLDS_CONFIG_PATH || 
+const THRESHOLDS_CONFIG_PATH = process.env.THRESHOLDS_CONFIG_PATH ||
   path.resolve(__dirname, '../../models/configs/confidence-thresholds.json');
 
 /**
  * Submit translation feedback
- * 
+ *
  * @param {Object} feedback - Feedback data
  * @param {string} feedback.translationId - Translation ID
  * @param {number} feedback.rating - Rating (1-5)
@@ -28,7 +29,7 @@ const THRESHOLDS_CONFIG_PATH = process.env.THRESHOLDS_CONFIG_PATH ||
  */
 exports.submitTranslationFeedback = async (feedback, userId) => {
   try {
-    logger.info('Submitting translation feedback', { 
+    logger.info('Submitting translation feedback', {
       translationId: feedback.translationId,
       rating: feedback.rating,
       issues: feedback.issues,
@@ -82,7 +83,7 @@ exports.submitTranslationFeedback = async (feedback, userId) => {
 
 /**
  * Get translation feedback statistics
- * 
+ *
  * @param {Object} options - Query options
  * @param {string} options.sessionId - Optional session ID filter
  * @param {string} options.startDate - Optional start date filter
@@ -163,7 +164,7 @@ exports.getTranslationFeedbackStats = async (options = {}) => {
     // Calculate average rating by context
     Object.keys(stats.byContext).forEach(context => {
       const contextFeedback = feedback.filter(f => f.context === context);
-      stats.byContext[context].averageRating = 
+      stats.byContext[context].averageRating =
         contextFeedback.reduce((sum, f) => sum + f.rating, 0) / contextFeedback.length || 0;
     });
 
@@ -186,7 +187,7 @@ exports.getTranslationFeedbackStats = async (options = {}) => {
     // Calculate average rating by language pair
     Object.keys(stats.byLanguagePair).forEach(pair => {
       const pairFeedback = feedback.filter(f => `${f.sourceLanguage}-${f.targetLanguage}` === pair);
-      stats.byLanguagePair[pair].averageRating = 
+      stats.byLanguagePair[pair].averageRating =
         pairFeedback.reduce((sum, f) => sum + f.rating, 0) / pairFeedback.length || 0;
     });
 
@@ -199,18 +200,13 @@ exports.getTranslationFeedbackStats = async (options = {}) => {
 
 /**
  * Update confidence thresholds based on feedback
- * 
+ *
  * @param {Object} translation - Translation object
  * @param {Object} feedback - Feedback object
  * @returns {Promise<boolean>} - Success indicator
  */
 async function updateConfidenceThresholds(translation, feedback) {
   try {
-    // Only update thresholds for low ratings (1-3)
-    if (feedback.rating > 3) {
-      return true;
-    }
-
     logger.info('Updating confidence thresholds based on feedback', {
       translationId: translation.id,
       rating: feedback.rating,
@@ -218,83 +214,16 @@ async function updateConfidenceThresholds(translation, feedback) {
       languagePair: `${translation.sourceLanguage}-${translation.targetLanguage}`
     });
 
-    // Load current thresholds
-    let thresholdsConfig = null;
-    try {
-      const configData = fs.readFileSync(THRESHOLDS_CONFIG_PATH, 'utf8');
-      thresholdsConfig = JSON.parse(configData);
-    } catch (error) {
-      logger.error('Error loading confidence thresholds configuration:', error);
-      return false;
+    // Use the feedback adapter to process the feedback and update thresholds
+    const success = await processTranslationFeedback(translation, feedback);
+
+    if (success) {
+      logger.info('Successfully updated confidence thresholds based on feedback');
+    } else {
+      logger.warn('Failed to update confidence thresholds based on feedback');
     }
 
-    // Get context thresholds
-    const context = translation.context || 'general';
-    if (!thresholdsConfig.contexts[context]) {
-      thresholdsConfig.contexts[context] = {
-        high: thresholdsConfig.default.high,
-        medium: thresholdsConfig.default.medium,
-        low: thresholdsConfig.default.low,
-        criticalTerms: []
-      };
-    }
-
-    // Get language pair thresholds
-    const languagePair = `${translation.sourceLanguage}-${translation.targetLanguage}`;
-    if (!thresholdsConfig.languagePairs[languagePair]) {
-      thresholdsConfig.languagePairs[languagePair] = {
-        high: thresholdsConfig.default.high,
-        medium: thresholdsConfig.default.medium,
-        low: thresholdsConfig.default.low
-      };
-    }
-
-    // Adjust thresholds based on feedback rating and issues
-    const adjustmentFactor = 0.01; // Small adjustment to avoid overreacting to single feedback
-    
-    // For very low ratings (1-2), increase thresholds more significantly
-    const ratingMultiplier = feedback.rating <= 2 ? 2 : 1;
-    
-    // Adjust context thresholds
-    thresholdsConfig.contexts[context].high += adjustmentFactor * ratingMultiplier;
-    thresholdsConfig.contexts[context].medium += adjustmentFactor * ratingMultiplier;
-    thresholdsConfig.contexts[context].low += adjustmentFactor * ratingMultiplier;
-    
-    // Adjust language pair thresholds
-    thresholdsConfig.languagePairs[languagePair].high += adjustmentFactor * ratingMultiplier;
-    thresholdsConfig.languagePairs[languagePair].medium += adjustmentFactor * ratingMultiplier;
-    thresholdsConfig.languagePairs[languagePair].low += adjustmentFactor * ratingMultiplier;
-    
-    // Ensure thresholds are within valid range (0-1)
-    thresholdsConfig.contexts[context].high = Math.min(Math.max(thresholdsConfig.contexts[context].high, 0), 1);
-    thresholdsConfig.contexts[context].medium = Math.min(Math.max(thresholdsConfig.contexts[context].medium, 0), 1);
-    thresholdsConfig.contexts[context].low = Math.min(Math.max(thresholdsConfig.contexts[context].low, 0), 1);
-    
-    thresholdsConfig.languagePairs[languagePair].high = Math.min(Math.max(thresholdsConfig.languagePairs[languagePair].high, 0), 1);
-    thresholdsConfig.languagePairs[languagePair].medium = Math.min(Math.max(thresholdsConfig.languagePairs[languagePair].medium, 0), 1);
-    thresholdsConfig.languagePairs[languagePair].low = Math.min(Math.max(thresholdsConfig.languagePairs[languagePair].low, 0), 1);
-    
-    // Ensure thresholds are properly ordered (high > medium > low)
-    thresholdsConfig.contexts[context].high = Math.max(thresholdsConfig.contexts[context].high, thresholdsConfig.contexts[context].medium + 0.05);
-    thresholdsConfig.contexts[context].medium = Math.max(thresholdsConfig.contexts[context].medium, thresholdsConfig.contexts[context].low + 0.05);
-    
-    thresholdsConfig.languagePairs[languagePair].high = Math.max(thresholdsConfig.languagePairs[languagePair].high, thresholdsConfig.languagePairs[languagePair].medium + 0.05);
-    thresholdsConfig.languagePairs[languagePair].medium = Math.max(thresholdsConfig.languagePairs[languagePair].medium, thresholdsConfig.languagePairs[languagePair].low + 0.05);
-    
-    // Save updated thresholds
-    try {
-      fs.writeFileSync(THRESHOLDS_CONFIG_PATH, JSON.stringify(thresholdsConfig, null, 2), 'utf8');
-      logger.info('Updated confidence thresholds configuration', {
-        context,
-        languagePair,
-        contextThresholds: thresholdsConfig.contexts[context],
-        languagePairThresholds: thresholdsConfig.languagePairs[languagePair]
-      });
-      return true;
-    } catch (error) {
-      logger.error('Error saving updated confidence thresholds configuration:', error);
-      return false;
-    }
+    return success;
   } catch (error) {
     logger.error('Error updating confidence thresholds:', error);
     return false;

@@ -1,0 +1,1278 @@
+
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MedTranslate AI Security Audit Report</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+          }
+          h1, h2, h3 {
+            color: #0077CC;
+          }
+          .summary {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+          }
+          .summary-item {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+          }
+          .pass {
+            background-color: #DFF0D8;
+            color: #3C763D;
+          }
+          .fail {
+            background-color: #F2DEDE;
+            color: #A94442;
+          }
+          .manual {
+            background-color: #FCF8E3;
+            color: #8A6D3B;
+          }
+          .skip {
+            background-color: #D9EDF7;
+            color: #31708F;
+          }
+          .error {
+            background-color: #F5F5F5;
+            color: #777;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+          }
+          th {
+            background-color: #f5f5f5;
+          }
+          .result-pass {
+            color: #3C763D;
+            font-weight: bold;
+          }
+          .result-fail {
+            color: #A94442;
+            font-weight: bold;
+          }
+          .result-manual {
+            color: #8A6D3B;
+            font-weight: bold;
+          }
+          .result-skip {
+            color: #31708F;
+            font-weight: bold;
+          }
+          .result-error {
+            color: #777;
+            font-weight: bold;
+          }
+          .severity-critical {
+            background-color: #F2DEDE;
+          }
+          .severity-high {
+            background-color: #FCF8E3;
+          }
+          .severity-medium {
+            background-color: #D9EDF7;
+          }
+          .severity-low {
+            background-color: #DFF0D8;
+          }
+          .severity-info {
+            background-color: #F5F5F5;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>MedTranslate AI Security Audit Report</h1>
+        <p>Generated: 07/05/2025, 09:11:34</p>
+        
+        <h2>Summary</h2>
+        <div class="summary">
+          <div class="summary-item pass">
+            <h3>PASS</h3>
+            <p>0</p>
+          </div>
+          <div class="summary-item fail">
+            <h3>FAIL</h3>
+            <p>0</p>
+          </div>
+          <div class="summary-item manual">
+            <h3>MANUAL</h3>
+            <p>131</p>
+          </div>
+          <div class="summary-item skip">
+            <h3>SKIP</h3>
+            <p>0</p>
+          </div>
+          <div class="summary-item error">
+            <h3>ERROR</h3>
+            <p>8</p>
+          </div>
+        </div>
+        
+        <h2>Failed Checks</h2>
+    <p>No failed checks.</p>
+      <h2>All Checks</h2>
+      <table>
+        <tr>
+          <th>Category</th>
+          <th>Check</th>
+          <th>Result</th>
+          <th>Severity</th>
+          <th>Details</th>
+        </tr>
+    
+        <tr>
+          <td>Authentication and Authorization - Authentication</td>
+          <td>Multi-factor authentication (MFA)</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authentication</td>
+          <td>Password policies</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authentication</td>
+          <td>Account lockout</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authentication</td>
+          <td>Session management</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authentication</td>
+          <td>JWT tokens</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking JWT tokens: Command failed: grep -r "expiresIn" --include="*.js" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\backend
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authentication</td>
+          <td>Refresh token</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authentication</td>
+          <td>Patient session codes</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authorization</td>
+          <td>Role-based access control (RBAC)</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authorization</td>
+          <td>Principle of least privilege</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authorization</td>
+          <td>API endpoints</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authorization</td>
+          <td>Frontend routes</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authorization</td>
+          <td>Resource-level permissions</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Authentication and Authorization - Authorization</td>
+          <td>Administrative functions</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data at Rest</td>
+          <td>Database encryption</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data at Rest</td>
+          <td>S3 bucket encryption</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking S3 bucket encryption: Command failed: grep -r "ServerSideEncryption" --include="*.ps1" --include="*.js" --include="*.json" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\infrastructure
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data at Rest</td>
+          <td>DynamoDB encryption</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking DynamoDB encryption: Command failed: grep -r "SSESpecification" --include="*.ps1" --include="*.js" --include="*.json" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\infrastructure
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data at Rest</td>
+          <td>KMS keys</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data at Rest</td>
+          <td>Encryption keys</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data at Rest</td>
+          <td>Edge device storage</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data in Transit</td>
+          <td>TLS 1.2+</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking TLS version: Command failed: grep -r "TLSv1.2" --include="*.ps1" --include="*.js" --include="*.json" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\infrastructure
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data in Transit</td>
+          <td>HTTPS</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking HTTPS enforcement: Command failed: grep -r "HTTPS" --include="*.ps1" --include="*.js" --include="*.json" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\infrastructure
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data in Transit</td>
+          <td>WebSocket connections</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data in Transit</td>
+          <td>API Gateway</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data in Transit</td>
+          <td>Certificate management</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data in Transit</td>
+          <td>Edge device communications</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data Minimization</td>
+          <td>Only necessary data</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data Minimization</td>
+          <td>Data retention policies</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data Minimization</td>
+          <td>Automatic data deletion</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data Minimization</td>
+          <td>PII/PHI</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data Minimization</td>
+          <td>Data anonymization</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Data Protection - Data Minimization</td>
+          <td>Transcripts</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - API Security</td>
+          <td>API Gateway</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - API Security</td>
+          <td>CORS policies</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking CORS policy: Command failed: grep -r "cors" --include="*.js" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\backend
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - API Security</td>
+          <td>Input validation</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - API Security</td>
+          <td>Output encoding</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - API Security</td>
+          <td>Rate limiting</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - API Security</td>
+          <td>API keys</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - Infrastructure Security</td>
+          <td>VPC configuration</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - Infrastructure Security</td>
+          <td>Security groups</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - Infrastructure Security</td>
+          <td>Network ACLs</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - Infrastructure Security</td>
+          <td>WAF</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - Infrastructure Security</td>
+          <td>DDoS protection</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Network Security - Infrastructure Security</td>
+          <td>Infrastructure as Code</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - Code Security</td>
+          <td>Code obfuscation</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - Code Security</td>
+          <td>Certificate pinning</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - Code Security</td>
+          <td>Jailbreak/root detection</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - Code Security</td>
+          <td>Secure storage</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - Code Security</td>
+          <td>Memory protection</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - Code Security</td>
+          <td>Secure coding practices</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - App Store Security</td>
+          <td>App permissions</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>No permissions found. Manual verification required.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - App Store Security</td>
+          <td>Privacy policy</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - App Store Security</td>
+          <td>Terms of service</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - App Store Security</td>
+          <td>App store guidelines</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - App Store Security</td>
+          <td>App signing</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Mobile Application Security - App Store Security</td>
+          <td>App updates</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Device Security</td>
+          <td>Secure boot</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Device Security</td>
+          <td>Firmware updates</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Device Security</td>
+          <td>Device authentication</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Device Security</td>
+          <td>Device authorization</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Device Security</td>
+          <td>Physical security</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Device Security</td>
+          <td>Tamper detection</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Model Security</td>
+          <td>Model encryption</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking model encryption: Command failed: grep -r "model.*encrypt" --include="*.js" --include="*.py" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\edge
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Model Security</td>
+          <td>Model integrity</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Model Security</td>
+          <td>Model updates</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Model Security</td>
+          <td>Model access</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Model Security</td>
+          <td>Inference security</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Edge Device Security - Model Security</td>
+          <td>Model versioning</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Logging</td>
+          <td>Centralized logging</td>
+          <td class="result-error">ERROR</td>
+          <td>MEDIUM</td>
+          <td>Error checking centralized logging: Command failed: grep -r "logging" --include="*.js" C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\backend
+'grep' is not recognized as an internal or external command,
+operable program or batch file.
+</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Logging</td>
+          <td>Log retention</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Logging</td>
+          <td>Sensitive data</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Logging</td>
+          <td>Log integrity</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Logging</td>
+          <td>Log format</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Logging</td>
+          <td>Log levels</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Monitoring</td>
+          <td>Real-time monitoring</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Monitoring</td>
+          <td>Alerting</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Monitoring</td>
+          <td>Metrics collection</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Monitoring</td>
+          <td>Anomaly detection</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Monitoring</td>
+          <td>Dashboard</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Logging and Monitoring - Monitoring</td>
+          <td>Incident response</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - HIPAA Compliance</td>
+          <td>Business Associate Agreements (BAAs)</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - HIPAA Compliance</td>
+          <td>Risk assessment</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - HIPAA Compliance</td>
+          <td>Security policies</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - HIPAA Compliance</td>
+          <td>Employee training</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - HIPAA Compliance</td>
+          <td>Audit controls</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - HIPAA Compliance</td>
+          <td>Contingency plans</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - GDPR Compliance</td>
+          <td>Data Processing Agreements (DPAs)</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - GDPR Compliance</td>
+          <td>Privacy by design</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - GDPR Compliance</td>
+          <td>Data subject rights</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - GDPR Compliance</td>
+          <td>Consent management</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - GDPR Compliance</td>
+          <td>Data Protection Impact Assessment (DPIA)</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - GDPR Compliance</td>
+          <td>Data breach notification</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - Other Regulations</td>
+          <td>CCPA/CPRA</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - Other Regulations</td>
+          <td>LGPD</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - Other Regulations</td>
+          <td>PIPEDA</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - Other Regulations</td>
+          <td>Industry-specific regulations</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - Other Regulations</td>
+          <td>International data transfer</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Compliance - Other Regulations</td>
+          <td>Regular compliance reviews</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Preparation</td>
+          <td>Incident response plan</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Preparation</td>
+          <td>Roles and responsibilities</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Preparation</td>
+          <td>Contact information</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Preparation</td>
+          <td>Communication templates</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Preparation</td>
+          <td>Escalation procedures</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Preparation</td>
+          <td>Training exercises</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Detection and Analysis</td>
+          <td>Monitoring systems</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Detection and Analysis</td>
+          <td>Alert thresholds</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Detection and Analysis</td>
+          <td>Incident classification</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Detection and Analysis</td>
+          <td>Forensic capabilities</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Detection and Analysis</td>
+          <td>Analysis procedures</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Detection and Analysis</td>
+          <td>Evidence collection</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Containment and Eradication</td>
+          <td>Containment strategies</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Containment and Eradication</td>
+          <td>System isolation</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Containment and Eradication</td>
+          <td>Malware removal</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Containment and Eradication</td>
+          <td>Vulnerability patching</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Containment and Eradication</td>
+          <td>Service restoration</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Containment and Eradication</td>
+          <td>Root cause analysis</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Recovery and Post-Incident</td>
+          <td>Recovery procedures</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Recovery and Post-Incident</td>
+          <td>Data restoration</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Recovery and Post-Incident</td>
+          <td>System hardening</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Recovery and Post-Incident</td>
+          <td>Post-incident review</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Recovery and Post-Incident</td>
+          <td>Lessons learned</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Incident Response - Recovery and Post-Incident</td>
+          <td>Incident documentation</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Pre-Audit</td>
+          <td>Audit scope</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Pre-Audit</td>
+          <td>Audit team</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Pre-Audit</td>
+          <td>Audit schedule</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Pre-Audit</td>
+          <td>Audit tools</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Pre-Audit</td>
+          <td>Documentation</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Pre-Audit</td>
+          <td>Environment access</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - During Audit</td>
+          <td>Regular status updates</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - During Audit</td>
+          <td>Issues are documented</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - During Audit</td>
+          <td>Evidence is collected</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - During Audit</td>
+          <td>Remediation guidance</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - During Audit</td>
+          <td>Communication channels</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - During Audit</td>
+          <td>Interim reports</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Post-Audit</td>
+          <td>Final report</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Post-Audit</td>
+          <td>Executive summary</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Post-Audit</td>
+          <td>Remediation plan</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Post-Audit</td>
+          <td>Follow-up schedule</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Post-Audit</td>
+          <td>Lessons learned</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        <tr>
+          <td>Security Audit Execution - Post-Audit</td>
+          <td>Continuous improvement</td>
+          <td class="result-manual check required">MANUAL CHECK REQUIRED</td>
+          <td>MEDIUM</td>
+          <td>This check requires manual verification.</td>
+        </tr>
+      
+        </table>
+      </body>
+      </html>
+    

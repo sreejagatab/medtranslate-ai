@@ -39,6 +39,9 @@ let modelAdapter;
 try {
   modelAdapter = require('./ml-models/model-adapter');
   console.log('ML model adapter loaded successfully');
+
+  // Make the model adapter available globally for other modules
+  global.modelAdapter = modelAdapter;
 } catch (error) {
   console.warn('ML model adapter not available:', error.message);
   modelAdapter = {
@@ -48,6 +51,9 @@ try {
     predictOfflineRisk: () => 0,
     getStatus: () => ({ isInitialized: false })
   };
+
+  // Set fallback adapter globally
+  global.modelAdapter = modelAdapter;
 }
 
 // Import new utilities
@@ -332,21 +338,71 @@ async function initialize() {
     // Initialize location tracking if available
     initializeLocationTracking();
 
-    // Initialize ML model adapter
+    // Initialize ML model adapter with enhanced error handling
     try {
       console.log('Initializing ML model adapter...');
-      const modelInitialized = await modelAdapter.initialize();
+
+      // Check if modelAdapter is properly loaded
+      if (!modelAdapter || typeof modelAdapter.initialize !== 'function') {
+        throw new Error('ML model adapter not properly loaded or missing initialize method');
+      }
+
+      // Initialize with timeout to prevent hanging
+      const modelInitPromise = modelAdapter.initialize();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('ML model initialization timed out after 30 seconds')), 30000)
+      );
+
+      // Race the initialization against the timeout
+      const modelInitialized = await Promise.race([modelInitPromise, timeoutPromise]);
+
       console.log(`ML model adapter initialization ${modelInitialized ? 'successful' : 'failed'}`);
 
       // Train models with existing data if available
       if (modelInitialized && usageLog.length > 0) {
         console.log('Training ML models with existing usage data...');
         const usageStats = getUsageStats();
-        await modelAdapter.trainModels(usageStats);
+
+        // Check if trainModels method exists
+        if (typeof modelAdapter.trainModels !== 'function') {
+          throw new Error('ML model adapter missing trainModels method');
+        }
+
+        // Train with timeout to prevent hanging
+        const trainPromise = modelAdapter.trainModels(usageStats);
+        const trainTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('ML model training timed out after 60 seconds')), 60000)
+        );
+
+        await Promise.race([trainPromise, trainTimeoutPromise]);
         console.log('ML models trained successfully');
       }
     } catch (error) {
       console.error('Error initializing ML model adapter:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+
+      // Create fallback adapter if initialization failed
+      if (!modelAdapter || !modelAdapter.isInitialized) {
+        console.warn('Creating fallback ML model adapter');
+        modelAdapter = {
+          initialize: async () => false,
+          trainModels: async () => false,
+          generatePredictions: () => [],
+          predictOfflineRisk: () => 0,
+          getStatus: () => ({
+            isInitialized: false,
+            error: error.message,
+            fallback: true
+          })
+        };
+
+        // Update global reference
+        global.modelAdapter = modelAdapter;
+      }
     }
 
     // Start prediction interval if enabled
@@ -372,6 +428,30 @@ async function initialize() {
     if (predictionModel.networkPatterns.offlineFrequency > 0.5) {
       console.log('High offline frequency detected, preparing for offline mode');
       await prepareForOfflineMode();
+    }
+
+    // Integrate with auto-sync-manager if available
+    try {
+      const autoSyncManager = require('./auto-sync-manager');
+      if (autoSyncManager && typeof autoSyncManager.on === 'function') {
+        // Register for network events from auto-sync-manager
+        autoSyncManager.on('sync_complete', async (data) => {
+          console.log('Sync completed, updating prediction model...');
+          await updatePredictionModel();
+        });
+
+        // Register for offline prediction events
+        autoSyncManager.on('offline_predicted', async (data) => {
+          console.log('Offline period predicted by auto-sync-manager, preparing...');
+          await prepareForOfflineMode({
+            duration: data.predictedDurationHours * 60 * 60 * 1000
+          });
+        });
+
+        console.log('Successfully integrated with auto-sync-manager');
+      }
+    } catch (error) {
+      console.warn('Could not integrate with auto-sync-manager:', error.message);
     }
 
     isInitialized = true;
@@ -950,6 +1030,25 @@ function recordInteraction(interactionType, data = {}) {
       startNewSession();
     }
 
+    // Ensure userPatterns exists and has interactionPatterns
+    if (!predictionModel.userPatterns) {
+      predictionModel.userPatterns = {
+        sessionDuration: 0,
+        averageSessionItems: 0,
+        commonSequences: [],
+        contextTransitions: {},
+        sessionFrequency: 0,
+        sessionTimeDistribution: Array(24).fill(0),
+        complexSequences: [],
+        userPreferences: {},
+        interactionPatterns: {}
+      };
+    }
+
+    if (!predictionModel.userPatterns.interactionPatterns) {
+      predictionModel.userPatterns.interactionPatterns = {};
+    }
+
     // Update interaction patterns
     if (!predictionModel.userPatterns.interactionPatterns[interactionType]) {
       predictionModel.userPatterns.interactionPatterns[interactionType] = {
@@ -986,6 +1085,92 @@ function recordInteraction(interactionType, data = {}) {
 
       if (data.sourceLanguage && data.targetLanguage) {
         sessionState.currentLanguagePair = `${data.sourceLanguage}-${data.targetLanguage}`;
+      }
+
+      // Initialize translation-specific metrics if they don't exist
+      if (!pattern.textLengthDistribution) {
+        pattern.textLengthDistribution = {
+          short: 0, // < 50 chars
+          medium: 0, // 50-200 chars
+          long: 0 // > 200 chars
+        };
+      }
+
+      if (!pattern.confidenceDistribution) {
+        pattern.confidenceDistribution = {
+          low: 0, // < 0.7
+          medium: 0, // 0.7-0.9
+          high: 0 // > 0.9
+        };
+      }
+
+      if (!pattern.processingTimeDistribution) {
+        pattern.processingTimeDistribution = {
+          fast: 0, // < 500ms
+          medium: 0, // 500-2000ms
+          slow: 0 // > 2000ms
+        };
+      }
+
+      // Update text length distribution
+      if (data.textLength) {
+        if (data.textLength < 50) {
+          pattern.textLengthDistribution.short++;
+        } else if (data.textLength < 200) {
+          pattern.textLengthDistribution.medium++;
+        } else {
+          pattern.textLengthDistribution.long++;
+        }
+      }
+
+      // Update confidence distribution
+      if (data.confidence !== undefined) {
+        if (data.confidence < 0.7) {
+          pattern.confidenceDistribution.low++;
+        } else if (data.confidence < 0.9) {
+          pattern.confidenceDistribution.medium++;
+        } else {
+          pattern.confidenceDistribution.high++;
+        }
+      }
+
+      // Update processing time distribution
+      if (data.processingTime !== undefined) {
+        if (data.processingTime < 500) {
+          pattern.processingTimeDistribution.fast++;
+        } else if (data.processingTime < 2000) {
+          pattern.processingTimeDistribution.medium++;
+        } else {
+          pattern.processingTimeDistribution.slow++;
+        }
+      }
+
+      // Store translation data for analysis
+      if (!predictionModel.translationData) {
+        predictionModel.translationData = [];
+      }
+
+      // Add translation to history with limited size
+      const translationEntry = {
+        timestamp: Date.now(),
+        sourceLanguage: data.sourceLanguage || 'unknown',
+        targetLanguage: data.targetLanguage || 'unknown',
+        context: data.context || 'general',
+        textLength: data.textLength || 0,
+        confidence: data.confidence !== undefined ? data.confidence : 0.5,
+        processingTime: data.processingTime !== undefined ? data.processingTime : 100
+      };
+
+      // Only add translation text if it exists
+      if (data.translation) {
+        translationEntry.translation = data.translation;
+      }
+
+      predictionModel.translationData.push(translationEntry);
+
+      // Keep only the last 1000 translations
+      if (predictionModel.translationData.length > 1000) {
+        predictionModel.translationData.shift();
       }
     }
   } catch (error) {
@@ -2791,17 +2976,40 @@ async function logTranslationUsage(text, sourceLanguage, targetLanguage, context
     }
 
     // Record interaction for enhanced analytics
-    recordInteraction('translation', {
-      sourceLanguage,
-      targetLanguage,
-      context,
-      textLength: text.length,
-      confidence: result.confidence,
-      processingTime: result.processingTime
-    });
+    try {
+      // Make sure result is defined and has expected properties
+      const safeResult = result || {};
+
+      recordInteraction('translation', {
+        sourceLanguage,
+        targetLanguage,
+        context,
+        textLength: text.length,
+        confidence: safeResult.confidence || 0.5,
+        processingTime: safeResult.processingTime || 100,
+        translation: safeResult.translatedText || ''
+      });
+    } catch (error) {
+      console.error('Error recording interaction:', error);
+    }
 
     // Update content patterns
-    updateContentPatterns(text, context, sourceLanguage, targetLanguage);
+    try {
+      // Initialize content patterns if not already initialized
+      if (!predictionModel.contentPatterns) {
+        predictionModel.contentPatterns = {
+          popularTerms: {},
+          termCooccurrence: {},
+          contentComplexity: {},
+          contentLength: {},
+          contentImportance: {}
+        };
+      }
+
+      updateContentPatterns(text, context, sourceLanguage, targetLanguage);
+    } catch (error) {
+      console.error('Error updating content patterns:', error);
+    }
 
     console.log(`Logged enhanced translation usage: ${sourceLanguage} -> ${targetLanguage} (${context || 'general'})`);
 
@@ -2820,6 +3028,19 @@ async function logTranslationUsage(text, sourceLanguage, targetLanguage, context
  */
 function calculateContentComplexity(text) {
   try {
+    if (!text || typeof text !== 'string') {
+      return {
+        wordCount: 0,
+        sentenceCount: 0,
+        avgWordLength: 0,
+        avgSentenceLength: 0,
+        medicalTermCount: 0,
+        medicalTermRatio: 0,
+        readabilityScore: 50,
+        complexity: 'medium'
+      };
+    }
+
     // Basic complexity metrics
     const words = text.split(/\s+/).filter(w => w.length > 0);
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
@@ -2847,7 +3068,13 @@ function calculateContentComplexity(text) {
     console.error('Error calculating content complexity:', error);
     return {
       wordCount: 0,
-      complexity: 'unknown'
+      sentenceCount: 0,
+      avgWordLength: 0,
+      avgSentenceLength: 0,
+      medicalTermCount: 0,
+      medicalTermRatio: 0,
+      readabilityScore: 50,
+      complexity: 'medium'
     };
   }
 }
@@ -2886,6 +3113,17 @@ function calculateOverallComplexity(avgSentenceLength, avgWordLength, medicalTer
  */
 function updateContentPatterns(text, context, sourceLanguage, targetLanguage) {
   try {
+    // Ensure contentPatterns exists
+    if (!predictionModel.contentPatterns) {
+      predictionModel.contentPatterns = {
+        popularTerms: {},
+        termCooccurrence: {},
+        contentComplexity: {},
+        contentLength: {},
+        contentImportance: {}
+      };
+    }
+
     const contentPatterns = predictionModel.contentPatterns;
     const terms = extractMedicalTerms(text);
     const complexity = calculateContentComplexity(text);
@@ -4108,46 +4346,122 @@ function getPredictions(options = {}) {
     const useCompression = options.useCompression || ENABLE_COMPRESSION;
 
     // Check if ML model adapter is initialized and use it if available
-    const modelStatus = modelAdapter.getStatus();
-    if (modelStatus.isInitialized) {
+    let modelStatus;
+    try {
+      modelStatus = modelAdapter.getStatus();
+      console.log('ML model status:', modelStatus);
+    } catch (statusError) {
+      console.error('Error getting ML model status:', statusError);
+      modelStatus = { isInitialized: false, error: statusError.message };
+    }
+
+    // Track if we're using ML predictions for analytics
+    let usingMlPredictions = false;
+
+    if (modelStatus && modelStatus.isInitialized) {
       console.log('Using ML model adapter for predictions');
 
-      // Get current language pair and context
-      const currentLanguagePair = getCurrentLanguagePair();
-      const currentContext = getCurrentContext();
+      try {
+        // Get current language pair and context
+        const currentLanguagePair = getCurrentLanguagePair();
+        const currentContext = getCurrentContext();
 
-      // Generate ML-based predictions
-      const mlPredictions = modelAdapter.generatePredictions({
-        currentHour,
-        currentDay,
-        languagePair: currentLanguagePair,
-        context: currentContext,
-        confidenceThreshold: 0.2 * aggressiveness, // Adjust threshold based on aggressiveness
-        maxPredictions: options.count || 50,
-        includeOfflineRisk: true
-      });
-
-      // If we have ML predictions, use them
-      if (mlPredictions.length > 0) {
-        console.log(`Generated ${mlPredictions.length} ML-based predictions`);
-
-        // Add ML predictions to the list
-        predictions.push(...mlPredictions);
-
-        // If we have enough ML predictions, return them
-        if (mlPredictions.length >= 10) {
-          // Apply limit
-          const limit = options.count || 50;
-          const limitedPredictions = predictions.slice(0, limit);
-
-          console.log(`Returning ${limitedPredictions.length} ML-based predictions`);
-          return limitedPredictions;
+        if (!currentLanguagePair) {
+          console.warn('No current language pair available for ML predictions');
         }
 
-        // Otherwise, continue with traditional predictions to supplement
-        console.log('Supplementing ML predictions with traditional predictions');
-      } else {
-        console.log('No ML predictions available, using traditional predictions');
+        // Get usage stats for better ML predictions
+        const usageStats = getUsageStats();
+
+        // Prepare device state information for edge-optimized predictions
+        const deviceState = {
+          batteryLevel: batteryLevel,
+          isCharging: devicePerformance.batteryCharging,
+          networkConnected: networkMonitor.getNetworkStatus().online,
+          availableMemoryMB: devicePerformance.memoryUsage,
+          devicePerformance: devicePerformance.cpuUsage > 80 ? 'low' :
+                            devicePerformance.cpuUsage > 50 ? 'medium' : 'high'
+        };
+
+        // Generate ML-based predictions synchronously with error handling
+        let mlPredictions = [];
+        try {
+          // Generate ML-based predictions with enhanced parameters
+          mlPredictions = modelAdapter.generatePredictions({
+            currentHour,
+            currentDay,
+            languagePair: currentLanguagePair,
+            context: currentContext,
+            location: currentLocation.locationName,
+            usageStats,
+            confidenceThreshold: 0.2 * aggressiveness, // Adjust threshold based on aggressiveness
+            maxPredictions: options.count || 50,
+            includeOfflineRisk: true,
+            // Add device state information
+            ...deviceState
+          });
+
+          console.log(`Generated ${mlPredictions.length} ML-based predictions using advanced models`);
+        } catch (predictionError) {
+          console.error('Error generating ML predictions:', predictionError);
+          mlPredictions = [];
+        }
+
+        // Check if predictions contain error information
+        const hasError = mlPredictions.length === 1 && mlPredictions[0].error === true;
+
+        // If we have valid ML predictions, use them
+        if (mlPredictions.length > 0 && !hasError) {
+          console.log(`Generated ${mlPredictions.length} ML-based predictions using advanced models`);
+          usingMlPredictions = true;
+
+          // Filter out any invalid predictions
+          const validMlPredictions = mlPredictions.filter(p =>
+            p && p.sourceLanguage && p.targetLanguage &&
+            p.score !== undefined && !isNaN(p.score)
+          );
+
+          if (validMlPredictions.length !== mlPredictions.length) {
+            console.warn(`Filtered out ${mlPredictions.length - validMlPredictions.length} invalid ML predictions`);
+          }
+
+          // Add ML predictions to the list
+          predictions.push(...validMlPredictions);
+
+          // If we have enough ML predictions, return them
+          if (validMlPredictions.length >= 10) {
+            // Apply limit
+            const limit = options.count || 50;
+            const limitedPredictions = predictions.slice(0, limit);
+
+            // Add metadata to predictions
+            const enhancedPredictions = limitedPredictions.map(p => ({
+              ...p,
+              generatedBy: 'ml_model',
+              timestamp: Date.now(),
+              offlineRisk: p.offlineRisk || offlineRisk
+            }));
+
+            console.log(`Returning ${enhancedPredictions.length} ML-based predictions from advanced models`);
+            return enhancedPredictions;
+          }
+
+          // Otherwise, continue with traditional predictions to supplement
+          console.log('Supplementing ML predictions with traditional predictions');
+        } else if (hasError) {
+          console.error('ML prediction returned error:', mlPredictions[0].errorMessage);
+          console.log('Falling back to traditional predictions');
+        } else {
+          console.log('No ML predictions available, using traditional predictions');
+        }
+      } catch (mlError) {
+        console.error('Error using ML model for predictions:', mlError);
+        console.log('Falling back to traditional predictions due to error');
+      }
+    } else {
+      console.log('ML model not initialized, using traditional predictions');
+      if (modelStatus && modelStatus.error) {
+        console.log('ML model error:', modelStatus.error);
       }
     }
 
@@ -4189,8 +4503,34 @@ function getPredictions(options = {}) {
     console.log(`Current offline risk: ${(offlineRisk * 100).toFixed(1)}%`);
 
     // Get location-based information
+    // Ensure currentLocation exists
+    if (!currentLocation) {
+      currentLocation = {
+        locationName: null,
+        latitude: 0,
+        longitude: 0,
+        lastUpdated: Date.now()
+      };
+    }
+
     const locationName = currentLocation.locationName || null;
-    const locationConnectivity = locationName ?
+
+    // Ensure locationPatterns exists
+    if (!predictionModel.locationPatterns) {
+      predictionModel.locationPatterns = {
+        frequentLocations: [],
+        locationTransitions: {},
+        locationDurations: {},
+        locationConnectivity: {}
+      };
+    }
+
+    // Ensure locationConnectivity exists
+    if (!predictionModel.locationPatterns.locationConnectivity) {
+      predictionModel.locationPatterns.locationConnectivity = {};
+    }
+
+    const locationConnectivity = locationName && predictionModel.locationPatterns.locationConnectivity ?
       (predictionModel.locationPatterns.locationConnectivity[locationName] || null) : null;
 
     // 1. Time-based predictions with offline awareness
@@ -4198,7 +4538,8 @@ function getPredictions(options = {}) {
       currentHour,
       currentDay,
       effectiveThreshold,
-      { offlineRisk, offlineRiskOnly }
+      { offlineRisk, offlineRiskOnly },
+      predictionModel
     );
     predictions.push(...timeBasedPredictions);
 
@@ -4208,7 +4549,8 @@ function getPredictions(options = {}) {
         currentLanguagePair,
         currentContext,
         effectiveThreshold,
-        { offlineRisk, offlineRiskOnly }
+        { offlineRisk, offlineRiskOnly },
+        predictionModel
       );
       predictions.push(...contextBasedPredictions);
     }
@@ -4217,7 +4559,8 @@ function getPredictions(options = {}) {
     const sessionBasedPredictions = getSessionBasedPredictions(
       currentContext,
       effectiveThreshold,
-      { offlineRisk, offlineRiskOnly }
+      { offlineRisk, offlineRiskOnly },
+      predictionModel
     );
     predictions.push(...sessionBasedPredictions);
 
@@ -4225,7 +4568,8 @@ function getPredictions(options = {}) {
     const termBasedPredictions = getTermBasedPredictions(
       Array.from(recentTerms),
       effectiveThreshold,
-      { offlineRisk, offlineRiskOnly, termFrequency }
+      { offlineRisk, offlineRiskOnly, termFrequency },
+      predictionModel
     );
     predictions.push(...termBasedPredictions);
 
@@ -4233,7 +4577,8 @@ function getPredictions(options = {}) {
     const networkBasedPredictions = getNetworkBasedPredictions(
       currentHour,
       effectiveThreshold,
-      { offlineRisk, offlineRiskOnly, currentDay }
+      { offlineRisk, offlineRiskOnly, currentDay },
+      predictionModel
     );
     predictions.push(...networkBasedPredictions);
 
@@ -4242,7 +4587,8 @@ function getPredictions(options = {}) {
       const locationBasedPredictions = predictionFunctions.getLocationBasedPredictions(
         locationName,
         effectiveThreshold,
-        { offlineRisk, offlineRiskOnly }
+        { offlineRisk, offlineRiskOnly },
+        predictionModel
       );
       predictions.push(...locationBasedPredictions);
     }
@@ -4252,7 +4598,8 @@ function getPredictions(options = {}) {
       batteryLevel,
       devicePerformance.networkSpeed,
       effectiveThreshold,
-      { offlineRisk, offlineRiskOnly }
+      { offlineRisk, offlineRiskOnly },
+      predictionModel
     );
     predictions.push(...deviceBasedPredictions);
 
@@ -4261,7 +4608,8 @@ function getPredictions(options = {}) {
       const complexityBasedPredictions = predictionFunctions.getComplexityBasedPredictions(
         currentContext,
         effectiveThreshold,
-        { offlineRisk, offlineRiskOnly }
+        { offlineRisk, offlineRiskOnly },
+        predictionModel
       );
       predictions.push(...complexityBasedPredictions);
     }
@@ -4270,7 +4618,8 @@ function getPredictions(options = {}) {
     const highScorePredictions = getHighScorePredictions(
       currentLanguagePair,
       effectiveThreshold,
-      { offlineRisk, offlineRiskOnly }
+      { offlineRisk, offlineRiskOnly },
+      predictionModel
     );
     predictions.push(...highScorePredictions);
 
@@ -4367,19 +4716,24 @@ function getPredictions(options = {}) {
  * @param {number} currentHour - Current hour (0-23)
  * @param {number} currentDay - Current day (0-6)
  * @param {number} threshold - Probability threshold
+ * @param {Object} options - Prediction options
+ * @param {Object} predModel - The prediction model (optional)
  * @returns {Array<Object>} - Time-based predictions
  */
-function getTimeBasedPredictions(currentHour, currentDay, threshold) {
+function getTimeBasedPredictions(currentHour, currentDay, threshold, options = {}, predModel = null) {
   const predictions = [];
 
+  // Use provided prediction model or global one
+  const model = predModel || predictionModel;
+
   // Check if we have time patterns
-  if (!predictionModel.timePatterns) {
+  if (!model.timePatterns) {
     return predictions;
   }
 
   // Get language pairs commonly used at this hour
-  if (predictionModel.timePatterns.hourlyLanguagePairs[currentHour]) {
-    const hourlyPairs = predictionModel.timePatterns.hourlyLanguagePairs[currentHour];
+  if (model.timePatterns.hourlyLanguagePairs[currentHour]) {
+    const hourlyPairs = model.timePatterns.hourlyLanguagePairs[currentHour];
     const totalHourlyCount = Object.values(hourlyPairs).reduce((sum, count) => sum + count, 0);
 
     if (totalHourlyCount > 0) {
@@ -4392,8 +4746,8 @@ function getTimeBasedPredictions(currentHour, currentDay, threshold) {
           // Find best context for this pair at this hour
           let bestContext = 'general';
 
-          if (predictionModel.languagePairs[pair] && predictionModel.languagePairs[pair].contexts) {
-            const contexts = predictionModel.languagePairs[pair].contexts;
+          if (model.languagePairs[pair] && model.languagePairs[pair].contexts) {
+            const contexts = model.languagePairs[pair].contexts;
             let maxCount = 0;
 
             for (const context in contexts) {
@@ -4418,8 +4772,8 @@ function getTimeBasedPredictions(currentHour, currentDay, threshold) {
   }
 
   // Get language pairs commonly used on this day
-  if (predictionModel.timePatterns.dailyLanguagePairs[currentDay]) {
-    const dailyPairs = predictionModel.timePatterns.dailyLanguagePairs[currentDay];
+  if (model.timePatterns.dailyLanguagePairs[currentDay]) {
+    const dailyPairs = model.timePatterns.dailyLanguagePairs[currentDay];
     const totalDailyCount = Object.values(dailyPairs).reduce((sum, count) => sum + count, 0);
 
     if (totalDailyCount > 0) {
@@ -4432,8 +4786,8 @@ function getTimeBasedPredictions(currentHour, currentDay, threshold) {
           // Find best context for this pair
           let bestContext = 'general';
 
-          if (predictionModel.languagePairs[pair] && predictionModel.languagePairs[pair].contexts) {
-            const contexts = predictionModel.languagePairs[pair].contexts;
+          if (model.languagePairs[pair] && model.languagePairs[pair].contexts) {
+            const contexts = model.languagePairs[pair].contexts;
             let maxCount = 0;
 
             for (const context in contexts) {
@@ -4466,14 +4820,19 @@ function getTimeBasedPredictions(currentHour, currentDay, threshold) {
  * @param {string} currentLanguagePair - Current language pair
  * @param {string} currentContext - Current context
  * @param {number} threshold - Probability threshold
+ * @param {Object} options - Prediction options
+ * @param {Object} predModel - The prediction model (optional)
  * @returns {Array<Object>} - Context-based predictions
  */
-function getContextBasedPredictions(currentLanguagePair, currentContext, threshold) {
+function getContextBasedPredictions(currentLanguagePair, currentContext, threshold, options = {}, predModel = null) {
   const predictions = [];
   const [sourceLanguage, targetLanguage] = currentLanguagePair.split('-');
 
+  // Use provided prediction model or global one
+  const model = predModel || predictionModel;
+
   // Add current language pair with different contexts
-  const languagePairData = predictionModel.languagePairs[currentLanguagePair];
+  const languagePairData = model.languagePairs[currentLanguagePair];
 
   if (languagePairData && languagePairData.contexts) {
     for (const context in languagePairData.contexts) {
@@ -4491,18 +4850,18 @@ function getContextBasedPredictions(currentLanguagePair, currentContext, thresho
   }
 
   // Add context sequences
-  if (predictionModel.sequences) {
-    for (const seq in predictionModel.sequences) {
+  if (model.sequences) {
+    for (const seq in model.sequences) {
       if (seq.startsWith(`${currentContext}->`) &&
-          predictionModel.sequences[seq].probability > threshold) {
+          model.sequences[seq].probability > threshold) {
         const nextContext = seq.split('->')[1];
 
         predictions.push({
           sourceLanguage,
           targetLanguage,
           context: nextContext,
-          probability: predictionModel.sequences[seq].probability,
-          score: predictionModel.sequences[seq].probability * 1.3, // Higher weight for sequences
+          probability: model.sequences[seq].probability,
+          score: model.sequences[seq].probability * 1.3, // Higher weight for sequences
           reason: 'context_sequence'
         });
       }
@@ -4510,10 +4869,10 @@ function getContextBasedPredictions(currentLanguagePair, currentContext, thresho
   }
 
   // Add language pair sequences
-  if (predictionModel.sequences) {
-    for (const seq in predictionModel.sequences) {
+  if (model.sequences) {
+    for (const seq in model.sequences) {
       if (seq.startsWith(`${currentLanguagePair}->`) &&
-          predictionModel.sequences[seq].probability > threshold) {
+          model.sequences[seq].probability > threshold) {
         const nextPair = seq.split('->')[1];
         const [nextSource, nextTarget] = nextPair.split('-');
 
@@ -4521,8 +4880,8 @@ function getContextBasedPredictions(currentLanguagePair, currentContext, thresho
           sourceLanguage: nextSource,
           targetLanguage: nextTarget,
           context: currentContext,
-          probability: predictionModel.sequences[seq].probability,
-          score: predictionModel.sequences[seq].probability * 1.1, // Slightly higher weight
+          probability: model.sequences[seq].probability,
+          score: model.sequences[seq].probability * 1.1, // Slightly higher weight
           reason: 'language_sequence'
         });
       }
@@ -4530,11 +4889,11 @@ function getContextBasedPredictions(currentLanguagePair, currentContext, thresho
   }
 
   // Add context transitions from user patterns
-  if (predictionModel.userPatterns &&
-      predictionModel.userPatterns.contextTransitions &&
-      predictionModel.userPatterns.contextTransitions[currentContext]) {
+  if (model.userPatterns &&
+      model.userPatterns.contextTransitions &&
+      model.userPatterns.contextTransitions[currentContext]) {
 
-    const transitions = predictionModel.userPatterns.contextTransitions[currentContext];
+    const transitions = model.userPatterns.contextTransitions[currentContext];
 
     for (const nextContext in transitions) {
       if (transitions[nextContext] > threshold) {
@@ -4558,18 +4917,23 @@ function getContextBasedPredictions(currentLanguagePair, currentContext, thresho
  *
  * @param {string} currentContext - Current context
  * @param {number} threshold - Probability threshold
+ * @param {Object} options - Prediction options
+ * @param {Object} predModel - The prediction model (optional)
  * @returns {Array<Object>} - Session-based predictions
  */
-function getSessionBasedPredictions(currentContext, threshold) {
+function getSessionBasedPredictions(currentContext, threshold, options = {}, predModel = null) {
   const predictions = [];
 
+  // Use provided prediction model or global one
+  const model = predModel || predictionModel;
+
   // Check if we have user patterns
-  if (!predictionModel.userPatterns || !predictionModel.userPatterns.commonSequences) {
+  if (!model.userPatterns || !model.userPatterns.commonSequences) {
     return predictions;
   }
 
   // Look for sequences that start with the current context
-  for (const seqData of predictionModel.userPatterns.commonSequences) {
+  for (const seqData of model.userPatterns.commonSequences) {
     const contexts = seqData.sequence.split('->');
 
     if (contexts[0] === currentContext && seqData.count > 1) {
@@ -4580,8 +4944,8 @@ function getSessionBasedPredictions(currentContext, threshold) {
         let bestPair = null;
         let bestScore = 0;
 
-        for (const pair in predictionModel.languagePairs) {
-          const pairData = predictionModel.languagePairs[pair];
+        for (const pair in model.languagePairs) {
+          const pairData = model.languagePairs[pair];
 
           if (pairData.contexts &&
               pairData.contexts[contexts[i]] &&
@@ -4619,19 +4983,24 @@ function getSessionBasedPredictions(currentContext, threshold) {
  *
  * @param {Array<string>} recentTerms - Recent medical terms
  * @param {number} threshold - Probability threshold
+ * @param {Object} options - Prediction options
+ * @param {Object} predModel - The prediction model (optional)
  * @returns {Array<Object>} - Term-based predictions
  */
-function getTermBasedPredictions(recentTerms, threshold) {
+function getTermBasedPredictions(recentTerms, threshold, options = {}, predModel = null) {
   const predictions = [];
 
+  // Use provided prediction model or global one
+  const model = predModel || predictionModel;
+
   // Check if we have terms data
-  if (!predictionModel.terms || recentTerms.length === 0) {
+  if (!model.terms || recentTerms.length === 0) {
     return predictions;
   }
 
   // For each recent term, find related language pairs and contexts
   for (const term of recentTerms) {
-    const termData = predictionModel.terms[term];
+    const termData = model.terms[term];
 
     if (!termData) {
       continue;
@@ -4712,26 +5081,31 @@ function getTermBasedPredictions(recentTerms, threshold) {
  *
  * @param {number} currentHour - Current hour (0-23)
  * @param {number} threshold - Probability threshold
+ * @param {Object} options - Prediction options
+ * @param {Object} predModel - The prediction model (optional)
  * @returns {Array<Object>} - Network-based predictions
  */
-function getNetworkBasedPredictions(currentHour, threshold) {
+function getNetworkBasedPredictions(currentHour, threshold, options = {}, predModel = null) {
   const predictions = [];
 
+  // Use provided prediction model or global one
+  const model = predModel || predictionModel;
+
   // Check if we have network patterns
-  if (!predictionModel.networkPatterns) {
+  if (!model.networkPatterns) {
     return predictions;
   }
 
   // Check if this hour has high offline probability
-  const offlineHourProbability = predictionModel.networkPatterns.offlineTimeOfDay[currentHour] /
-    predictionModel.networkPatterns.offlineTimeOfDay.reduce((sum, count) => sum + count, 1);
+  const offlineHourProbability = model.networkPatterns.offlineTimeOfDay[currentHour] /
+    model.networkPatterns.offlineTimeOfDay.reduce((sum, count) => sum + count, 1);
 
   if (offlineHourProbability > threshold) {
     // This hour has high probability of going offline
     // Add high-priority predictions for the most common language pairs
 
     // Sort language pairs by combined score
-    const sortedPairs = Object.entries(predictionModel.languagePairs)
+    const sortedPairs = Object.entries(model.languagePairs)
       .map(([pair, data]) => ({
         pair,
         score: data.combinedScore || data.probability || 0
@@ -4746,10 +5120,10 @@ function getNetworkBasedPredictions(currentHour, threshold) {
       let bestContext = 'general';
       let bestContextScore = 0;
 
-      if (predictionModel.languagePairs[pair] && predictionModel.languagePairs[pair].contexts) {
-        for (const context in predictionModel.languagePairs[pair].contexts) {
-          if (predictionModel.languagePairs[pair].contexts[context] > bestContextScore) {
-            bestContextScore = predictionModel.languagePairs[pair].contexts[context];
+      if (model.languagePairs[pair] && model.languagePairs[pair].contexts) {
+        for (const context in model.languagePairs[pair].contexts) {
+          if (model.languagePairs[pair].contexts[context] > bestContextScore) {
+            bestContextScore = model.languagePairs[pair].contexts[context];
             bestContext = context;
           }
         }
@@ -4775,19 +5149,24 @@ function getNetworkBasedPredictions(currentHour, threshold) {
  *
  * @param {string} currentLanguagePair - Current language pair
  * @param {number} threshold - Probability threshold
+ * @param {Object} options - Prediction options
+ * @param {Object} predModel - The prediction model (optional)
  * @returns {Array<Object>} - High-score predictions
  */
-function getHighScorePredictions(currentLanguagePair, threshold) {
+function getHighScorePredictions(currentLanguagePair, threshold, options = {}, predModel = null) {
   const predictions = [];
 
+  // Use provided prediction model or global one
+  const model = predModel || predictionModel;
+
   // Check if we have language pairs
-  if (!predictionModel.languagePairs) {
+  if (!model.languagePairs) {
     return predictions;
   }
 
   // Add high-score language pairs
-  for (const pair in predictionModel.languagePairs) {
-    const pairData = predictionModel.languagePairs[pair];
+  for (const pair in model.languagePairs) {
+    const pairData = model.languagePairs[pair];
 
     if (pair !== currentLanguagePair &&
         pairData.combinedScore &&
@@ -4942,14 +5321,14 @@ function getUsageStats() {
     }));
 
     // Get ML model status if available
-    let mlModelStatus = null;
+    let mlModelStatus = { isInitialized: false };
     try {
-      const modelStatus = modelAdapter.getStatus();
-      if (modelStatus.isInitialized) {
+      if (modelAdapter) {
+        const modelStatus = modelAdapter.getStatus();
         mlModelStatus = {
-          isInitialized: modelStatus.isInitialized,
-          lastTrainingTime: modelStatus.lastTrainingTime,
-          modelPerformance: modelStatus.modelPerformance
+          isInitialized: modelStatus.isInitialized || false,
+          lastTrainingTime: modelStatus.lastTrainingTime || 0,
+          modelPerformance: modelStatus.modelPerformance || {}
         };
       }
     } catch (error) {
@@ -5083,6 +5462,382 @@ function generateMultipleSampleTexts(prediction, count = 3) {
   return samples;
 }
 
+/**
+ * Get cache status information
+ *
+ * @returns {Promise<Object>} - Cache status information
+ */
+async function getStatus() {
+  try {
+    if (!isInitialized) {
+      await initialize();
+    }
+
+    // Get cache information from cache manager
+    const cacheInfo = cacheManager ? cacheManager.getCacheInfo() : {
+      sizeBytes: 0,
+      itemCount: 0,
+      hits: 0,
+      misses: 0
+    };
+
+    // Calculate hit rate
+    const totalRequests = cacheInfo.hits + cacheInfo.misses;
+    const hitRate = totalRequests > 0 ? cacheInfo.hits / totalRequests : 0;
+
+    // Calculate offline readiness
+    let offlineReadiness = 0;
+
+    // If we have predictions, use them to calculate offline readiness
+    const predictions = await getPredictions();
+    if (predictions.predictedKeys && predictions.predictedKeys.length > 0) {
+      // Check how many predicted keys are in cache
+      let cachedCount = 0;
+      if (cacheManager) {
+        for (const key of predictions.predictedKeys) {
+          if (await cacheManager.hasItem(key)) {
+            cachedCount++;
+          }
+        }
+      }
+
+      // Calculate readiness based on percentage of predicted keys in cache
+      offlineReadiness = predictions.predictedKeys.length > 0
+        ? cachedCount / predictions.predictedKeys.length
+        : 0;
+    } else {
+      // Fallback calculation based on cache size and usage patterns
+      const usageStats = getUsageStats();
+      const frequentItems = Object.keys(usageStats.frequentItems || {}).length;
+      const cachedItems = cacheInfo.itemCount;
+
+      // Simple ratio of cached items to frequent items
+      offlineReadiness = frequentItems > 0 ? Math.min(cachedItems / frequentItems, 1) : 0;
+    }
+
+    // Get compression ratio if available
+    let compressionRatio = 1;
+    if (compressionUtil && cacheInfo.originalSizeBytes > 0 && cacheInfo.compressedSizeBytes > 0) {
+      compressionRatio = cacheInfo.originalSizeBytes / cacheInfo.compressedSizeBytes;
+    }
+
+    // Count prioritized items
+    let prioritizedItemCount = 0;
+    let lowPriorityItemCount = 0;
+
+    if (cacheManager) {
+      const cacheItems = await cacheManager.getAllItems();
+      for (const item of cacheItems) {
+        if (item.priority && item.priority >= OFFLINE_PRIORITY_THRESHOLD) {
+          prioritizedItemCount++;
+        } else {
+          lowPriorityItemCount++;
+        }
+      }
+    }
+
+    // Calculate average cache age
+    let totalAgeMs = 0;
+    let itemsWithAge = 0;
+    const now = Date.now();
+
+    if (cacheManager) {
+      const cacheItems = await cacheManager.getAllItems();
+      for (const item of cacheItems) {
+        if (item.timestamp) {
+          totalAgeMs += (now - item.timestamp);
+          itemsWithAge++;
+        }
+      }
+    }
+
+    const averageCacheAgeMs = itemsWithAge > 0 ? totalAgeMs / itemsWithAge : 0;
+
+    // Calculate cache efficiency (hit rate weighted by priority)
+    const cacheEfficiency = hitRate * (1 + (prioritizedItemCount / Math.max(cacheInfo.itemCount, 1)) * 0.5);
+
+    return {
+      initialized: isInitialized,
+      totalSizeBytes: cacheInfo.sizeBytes,
+      itemCount: cacheInfo.itemCount,
+      hits: cacheInfo.hits,
+      misses: cacheInfo.misses,
+      hitRate,
+      offlineReadiness,
+      lastUpdated: predictionModel.lastUpdated,
+      compressionRatio,
+      prioritizedItemCount,
+      lowPriorityItemCount,
+      averageCacheAgeMs,
+      cacheEfficiency,
+      predictionModelVersion: predictionModel.version,
+      mlModelStatus: modelAdapter ? modelAdapter.getStatus() : { isInitialized: false }
+    };
+  } catch (error) {
+    console.error('Error getting cache status:', error);
+    return {
+      initialized: isInitialized,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Get detailed cache metrics
+ *
+ * @returns {Promise<Object>} - Detailed cache metrics
+ */
+async function getMetrics() {
+  try {
+    if (!isInitialized) {
+      await initialize();
+    }
+
+    // Get usage statistics
+    const usageStats = getUsageStats();
+
+    // Get network predictions
+    const networkPredictions = await getPredictions();
+
+    // Get device performance metrics
+    const deviceMetrics = { ...devicePerformance };
+
+    // Get location patterns
+    const locationPatterns = { ...predictionModel.locationPatterns };
+
+    // Get time patterns
+    const timePatterns = { ...predictionModel.timePatterns };
+
+    // Get content patterns
+    const contentPatterns = { ...predictionModel.contentPatterns };
+
+    // Get adaptive thresholds
+    const adaptiveThresholds = { ...predictionModel.adaptiveThresholds };
+
+    return {
+      usageStats,
+      networkPredictions,
+      deviceMetrics,
+      locationPatterns,
+      timePatterns,
+      contentPatterns,
+      adaptiveThresholds,
+      sessionState: { ...sessionState },
+      batteryLevel,
+      lastUpdated: Date.now()
+    };
+  } catch (error) {
+    console.error('Error getting cache metrics:', error);
+    return {
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Optimize the cache
+ *
+ * @param {Object} options - Optimization options
+ * @returns {Promise<Object>} - Optimization result
+ */
+async function optimizeCache(options = {}) {
+  try {
+    console.log('Optimizing cache with options:', options);
+
+    if (!isInitialized) {
+      await initialize();
+    }
+
+    if (!cacheManager) {
+      return {
+        success: false,
+        error: 'Cache manager not available'
+      };
+    }
+
+    // Get current cache info
+    const beforeInfo = cacheManager.getCacheInfo();
+
+    // Perform optimization
+    const result = await cacheManager.optimizeCache({
+      maxItems: options.maxItems,
+      maxSizeMB: options.maxSizeMB,
+      priorityThreshold: options.priorityThreshold || OFFLINE_PRIORITY_THRESHOLD,
+      keepPredicted: options.keepPredicted !== false,
+      force: options.force || false
+    });
+
+    // Get updated cache info
+    const afterInfo = cacheManager.getCacheInfo();
+
+    return {
+      success: true,
+      optimized: result.optimized,
+      removedItems: result.removedItems,
+      freedSpaceBytes: beforeInfo.sizeBytes - afterInfo.sizeBytes,
+      beforeItemCount: beforeInfo.itemCount,
+      afterItemCount: afterInfo.itemCount,
+      beforeSizeBytes: beforeInfo.sizeBytes,
+      afterSizeBytes: afterInfo.sizeBytes
+    };
+  } catch (error) {
+    console.error('Error optimizing cache:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Get detailed cache status information
+ *
+ * @returns {Object} - Cache status information
+ */
+function getCacheStatus() {
+  try {
+    // Get basic status
+    const status = getStatus();
+
+    // Get storage information if available
+    let storageInfo = {
+      totalSize: 0,
+      itemCount: 0,
+      compressionRatio: 1,
+      storageUsage: 0
+    };
+
+    if (storageManager) {
+      const storageStatus = storageManager.getStatus();
+      storageInfo = {
+        totalSize: storageStatus.totalSize || 0,
+        itemCount: storageStatus.itemCount || 0,
+        compressionRatio: storageStatus.compressionRatio || 1,
+        storageUsage: storageStatus.quotaUsage || 0
+      };
+    }
+
+    // Get ML model status if available
+    let mlStatus = { isInitialized: false };
+    if (modelAdapter) {
+      mlStatus = modelAdapter.getStatus();
+    }
+
+    // Calculate offline readiness score
+    const offlineRisk = calculateOfflineRisk();
+    const offlineReadiness = calculateOfflineReadiness();
+
+    // Get network prediction
+    const networkPrediction = modelAdapter && mlStatus.isInitialized ?
+      modelAdapter.predictOfflineRisk({ timestamp: Date.now(), location: currentLocation.locationName }) :
+      { offlinePredicted: false, confidence: 0, predictedDuration: 0 };
+
+    return {
+      success: true,
+      timestamp: Date.now(),
+      cacheSize: storageInfo.totalSize,
+      itemCount: storageInfo.itemCount,
+      hitRate: status.hitRate || 0,
+      offlineReadiness: offlineReadiness,
+      lastUpdated: predictionModel.lastUpdated,
+      predictedOffline: networkPrediction.offlinePredicted,
+      predictedDuration: networkPrediction.predictedDuration,
+      offlineRisk: offlineRisk.offlinePredicted ? offlineRisk.confidence : 0,
+      storageUsage: storageInfo.storageUsage,
+      compressionRatio: storageInfo.compressionRatio,
+      mlModelsEnabled: mlStatus.isInitialized,
+      mlModelTypes: mlStatus.isInitialized ? Object.keys(mlStatus.models).filter(model =>
+        mlStatus.models[model].isInitialized || mlStatus.models[model].enabled
+      ) : [],
+      deviceStatus: {
+        batteryLevel,
+        networkStatus: networkMonitor.isOnline() ? 'online' : 'offline',
+        networkQuality: networkMonitor.getNetworkQuality() || 'unknown'
+      }
+    };
+  } catch (error) {
+    console.error('Error getting cache status:', error);
+    return {
+      success: false,
+      error: error.message,
+      timestamp: Date.now()
+    };
+  }
+}
+
+/**
+ * Calculate offline readiness score
+ *
+ * @returns {number} - Offline readiness score (0-1)
+ */
+function calculateOfflineReadiness() {
+  try {
+    // Factors that contribute to offline readiness
+    const factors = {
+      // Cache size relative to quota
+      cacheSize: 0,
+
+      // ML model readiness
+      mlModelReady: 0,
+
+      // Historical offline performance
+      offlinePerformance: 0,
+
+      // Prediction quality
+      predictionQuality: 0,
+
+      // Battery level
+      batteryLevel: 0
+    };
+
+    // Calculate cache size factor
+    if (storageManager) {
+      const storageStatus = storageManager.getStatus();
+      factors.cacheSize = Math.min(1, storageStatus.itemCount / 100);
+    }
+
+    // Calculate ML model readiness
+    if (modelAdapter) {
+      const modelStatus = modelAdapter.getStatus();
+      factors.mlModelReady = modelStatus.isInitialized ? 1 : 0;
+    }
+
+    // Calculate offline performance factor
+    const offlineStats = sessionState.offlineModeCount > 0 ?
+      sessionState.syncSuccessCount / Math.max(1, sessionState.offlineModeCount) : 0;
+    factors.offlinePerformance = Math.min(1, offlineStats);
+
+    // Calculate prediction quality factor
+    factors.predictionQuality = predictionModel.lastUpdated > 0 ?
+      Math.min(1, usageLog.length / 100) : 0;
+
+    // Calculate battery level factor
+    factors.batteryLevel = batteryLevel / 100;
+
+    // Calculate weighted average
+    const weights = {
+      cacheSize: 0.3,
+      mlModelReady: 0.2,
+      offlinePerformance: 0.2,
+      predictionQuality: 0.2,
+      batteryLevel: 0.1
+    };
+
+    let readinessScore = 0;
+    let totalWeight = 0;
+
+    for (const [factor, weight] of Object.entries(weights)) {
+      readinessScore += factors[factor] * weight;
+      totalWeight += weight;
+    }
+
+    return totalWeight > 0 ? readinessScore / totalWeight : 0;
+  } catch (error) {
+    console.error('Error calculating offline readiness:', error);
+    return 0;
+  }
+}
+
 // Export module
 const predictiveCache = {
   initialize,
@@ -5095,7 +5850,13 @@ const predictiveCache = {
   setUsageLog,
   generateSampleText,
   generateMultipleSampleTexts,
-  prepareForOfflineMode
+  prepareForOfflineMode,
+  // New functions
+  getStatus,
+  getMetrics,
+  optimizeCache,
+  getCacheStatus,
+  calculateOfflineReadiness
 };
 
 module.exports = predictiveCache;

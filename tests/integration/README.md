@@ -10,6 +10,9 @@ Integration tests are organized by integration point:
 - `backend-frontend-*.test.js`: Tests for backend and frontend integration
 - `edge-frontend-*.test.js`: Tests for edge and frontend integration
 - `end-to-end-*.test.js`: Complete end-to-end tests
+- `system-status-dashboard.test.js`: Tests for System Status Dashboard with health check endpoints
+- `alerting-system.test.js`: Tests for alerting system with simulated unhealthy components
+- `cloudwatch-integration.test.js`: Tests for CloudWatch integration with mock AWS services
 
 ## Running Integration Tests
 
@@ -103,3 +106,25 @@ When adding new integration tests, follow these guidelines:
   - [ ] Message broadcasting
   - [ ] Session management
   - [ ] Error handling
+
+### Health Check and Monitoring Integration
+
+- [x] System Status Dashboard Integration
+  - [x] Fetching system health data
+  - [x] Rendering health status
+  - [x] Handling degraded status
+  - [x] Handling error status
+  - [x] Handling API errors
+
+- [x] Alerting System Integration
+  - [x] Sending alerts for unhealthy components
+  - [x] Email alerting
+  - [x] SMS alerting
+  - [x] Slack alerting
+  - [x] System alerting
+
+- [x] CloudWatch Integration
+  - [x] Sending system health metrics
+  - [x] Sending logs
+  - [x] Creating alarms
+  - [x] Handling unhealthy components

@@ -48,10 +48,15 @@ async function translateText(
 
     // Prepare cultural context adaptation if requested
     let adaptedContext = medicalContext;
+    let culturalContextInfo = null;
+
     if (useCulturalContext) {
       // Adapt context based on target language cultural considerations
       adaptedContext = adaptContextForCulture(medicalContext, targetLanguage);
       console.log(`Adapted medical context from ${medicalContext} to ${adaptedContext} for cultural context in ${targetLanguage}`);
+
+      // Get detailed cultural context information
+      culturalContextInfo = getCulturalContextInfo(medicalContext, targetLanguage);
     }
 
     // Perform translation using Bedrock with the recommended model
@@ -139,6 +144,12 @@ async function translateText(
     // Add model information to the result
     if (translationResult.modelUsed) {
       translationResult.modelInfo = getModelInfo(translationResult.modelUsed);
+    }
+
+    // Add cultural context information if available
+    if (culturalContextInfo) {
+      translationResult.culturalContext = culturalContextInfo;
+      translationResult.adaptedContext = adaptedContext;
     }
 
     return translationResult;
@@ -229,6 +240,24 @@ function getAvailableModels() {
   return getBedrockModels();
 }
 
+const fs = require('fs');
+const path = require('path');
+
+// Load cultural context configuration
+const CULTURAL_CONFIG_PATH = process.env.CULTURAL_CONFIG_PATH || '../../models/configs/cultural-context.json';
+let culturalConfig = null;
+
+try {
+  const configPath = path.resolve(__dirname, CULTURAL_CONFIG_PATH);
+  if (fs.existsSync(configPath)) {
+    culturalConfig = require(configPath);
+    console.log('Loaded cultural context configuration from:', configPath);
+  }
+} catch (error) {
+  console.warn('Error loading cultural context configuration:', error.message);
+  console.warn('Using default cultural adaptations');
+}
+
 /**
  * Adapts medical context based on cultural considerations for the target language
  *
@@ -237,52 +266,111 @@ function getAvailableModels() {
  * @returns {string} - The adapted medical context
  */
 function adaptContextForCulture(medicalContext, targetLanguage) {
-  // Cultural adaptations for specific language regions
-  const culturalAdaptations = {
-    // East Asian languages
-    'zh': { // Chinese
-      'general': 'general_tcm', // Traditional Chinese Medicine context
-      'cardiology': 'cardiology_tcm',
-      'gastroenterology': 'gastroenterology_tcm'
-    },
-    'ja': { // Japanese
-      'general': 'general_kampo', // Kampo medicine context
-      'psychiatry': 'psychiatry_eastern'
-    },
-    'ko': { // Korean
-      'general': 'general_eastern',
-      'psychiatry': 'psychiatry_eastern'
-    },
+  // Use configuration file if available
+  if (culturalConfig && culturalConfig.languageAdaptations) {
+    const languageConfig = culturalConfig.languageAdaptations[targetLanguage];
 
-    // South Asian languages
-    'hi': { // Hindi
-      'general': 'general_ayurveda', // Ayurvedic context
-      'gastroenterology': 'gastroenterology_ayurveda'
-    },
+    if (languageConfig) {
+      // Check if we have a specific adaptation for this medical context
+      if (languageConfig.contexts &&
+          languageConfig.contexts[medicalContext] &&
+          languageConfig.contexts[medicalContext].adaptedContext) {
 
-    // Middle Eastern languages
-    'ar': { // Arabic
-      'general': 'general_unani', // Unani medicine context
-      'psychiatry': 'psychiatry_cultural'
-    },
+        return languageConfig.contexts[medicalContext].adaptedContext;
+      }
 
-    // Latin American Spanish
-    'es-419': {
-      'general': 'general_latinam',
-      'psychiatry': 'psychiatry_cultural'
+      // If no specific context adaptation found, but language has a default adaptation
+      if (languageConfig.defaultAdaptation) {
+        return `${medicalContext}_${languageConfig.defaultAdaptation}`;
+      }
     }
-  };
+  } else {
+    // Fallback to hardcoded adaptations if config file not available
+    const culturalAdaptations = {
+      // East Asian languages
+      'zh': { // Chinese
+        'general': 'general_tcm', // Traditional Chinese Medicine context
+        'cardiology': 'cardiology_tcm',
+        'gastroenterology': 'gastroenterology_tcm'
+      },
+      'ja': { // Japanese
+        'general': 'general_kampo', // Kampo medicine context
+        'psychiatry': 'psychiatry_eastern'
+      },
+      'ko': { // Korean
+        'general': 'general_eastern',
+        'psychiatry': 'psychiatry_eastern'
+      },
+      // South Asian languages
+      'hi': { // Hindi
+        'general': 'general_ayurveda', // Ayurvedic context
+        'gastroenterology': 'gastroenterology_ayurveda'
+      },
+      // Middle Eastern languages
+      'ar': { // Arabic
+        'general': 'general_unani', // Unani medicine context
+        'psychiatry': 'psychiatry_cultural'
+      },
+      // Latin American Spanish
+      'es-419': {
+        'general': 'general_latinam',
+        'psychiatry': 'psychiatry_cultural'
+      }
+    };
 
-  // Check if we have cultural adaptations for this language
-  if (culturalAdaptations[targetLanguage]) {
-    // Check if we have a specific adaptation for this medical context
-    if (culturalAdaptations[targetLanguage][medicalContext]) {
-      return culturalAdaptations[targetLanguage][medicalContext];
+    // Check if we have cultural adaptations for this language
+    if (culturalAdaptations[targetLanguage]) {
+      // Check if we have a specific adaptation for this medical context
+      if (culturalAdaptations[targetLanguage][medicalContext]) {
+        return culturalAdaptations[targetLanguage][medicalContext];
+      }
     }
   }
 
   // If no specific adaptation found, return the original context
   return medicalContext;
+}
+
+/**
+ * Gets cultural context information for a specific language and medical context
+ *
+ * @param {string} medicalContext - The medical context
+ * @param {string} targetLanguage - The target language code
+ * @returns {Object|null} - Cultural context information or null if not found
+ */
+function getCulturalContextInfo(medicalContext, targetLanguage) {
+  if (!culturalConfig || !culturalConfig.languageAdaptations) {
+    return null;
+  }
+
+  const languageConfig = culturalConfig.languageAdaptations[targetLanguage];
+  if (!languageConfig || !languageConfig.contexts) {
+    return null;
+  }
+
+  // Get context-specific information
+  const contextInfo = languageConfig.contexts[medicalContext];
+  if (contextInfo) {
+    return {
+      language: languageConfig.name,
+      adaptedContext: contextInfo.adaptedContext,
+      description: contextInfo.description,
+      keyTerms: contextInfo.keyTerms,
+      culturalNotes: contextInfo.culturalNotes
+    };
+  }
+
+  // If no specific context found, return general information about the language adaptation
+  if (languageConfig.defaultAdaptation) {
+    return {
+      language: languageConfig.name,
+      adaptedContext: `${medicalContext}_${languageConfig.defaultAdaptation}`,
+      description: `${medicalContext} with ${languageConfig.name} cultural context`,
+      defaultAdaptation: languageConfig.defaultAdaptation
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -369,5 +457,6 @@ module.exports = {
   translateAudio,
   translateAudioEnhanced,
   getAvailableModels,
-  adaptContextForCulture
+  adaptContextForCulture,
+  getCulturalContextInfo
 };

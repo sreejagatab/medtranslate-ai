@@ -1,0 +1,122 @@
+{
+  "success": true,
+  "devices": [
+    {
+      "deviceId": "edge-device-1",
+      "deviceName": "Hospital Wing A",
+      "quality": {
+        "modelPerformance": {
+          "claude-3-sonnet": {
+            "averageConfidence": 0.92,
+            "accuracy": 0.95,
+            "usageCount": 450
+          },
+          "claude-3-haiku": {
+            "averageConfidence": 0.88,
+            "accuracy": 0.91,
+            "usageCount": 320
+          }
+        },
+        "contextPerformance": {
+          "general": {
+            "averageConfidence": 0.90,
+            "accuracy": 0.93,
+            "usageCount": 380
+          },
+          "cardiology": {
+            "averageConfidence": 0.94,
+            "accuracy": 0.96,
+            "usageCount": 210
+          }
+        },
+        "languagePairPerformance": {
+          "en-es": {
+            "averageConfidence": 0.93,
+            "accuracy": 0.95,
+            "usageCount": 320
+          },
+          "es-en": {
+            "averageConfidence": 0.91,
+            "accuracy": 0.94,
+            "usageCount": 280
+          }
+        },
+        "feedbackStats": {
+          "positive": 580,
+          "negative": 25,
+          "byContext": {
+            "general": {
+              "positive": 320,
+              "negative": 15
+            },
+            "cardiology": {
+              "positive": 260,
+              "negative": 10
+            }
+          }
+        }
+      },
+      "online": true,
+      "lastUpdated": "2023-05-01T12:00:00.000Z"
+    },
+    {
+      "deviceId": "edge-device-2",
+      "deviceName": "Hospital Wing B",
+      "quality": {
+        "modelPerformance": {
+          "claude-3-sonnet": {
+            "averageConfidence": 0.90,
+            "accuracy": 0.93,
+            "usageCount": 380
+          },
+          "claude-3-haiku": {
+            "averageConfidence": 0.86,
+            "accuracy": 0.89,
+            "usageCount": 290
+          }
+        },
+        "contextPerformance": {
+          "general": {
+            "averageConfidence": 0.88,
+            "accuracy": 0.91,
+            "usageCount": 350
+          },
+          "neurology": {
+            "averageConfidence": 0.92,
+            "accuracy": 0.94,
+            "usageCount": 180
+          }
+        },
+        "languagePairPerformance": {
+          "en-fr": {
+            "averageConfidence": 0.91,
+            "accuracy": 0.93,
+            "usageCount": 280
+          },
+          "fr-en": {
+            "averageConfidence": 0.89,
+            "accuracy": 0.92,
+            "usageCount": 240
+          }
+        },
+        "feedbackStats": {
+          "positive": 520,
+          "negative": 30,
+          "byContext": {
+            "general": {
+              "positive": 290,
+              "negative": 18
+            },
+            "neurology": {
+              "positive": 230,
+              "negative": 12
+            }
+          }
+        }
+      },
+      "online": true,
+      "lastUpdated": "2023-05-01T12:00:00.000Z"
+    }
+  ],
+  "timestamp": "2023-05-01T12:00:00.000Z"
+}

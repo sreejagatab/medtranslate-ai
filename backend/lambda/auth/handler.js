@@ -347,12 +347,11 @@ exports.register = async (event) => {
     }
 
     // Generate token for the new user
-    const token = await authService.generateToken({
-      id: result.user.id,
-      name: result.user.name,
-      email: result.user.email,
-      role: result.user.role
-    });
+    const token = await authService.generateProviderToken(
+      result.user.id,
+      result.user.name,
+      result.user.role
+    );
 
     return formatResponse(201, {
       success: true,

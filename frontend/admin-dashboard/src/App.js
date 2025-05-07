@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import ConnectionAnalyticsPage from './pages/ConnectionAnalyticsPage';
+import SyncAnalyticsPage from './pages/SyncAnalyticsPage';
 import RecoveryManagerPage from './pages/RecoveryManagerPage';
 import UsersPage from './pages/UsersPage';
 import SystemHealthPage from './pages/SystemHealthPage';
@@ -105,6 +106,12 @@ function App() {
                 <Route path="/connection-analytics" element={
                   <ProtectedRoute>
                     <ConnectionAnalyticsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/sync-analytics" element={
+                  <ProtectedRoute>
+                    <SyncAnalyticsPage />
                   </ProtectedRoute>
                 } />
 

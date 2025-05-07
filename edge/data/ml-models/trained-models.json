@@ -1,8 +1,32 @@
 {
-  "lastTrainingTime": 1746137709485,
+  "lastTrainingTime": 1746608434390,
   "modelPerformance": {
     "timeSeries": 0.4,
     "content": 0.4,
     "network": 0.2
-  }
+  },
+  "useEnhancedConnectionPrediction": true,
+  "useAdvancedTimeSeriesModels": false,
+  "connectionModelStatus": {
+    "isInitialized": true,
+    "sampleCount": 0,
+    "issueCount": 0,
+    "qualityHistoryCount": 0,
+    "locationCount": 0,
+    "transitionCount": 0,
+    "userProfileCount": 0,
+    "recurringPatternCount": 0,
+    "modelConfidence": 0,
+    "adaptiveWeights": {
+      "timePattern": 0.25,
+      "locationPattern": 0.25,
+      "recentQuality": 0.15,
+      "transitionPattern": 0.15,
+      "userProfile": 0.1,
+      "recurringPattern": 0.1
+    },
+    "patternDetectionEnabled": true,
+    "adaptiveWeightsEnabled": true
+  },
+  "advancedTimeSeriesStatus": null
 }

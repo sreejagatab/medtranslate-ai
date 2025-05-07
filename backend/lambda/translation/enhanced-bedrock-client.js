@@ -424,28 +424,89 @@ function getModelFallbackChain(sourceLanguage, targetLanguage, medicalContext, p
     });
   }
 
-  // Add fallback models in priority order
-  // 1. Claude models are generally best for medical content
-  if (models[0].family !== 'claude' && modelConfig.models['claude']) {
-    models.push({
-      id: modelConfig.models['claude'][0],
-      family: 'claude',
-      fallback: true
-    });
+  // If fallback strategy is not enabled, just return the primary model
+  if (modelConfig.fallbackStrategy && !modelConfig.fallbackStrategy.enabled) {
+    return models;
   }
 
-  // 2. Titan models are good for many languages
-  if (models[0].family !== 'titan' && modelConfig.models['titan']) {
-    models.push({
-      id: modelConfig.models['titan'][0],
-      family: 'titan',
-      fallback: true
-    });
+  // Determine which fallback order to use
+  let fallbackOrder = [];
+
+  // Check if we have context-specific fallbacks
+  if (modelConfig.fallbackStrategy &&
+      modelConfig.fallbackStrategy.contextSpecificFallbacks &&
+      modelConfig.fallbackStrategy.contextSpecificFallbacks[medicalContext]) {
+    fallbackOrder = modelConfig.fallbackStrategy.contextSpecificFallbacks[medicalContext];
+  }
+  // Check if we have language-specific fallbacks
+  else if (modelConfig.fallbackStrategy && modelConfig.fallbackStrategy.languageSpecificFallbacks) {
+    // Find the language group that contains the source or target language
+    for (const [groupName, group] of Object.entries(modelConfig.fallbackStrategy.languageSpecificFallbacks)) {
+      if (group.languages &&
+          (group.languages.includes(sourceLanguage) || group.languages.includes(targetLanguage))) {
+        fallbackOrder = group.order;
+        break;
+      }
+    }
   }
 
-  // 3. Add other model families not already included
-  for (const family of modelConfig.modelFamilies) {
-    if (!models.some(m => m.family === family) && modelConfig.models[family]) {
+  // If no specific fallback order was found, use the default order
+  if (fallbackOrder.length === 0 && modelConfig.fallbackStrategy && modelConfig.fallbackStrategy.order) {
+    fallbackOrder = modelConfig.fallbackStrategy.order;
+  }
+
+  // If cost optimization is enabled, use cost-optimized fallback order
+  if (modelConfig.fallbackStrategy &&
+      modelConfig.fallbackStrategy.costOptimizedFallbacks &&
+      modelConfig.fallbackStrategy.costOptimizedFallbacks.enabled) {
+    fallbackOrder = modelConfig.fallbackStrategy.costOptimizedFallbacks.order;
+  }
+
+  // If performance optimization is enabled, use performance-optimized fallback order
+  if (modelConfig.fallbackStrategy &&
+      modelConfig.fallbackStrategy.performanceOptimizedFallbacks &&
+      modelConfig.fallbackStrategy.performanceOptimizedFallbacks.enabled) {
+    fallbackOrder = modelConfig.fallbackStrategy.performanceOptimizedFallbacks.order;
+  }
+
+  // Add fallback models in the determined order
+  for (const family of fallbackOrder) {
+    // Skip the family that's already the primary model
+    if (models[0].family === family) {
+      continue;
+    }
+
+    // Handle special cases like claude-haiku, titan-lite, etc.
+    if (family.includes('-')) {
+      const [baseName, variant] = family.split('-');
+
+      if (modelConfig.models[baseName]) {
+        // Find the specific model variant
+        const modelVariants = {
+          'claude-haiku': 'anthropic.claude-3-haiku-20240307-v1:0',
+          'claude-sonnet': 'anthropic.claude-3-sonnet-20240229-v1:0',
+          'claude-opus': 'anthropic.claude-3-opus-20240229-v1:0',
+          'titan-lite': 'amazon.titan-text-lite-v1',
+          'titan-express': 'amazon.titan-text-express-v1',
+          'llama-small': 'meta.llama3-8b-instruct-v1:0',
+          'llama-large': 'meta.llama3-70b-instruct-v1:0'
+        };
+
+        const specificModelId = modelVariants[family];
+        if (specificModelId) {
+          models.push({
+            id: specificModelId,
+            family: baseName,
+            variant: variant,
+            fallback: true
+          });
+          continue;
+        }
+      }
+    }
+
+    // Standard case - add the first model from the family
+    if (modelConfig.models[family] && modelConfig.models[family].length > 0) {
       models.push({
         id: modelConfig.models[family][0],
         family: family,
@@ -454,7 +515,21 @@ function getModelFallbackChain(sourceLanguage, targetLanguage, medicalContext, p
     }
   }
 
-  return models;
+  // If AWS Translate is in the fallback order and we have the translate service
+  if (fallbackOrder.includes('aws.translate') && translate) {
+    models.push({
+      id: 'aws.translate',
+      family: 'aws.translate',
+      fallback: true
+    });
+  }
+
+  // Limit the number of fallbacks based on maxAttempts
+  const maxAttempts = modelConfig.fallbackStrategy && modelConfig.fallbackStrategy.maxAttempts
+    ? modelConfig.fallbackStrategy.maxAttempts
+    : 3;
+
+  return models.slice(0, maxAttempts);
 }
 
 /**
@@ -507,6 +582,54 @@ If there are specialized medical terms, ensure they are translated accurately ac
 Provide only the translated text without any explanations or notes.`;
   }
 
+  // Check if we have cultural context information
+  let culturalContextPrompt = '';
+
+  // Try to load cultural context configuration
+  try {
+    const culturalConfigPath = path.resolve(__dirname, '../../models/configs/cultural-context.json');
+    if (fs.existsSync(culturalConfigPath)) {
+      const culturalConfig = require(culturalConfigPath);
+
+      // Extract language code (remove region if present)
+      const baseTargetLang = targetLanguage.split('-')[0];
+
+      // Check if we have cultural adaptations for this language
+      if (culturalConfig.languageAdaptations &&
+          (culturalConfig.languageAdaptations[targetLanguage] || culturalConfig.languageAdaptations[baseTargetLang])) {
+
+        const langConfig = culturalConfig.languageAdaptations[targetLanguage] ||
+                          culturalConfig.languageAdaptations[baseTargetLang];
+
+        // Check if we have context-specific information
+        if (langConfig.contexts && langConfig.contexts[medicalContext]) {
+          const contextInfo = langConfig.contexts[medicalContext];
+
+          culturalContextPrompt = `\nCultural Context Information:
+- This translation should consider ${langConfig.name} cultural context
+- ${contextInfo.description}
+- Key cultural terms: ${contextInfo.keyTerms.join(', ')}
+- Cultural note: ${contextInfo.culturalNotes}`;
+        }
+        // If no specific context but language has a default adaptation
+        else if (langConfig.defaultAdaptation && culturalConfig.promptModifications) {
+          const adaptationType = langConfig.defaultAdaptation;
+
+          if (culturalConfig.promptModifications[adaptationType] &&
+              culturalConfig.promptModifications[adaptationType].additions) {
+
+            culturalContextPrompt = `\nCultural Context Information:`;
+            for (const addition of culturalConfig.promptModifications[adaptationType].additions) {
+              culturalContextPrompt += `\n- ${addition}`;
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Error loading cultural context for prompt:', error.message);
+  }
+
   // Prepare prompt based on model
   let prompt;
   let params;
@@ -516,6 +639,7 @@ Provide only the translated text without any explanations or notes.`;
     prompt = `<instructions>
 ${promptTemplate}
 ${medicalTermsPrompt}
+${culturalContextPrompt}
 </instructions>
 
 <input>
@@ -547,6 +671,7 @@ ${medicalTermsPrompt}
     // Titan-specific prompt format
     prompt = `${promptTemplate}
 ${medicalTermsPrompt}
+${culturalContextPrompt}
 
 Text to translate: {text}`;
 
@@ -574,6 +699,7 @@ Text to translate: {text}`;
     // Llama-specific prompt format
     prompt = `<s>[INST]${promptTemplate}
 ${medicalTermsPrompt}
+${culturalContextPrompt}
 
 Text to translate: {text}[/INST]</s>`;
 
@@ -599,6 +725,7 @@ Text to translate: {text}[/INST]</s>`;
     // Mistral-specific prompt format
     prompt = `<s>[INST]${promptTemplate}
 ${medicalTermsPrompt}
+${culturalContextPrompt}
 
 Text to translate: {text}[/INST]</s>`;
 
@@ -624,6 +751,7 @@ Text to translate: {text}[/INST]</s>`;
     // Generic format for other models
     prompt = `${promptTemplate}
 ${medicalTermsPrompt}
+${culturalContextPrompt}
 
 Text to translate: ${text}`;
 
@@ -666,6 +794,7 @@ Text to translate: ${text}`;
     // Generate confidence analysis if requested
     let confidenceScore = 'high';
     let confidenceAnalysis = null;
+    let confidenceScoreNumeric = 0.95; // Default high confidence
 
     if (includeConfidenceAnalysis) {
       const analysisResult = await analyzeTranslationConfidence(
@@ -679,7 +808,26 @@ Text to translate: ${text}`;
 
       confidenceScore = analysisResult.confidenceLevel;
       confidenceAnalysis = analysisResult;
+
+      // Convert confidence level to numeric value for tracking
+      if (confidenceScore === 'high') confidenceScoreNumeric = 0.95;
+      else if (confidenceScore === 'medium') confidenceScoreNumeric = 0.8;
+      else if (confidenceScore === 'low') confidenceScoreNumeric = 0.6;
+
+      // Use the actual score if available
+      if (analysisResult.score) {
+        confidenceScoreNumeric = analysisResult.score;
+      }
     }
+
+    // Track model performance
+    trackModelPerformance(modelId, {
+      responseTime: processingTime,
+      error: false,
+      confidenceScore: confidenceScoreNumeric,
+      // Estimate cost based on model tier and input length
+      costPerRequest: estimateModelCost(modelId, text.length)
+    });
 
     return {
       translatedText: responseText,
@@ -694,6 +842,13 @@ Text to translate: ${text}`;
   } catch (error) {
     console.error('Error calling Bedrock:', error);
 
+    // Track model error
+    trackModelPerformance(modelId, {
+      error: true,
+      errorType: error.name || 'UnknownError',
+      errorMessage: error.message
+    });
+
     // Try fallback to AWS Translate if Bedrock fails
     try {
       console.log('Falling back to AWS Translate');
@@ -707,6 +862,14 @@ Text to translate: ${text}`;
       const endTime = Date.now();
       const processingTime = endTime - startTime;
 
+      // Track AWS Translate success
+      trackModelPerformance('aws.translate', {
+        responseTime: processingTime,
+        error: false,
+        confidenceScore: 0.7, // Default medium confidence for AWS Translate
+        costPerRequest: estimateModelCost('aws.translate', text.length)
+      });
+
       return {
         translatedText: translateResult.TranslatedText,
         confidence: 'low', // AWS Translate doesn't have medical specialization
@@ -715,11 +878,23 @@ Text to translate: ${text}`;
         medicalContext,
         modelUsed: 'aws.translate',
         fallback: true,
-        processingTime
+        processingTime,
+        originalModelError: {
+          model: modelId,
+          error: error.message
+        }
       };
     } catch (translateError) {
       console.error('Error with fallback translation:', translateError);
-      throw new Error(`Translation failed: ${error.message}. Fallback also failed.`);
+
+      // Track AWS Translate error
+      trackModelPerformance('aws.translate', {
+        error: true,
+        errorType: translateError.name || 'UnknownError',
+        errorMessage: translateError.message
+      });
+
+      throw new Error(`Translation failed: ${error.message}. Fallback also failed: ${translateError.message}`);
     }
   }
 }
@@ -907,64 +1082,447 @@ function selectBestModelForContext(sourceLanguage, targetLanguage, medicalContex
  * @returns {Object} - Model information
  */
 function getModelInfo(modelId) {
+  // Default model info
   const modelInfo = {
     id: modelId,
     family: 'unknown',
     capabilities: [],
     recommendedFor: [],
     contextWindow: 4096,
-    tokenLimit: 1024
+    tokenLimit: 1024,
+    languages: [],
+    costTier: 'standard'
   };
 
-  // Determine model family and capabilities
-  if (modelId.startsWith('anthropic.claude')) {
-    modelInfo.family = 'claude';
-    modelInfo.capabilities = ['medical translation', 'terminology verification', 'context awareness'];
-    modelInfo.recommendedFor = ['complex medical contexts', 'high accuracy needs', 'nuanced translations'];
+  // Check if we have detailed capabilities in the config
+  if (modelConfig.modelCapabilities && modelConfig.modelCapabilities[modelId]) {
+    const capabilities = modelConfig.modelCapabilities[modelId];
 
-    if (modelId.includes('claude-3-sonnet')) {
-      modelInfo.contextWindow = 200000;
-      modelInfo.tokenLimit = 4096;
-    } else if (modelId.includes('claude-3-haiku')) {
-      modelInfo.contextWindow = 100000;
-      modelInfo.tokenLimit = 2048;
-    } else {
-      modelInfo.contextWindow = 100000;
-      modelInfo.tokenLimit = 2048;
+    // Update model info with capabilities from config
+    if (capabilities.maxTokens) modelInfo.contextWindow = capabilities.maxTokens;
+    if (capabilities.outputTokens) modelInfo.tokenLimit = capabilities.outputTokens;
+    if (capabilities.languages) modelInfo.languages = capabilities.languages;
+    if (capabilities.strengths) modelInfo.capabilities = capabilities.strengths;
+    if (capabilities.costTier) modelInfo.costTier = capabilities.costTier;
+
+    // Set recommended for based on strengths and context handling
+    if (capabilities.strengths && capabilities.contextHandling) {
+      modelInfo.recommendedFor = [
+        `${capabilities.contextHandling} context handling`,
+        `${capabilities.medicalAccuracy || 'good'} medical accuracy`,
+        ...capabilities.strengths.map(s => s.toLowerCase())
+      ];
     }
-  } else if (modelId.startsWith('amazon.titan')) {
-    modelInfo.family = 'titan';
-    modelInfo.capabilities = ['general translation', 'Asian language support'];
-    modelInfo.recommendedFor = ['Asian languages', 'general medical contexts'];
-    modelInfo.contextWindow = 8000;
-    modelInfo.tokenLimit = 1024;
-  } else if (modelId.startsWith('meta.llama')) {
-    modelInfo.family = 'llama';
-    modelInfo.capabilities = ['efficient translation', 'European language support'];
-    modelInfo.recommendedFor = ['European languages', 'general medical contexts'];
+  } else {
+    // Fallback to hardcoded model family detection
+    // Determine model family and capabilities
+    if (modelId.startsWith('anthropic.claude')) {
+      modelInfo.family = 'claude';
+      modelInfo.capabilities = ['medical translation', 'terminology verification', 'context awareness'];
+      modelInfo.recommendedFor = ['complex medical contexts', 'high accuracy needs', 'nuanced translations'];
+      modelInfo.languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'zh', 'ja', 'ko', 'ar', 'ru'];
 
-    if (modelId.includes('70b')) {
-      modelInfo.contextWindow = 4096;
-      modelInfo.tokenLimit = 1024;
-    } else {
-      modelInfo.contextWindow = 2048;
-      modelInfo.tokenLimit = 512;
-    }
-  } else if (modelId.startsWith('mistral.')) {
-    modelInfo.family = 'mistral';
-    modelInfo.capabilities = ['Slavic language support', 'general translation'];
-    modelInfo.recommendedFor = ['Slavic languages', 'general medical contexts'];
+      if (modelId.includes('claude-3-opus')) {
+        modelInfo.contextWindow = 200000;
+        modelInfo.tokenLimit = 4096;
+        modelInfo.costTier = 'premium';
+      } else if (modelId.includes('claude-3-sonnet')) {
+        modelInfo.contextWindow = 200000;
+        modelInfo.tokenLimit = 4096;
+        modelInfo.costTier = 'standard';
+      } else if (modelId.includes('claude-3-haiku')) {
+        modelInfo.contextWindow = 100000;
+        modelInfo.tokenLimit = 2048;
+        modelInfo.costTier = 'economy';
+      } else {
+        modelInfo.contextWindow = 100000;
+        modelInfo.tokenLimit = 2048;
+        modelInfo.costTier = 'economy';
+      }
+    } else if (modelId.startsWith('amazon.titan')) {
+      modelInfo.family = 'titan';
+      modelInfo.capabilities = ['general translation', 'Asian language support'];
+      modelInfo.recommendedFor = ['Asian languages', 'general medical contexts'];
+      modelInfo.languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'zh', 'ja', 'ko', 'th', 'vi'];
 
-    if (modelId.includes('mixtral')) {
-      modelInfo.contextWindow = 8192;
-      modelInfo.tokenLimit = 1024;
-    } else {
-      modelInfo.contextWindow = 4096;
-      modelInfo.tokenLimit = 512;
+      if (modelId.includes('premier')) {
+        modelInfo.contextWindow = 32000;
+        modelInfo.tokenLimit = 4096;
+        modelInfo.costTier = 'standard';
+      } else if (modelId.includes('express')) {
+        modelInfo.contextWindow = 8000;
+        modelInfo.tokenLimit = 1024;
+        modelInfo.costTier = 'standard';
+      } else if (modelId.includes('lite')) {
+        modelInfo.contextWindow = 4000;
+        modelInfo.tokenLimit = 512;
+        modelInfo.costTier = 'economy';
+      } else {
+        modelInfo.contextWindow = 8000;
+        modelInfo.tokenLimit = 1024;
+        modelInfo.costTier = 'standard';
+      }
+    } else if (modelId.startsWith('meta.llama')) {
+      modelInfo.family = 'llama';
+      modelInfo.capabilities = ['efficient translation', 'European language support'];
+      modelInfo.recommendedFor = ['European languages', 'general medical contexts'];
+      modelInfo.languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl'];
+
+      if (modelId.includes('llama3-70b')) {
+        modelInfo.contextWindow = 8192;
+        modelInfo.tokenLimit = 2048;
+        modelInfo.costTier = 'standard';
+      } else if (modelId.includes('llama3-8b')) {
+        modelInfo.contextWindow = 4096;
+        modelInfo.tokenLimit = 1024;
+        modelInfo.costTier = 'economy';
+      } else if (modelId.includes('70b')) {
+        modelInfo.contextWindow = 4096;
+        modelInfo.tokenLimit = 1024;
+        modelInfo.costTier = 'standard';
+      } else {
+        modelInfo.contextWindow = 2048;
+        modelInfo.tokenLimit = 512;
+        modelInfo.costTier = 'economy';
+      }
+    } else if (modelId.startsWith('mistral.')) {
+      modelInfo.family = 'mistral';
+      modelInfo.capabilities = ['Slavic language support', 'general translation'];
+      modelInfo.recommendedFor = ['Slavic languages', 'general medical contexts'];
+      modelInfo.languages = ['en', 'es', 'fr', 'de', 'it', 'ru', 'uk', 'pl', 'cs'];
+
+      if (modelId.includes('mistral-large')) {
+        modelInfo.contextWindow = 32768;
+        modelInfo.tokenLimit = 2048;
+        modelInfo.costTier = 'standard';
+      } else if (modelId.includes('mixtral')) {
+        modelInfo.contextWindow = 8192;
+        modelInfo.tokenLimit = 1024;
+        modelInfo.costTier = 'standard';
+      } else {
+        modelInfo.contextWindow = 4096;
+        modelInfo.tokenLimit = 512;
+        modelInfo.costTier = 'economy';
+      }
+    } else if (modelId.startsWith('cohere.')) {
+      modelInfo.family = 'cohere';
+      modelInfo.capabilities = ['multilingual support', 'general translation'];
+      modelInfo.recommendedFor = ['multilingual contexts', 'general medical content'];
+      modelInfo.languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'ja', 'ko', 'zh'];
+
+      if (modelId.includes('command-text-v14')) {
+        modelInfo.contextWindow = 128000;
+        modelInfo.tokenLimit = 4096;
+        modelInfo.costTier = 'standard';
+      } else if (modelId.includes('command-light')) {
+        modelInfo.contextWindow = 64000;
+        modelInfo.tokenLimit = 2048;
+        modelInfo.costTier = 'economy';
+      } else {
+        modelInfo.contextWindow = 4096;
+        modelInfo.tokenLimit = 1024;
+        modelInfo.costTier = 'standard';
+      }
+    } else if (modelId.startsWith('ai21.')) {
+      modelInfo.family = 'ai21';
+      modelInfo.capabilities = ['general translation', 'technical content'];
+      modelInfo.recommendedFor = ['technical medical content', 'structured output'];
+      modelInfo.languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'he'];
+
+      if (modelId.includes('ultra')) {
+        modelInfo.contextWindow = 8192;
+        modelInfo.tokenLimit = 1024;
+        modelInfo.costTier = 'standard';
+      } else {
+        modelInfo.contextWindow = 4096;
+        modelInfo.tokenLimit = 512;
+        modelInfo.costTier = 'economy';
+      }
+    } else if (modelId === 'aws.translate') {
+      modelInfo.family = 'aws.translate';
+      modelInfo.capabilities = ['basic translation', 'high availability'];
+      modelInfo.recommendedFor = ['fallback option', 'simple content'];
+      modelInfo.languages = Object.keys(LANGUAGE_CODES);
+      modelInfo.contextWindow = 10000;
+      modelInfo.tokenLimit = 10000;
+      modelInfo.costTier = 'economy';
     }
   }
 
+  // Determine model family if not set
+  if (modelInfo.family === 'unknown') {
+    if (modelId.startsWith('anthropic.')) modelInfo.family = 'claude';
+    else if (modelId.startsWith('amazon.')) modelInfo.family = 'titan';
+    else if (modelId.startsWith('meta.')) modelInfo.family = 'llama';
+    else if (modelId.startsWith('mistral.')) modelInfo.family = 'mistral';
+    else if (modelId.startsWith('cohere.')) modelInfo.family = 'cohere';
+    else if (modelId.startsWith('ai21.')) modelInfo.family = 'ai21';
+    else if (modelId.startsWith('stability.')) modelInfo.family = 'stability';
+  }
+
   return modelInfo;
+}
+
+// Model performance tracking
+const modelPerformanceData = {
+  responseTime: {},
+  errorRate: {},
+  confidenceScore: {},
+  userFeedbackScore: {},
+  costPerRequest: {},
+  usageCount: {},
+  lastUpdated: {}
+};
+
+/**
+ * Estimate the cost of a model request based on input length
+ *
+ * @param {string} modelId - The model ID
+ * @param {number} inputLength - The length of the input text
+ * @returns {number} - Estimated cost in USD
+ */
+function estimateModelCost(modelId, inputLength) {
+  // Approximate token count (rough estimate)
+  const tokenCount = Math.ceil(inputLength / 4);
+
+  // Base cost per 1K tokens (input)
+  let costPer1KTokens = 0.0;
+
+  // Get model info to determine cost tier
+  const modelInfo = getModelInfo(modelId);
+  const costTier = modelInfo.costTier || 'standard';
+
+  // Set cost based on model family and tier
+  if (modelId.startsWith('anthropic.claude')) {
+    if (modelId.includes('claude-3-opus')) {
+      costPer1KTokens = 0.015; // Premium tier
+    } else if (modelId.includes('claude-3-sonnet')) {
+      costPer1KTokens = 0.008; // Standard tier
+    } else if (modelId.includes('claude-3-haiku')) {
+      costPer1KTokens = 0.0025; // Economy tier
+    } else {
+      costPer1KTokens = 0.0025; // Default Claude
+    }
+  } else if (modelId.startsWith('amazon.titan')) {
+    if (modelId.includes('premier')) {
+      costPer1KTokens = 0.0075; // Standard tier
+    } else if (modelId.includes('express')) {
+      costPer1KTokens = 0.0035; // Standard tier
+    } else if (modelId.includes('lite')) {
+      costPer1KTokens = 0.0015; // Economy tier
+    } else {
+      costPer1KTokens = 0.0035; // Default Titan
+    }
+  } else if (modelId.startsWith('meta.llama')) {
+    if (modelId.includes('llama3-70b') || modelId.includes('70b')) {
+      costPer1KTokens = 0.0045; // Standard tier
+    } else {
+      costPer1KTokens = 0.0015; // Economy tier
+    }
+  } else if (modelId.startsWith('mistral.')) {
+    if (modelId.includes('mistral-large')) {
+      costPer1KTokens = 0.006; // Standard tier
+    } else if (modelId.includes('mixtral')) {
+      costPer1KTokens = 0.003; // Standard tier
+    } else {
+      costPer1KTokens = 0.0015; // Economy tier
+    }
+  } else if (modelId.startsWith('cohere.')) {
+    if (modelId.includes('command-light')) {
+      costPer1KTokens = 0.0015; // Economy tier
+    } else {
+      costPer1KTokens = 0.003; // Standard tier
+    }
+  } else if (modelId.startsWith('ai21.')) {
+    if (modelId.includes('ultra')) {
+      costPer1KTokens = 0.0045; // Standard tier
+    } else {
+      costPer1KTokens = 0.0015; // Economy tier
+    }
+  } else if (modelId === 'aws.translate') {
+    // AWS Translate pricing is per character
+    return (inputLength / 1000000) * 15.0; // $15 per million characters
+  }
+
+  // Calculate cost based on token count
+  return (tokenCount / 1000) * costPer1KTokens;
+}
+
+/**
+ * Track model performance metrics
+ *
+ * @param {string} modelId - The model ID
+ * @param {Object} metrics - Performance metrics
+ * @returns {void}
+ */
+function trackModelPerformance(modelId, metrics) {
+  // Skip if performance tracking is disabled
+  if (!modelConfig.modelPerformanceTracking || !modelConfig.modelPerformanceTracking.enabled) {
+    return;
+  }
+
+  // Initialize model data if not exists
+  if (!modelPerformanceData.responseTime[modelId]) {
+    modelPerformanceData.responseTime[modelId] = [];
+    modelPerformanceData.errorRate[modelId] = { success: 0, error: 0 };
+    modelPerformanceData.confidenceScore[modelId] = [];
+    modelPerformanceData.userFeedbackScore[modelId] = [];
+    modelPerformanceData.costPerRequest[modelId] = [];
+    modelPerformanceData.usageCount[modelId] = 0;
+  }
+
+  // Update usage count
+  modelPerformanceData.usageCount[modelId]++;
+
+  // Update last updated timestamp
+  modelPerformanceData.lastUpdated[modelId] = Date.now();
+
+  // Track response time
+  if (metrics.responseTime) {
+    modelPerformanceData.responseTime[modelId].push(metrics.responseTime);
+    // Keep only the last 100 samples
+    if (modelPerformanceData.responseTime[modelId].length > 100) {
+      modelPerformanceData.responseTime[modelId].shift();
+    }
+  }
+
+  // Track error rate
+  if (metrics.error !== undefined) {
+    if (metrics.error) {
+      modelPerformanceData.errorRate[modelId].error++;
+    } else {
+      modelPerformanceData.errorRate[modelId].success++;
+    }
+  }
+
+  // Track confidence score
+  if (metrics.confidenceScore) {
+    modelPerformanceData.confidenceScore[modelId].push(metrics.confidenceScore);
+    // Keep only the last 100 samples
+    if (modelPerformanceData.confidenceScore[modelId].length > 100) {
+      modelPerformanceData.confidenceScore[modelId].shift();
+    }
+  }
+
+  // Track user feedback score
+  if (metrics.userFeedbackScore) {
+    modelPerformanceData.userFeedbackScore[modelId].push(metrics.userFeedbackScore);
+    // Keep only the last 100 samples
+    if (modelPerformanceData.userFeedbackScore[modelId].length > 100) {
+      modelPerformanceData.userFeedbackScore[modelId].shift();
+    }
+  }
+
+  // Track cost per request
+  if (metrics.costPerRequest) {
+    modelPerformanceData.costPerRequest[modelId].push(metrics.costPerRequest);
+    // Keep only the last 100 samples
+    if (modelPerformanceData.costPerRequest[modelId].length > 100) {
+      modelPerformanceData.costPerRequest[modelId].shift();
+    }
+  }
+
+  // Log performance data for debugging
+  console.log(`Model performance tracked for ${modelId}: ${JSON.stringify(metrics)}`);
+}
+
+/**
+ * Calculate model performance metrics
+ *
+ * @param {string} modelId - The model ID
+ * @returns {Object} - Performance metrics
+ */
+function calculateModelPerformanceMetrics(modelId) {
+  // Return empty metrics if no data available
+  if (!modelPerformanceData.responseTime[modelId]) {
+    return {
+      responseTime: null,
+      errorRate: null,
+      confidenceScore: null,
+      userFeedbackScore: null,
+      costPerRequest: null,
+      usageCount: 0,
+      lastUpdated: null,
+      performanceRating: null
+    };
+  }
+
+  // Calculate average response time
+  const responseTimeAvg = modelPerformanceData.responseTime[modelId].length > 0
+    ? modelPerformanceData.responseTime[modelId].reduce((sum, time) => sum + time, 0) / modelPerformanceData.responseTime[modelId].length
+    : null;
+
+  // Calculate error rate
+  const totalRequests = modelPerformanceData.errorRate[modelId].success + modelPerformanceData.errorRate[modelId].error;
+  const errorRate = totalRequests > 0
+    ? modelPerformanceData.errorRate[modelId].error / totalRequests
+    : null;
+
+  // Calculate average confidence score
+  const confidenceScoreAvg = modelPerformanceData.confidenceScore[modelId].length > 0
+    ? modelPerformanceData.confidenceScore[modelId].reduce((sum, score) => sum + score, 0) / modelPerformanceData.confidenceScore[modelId].length
+    : null;
+
+  // Calculate average user feedback score
+  const userFeedbackScoreAvg = modelPerformanceData.userFeedbackScore[modelId].length > 0
+    ? modelPerformanceData.userFeedbackScore[modelId].reduce((sum, score) => sum + score, 0) / modelPerformanceData.userFeedbackScore[modelId].length
+    : null;
+
+  // Calculate average cost per request
+  const costPerRequestAvg = modelPerformanceData.costPerRequest[modelId].length > 0
+    ? modelPerformanceData.costPerRequest[modelId].reduce((sum, cost) => sum + cost, 0) / modelPerformanceData.costPerRequest[modelId].length
+    : null;
+
+  // Calculate performance rating based on thresholds
+  let performanceRating = null;
+  if (modelConfig.modelPerformanceTracking && modelConfig.modelPerformanceTracking.performanceThresholds) {
+    const thresholds = modelConfig.modelPerformanceTracking.performanceThresholds;
+
+    // Calculate response time rating
+    let responseTimeRating = 0;
+    if (responseTimeAvg !== null && thresholds.responseTime) {
+      if (responseTimeAvg <= thresholds.responseTime.excellent) responseTimeRating = 4;
+      else if (responseTimeAvg <= thresholds.responseTime.good) responseTimeRating = 3;
+      else if (responseTimeAvg <= thresholds.responseTime.acceptable) responseTimeRating = 2;
+      else if (responseTimeAvg <= thresholds.responseTime.poor) responseTimeRating = 1;
+    }
+
+    // Calculate error rate rating
+    let errorRateRating = 0;
+    if (errorRate !== null && thresholds.errorRate) {
+      if (errorRate <= thresholds.errorRate.excellent) errorRateRating = 4;
+      else if (errorRate <= thresholds.errorRate.good) errorRateRating = 3;
+      else if (errorRate <= thresholds.errorRate.acceptable) errorRateRating = 2;
+      else if (errorRate <= thresholds.errorRate.poor) errorRateRating = 1;
+    }
+
+    // Calculate confidence score rating
+    let confidenceScoreRating = 0;
+    if (confidenceScoreAvg !== null && thresholds.confidenceScore) {
+      if (confidenceScoreAvg >= thresholds.confidenceScore.excellent) confidenceScoreRating = 4;
+      else if (confidenceScoreAvg >= thresholds.confidenceScore.good) confidenceScoreRating = 3;
+      else if (confidenceScoreAvg >= thresholds.confidenceScore.acceptable) confidenceScoreRating = 2;
+      else if (confidenceScoreAvg >= thresholds.confidenceScore.poor) confidenceScoreRating = 1;
+    }
+
+    // Calculate overall performance rating (average of all ratings)
+    const ratings = [responseTimeRating, errorRateRating, confidenceScoreRating].filter(r => r > 0);
+    if (ratings.length > 0) {
+      const avgRating = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+      performanceRating = avgRating.toFixed(2);
+    }
+  }
+
+  return {
+    responseTime: responseTimeAvg,
+    errorRate: errorRate,
+    confidenceScore: confidenceScoreAvg,
+    userFeedbackScore: userFeedbackScoreAvg,
+    costPerRequest: costPerRequestAvg,
+    usageCount: modelPerformanceData.usageCount[modelId],
+    lastUpdated: modelPerformanceData.lastUpdated[modelId],
+    performanceRating: performanceRating
+  };
 }
 
 /**
@@ -979,8 +1537,26 @@ function getAvailableModels() {
   for (const family of modelFamilies) {
     const models = modelConfig.models[family];
     if (models && models.length > 0) {
+      const familyModels = [];
+
+      for (const modelId of models) {
+        const info = getModelInfo(modelId);
+        const performance = calculateModelPerformanceMetrics(modelId);
+
+        familyModels.push({
+          id: modelId,
+          capabilities: info.capabilities,
+          recommendedFor: info.recommendedFor,
+          contextWindow: info.contextWindow,
+          tokenLimit: info.tokenLimit,
+          languages: info.languages,
+          costTier: info.costTier,
+          performance: performance
+        });
+      }
+
       modelInfo[family] = {
-        models: models,
+        models: familyModels,
         capabilities: getModelInfo(models[0]).capabilities,
         recommendedFor: getModelInfo(models[0]).recommendedFor
       };
@@ -989,7 +1565,12 @@ function getAvailableModels() {
 
   return {
     availableModels: modelInfo,
-    defaultModel: modelConfig.defaultModel
+    defaultModel: modelConfig.defaultModel,
+    fallbackStrategy: modelConfig.fallbackStrategy,
+    performanceTracking: modelConfig.modelPerformanceTracking ? {
+      enabled: modelConfig.modelPerformanceTracking.enabled,
+      metricsTracked: modelConfig.modelPerformanceTracking.metricsToTrack
+    } : null
   };
 }
 
@@ -1257,5 +1838,8 @@ module.exports = {
   getModelInfo,
   getAvailableModels,
   mockTranslate,
-  analyzeTranslationConfidence
+  analyzeTranslationConfidence,
+  trackModelPerformance,
+  calculateModelPerformanceMetrics,
+  estimateModelCost
 };

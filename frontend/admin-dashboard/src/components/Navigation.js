@@ -33,6 +33,9 @@ const Navigation = ({ onLogout }) => {
               <NavDropdown.Item as={Link} to="/connection-analytics">
                 Connection Analytics
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/sync-analytics">
+                Sync Analytics
+              </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/recovery-manager">
                 Recovery Manager
               </NavDropdown.Item>

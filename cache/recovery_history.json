@@ -1,0 +1,72 @@
+[
+  {
+    "timestamp": 1746606047543,
+    "issueType": "offline",
+    "reason": "Network is offline",
+    "isProactive": false,
+    "attempt": 1,
+    "strategies": [],
+    "success": false,
+    "duration": 1
+  },
+  {
+    "timestamp": 1746606347561,
+    "issueType": "offline",
+    "reason": "Network is offline",
+    "isProactive": false,
+    "attempt": 1,
+    "strategies": [],
+    "success": false,
+    "duration": 0
+  },
+  {
+    "timestamp": 1746606647586,
+    "issueType": "offline",
+    "reason": "Network is offline",
+    "isProactive": false,
+    "attempt": 1,
+    "strategies": [],
+    "success": false,
+    "duration": 1
+  },
+  {
+    "timestamp": 1746608359483,
+    "issueType": "offline",
+    "reason": "Network is offline",
+    "isProactive": false,
+    "attempt": 1,
+    "strategies": [],
+    "success": false,
+    "duration": 0
+  },
+  {
+    "timestamp": 1746608494398,
+    "issueType": "offline",
+    "reason": "Network is offline",
+    "isProactive": false,
+    "attempt": 1,
+    "strategies": [],
+    "success": false,
+    "duration": 1
+  },
+  {
+    "timestamp": 1746608794427,
+    "issueType": "offline",
+    "reason": "Network is offline",
+    "isProactive": false,
+    "attempt": 1,
+    "strategies": [],
+    "success": false,
+    "duration": 1
+  },
+  {
+    "timestamp": 1746609094456,
+    "issueType": "offline",
+    "reason": "Network is offline",
+    "isProactive": false,
+    "attempt": 1,
+    "strategies": [],
+    "success": false,
+    "duration": 0
+  }
+]

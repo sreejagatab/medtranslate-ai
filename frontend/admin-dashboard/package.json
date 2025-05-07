@@ -28,7 +28,14 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "setup": "node setup.js setup",
-    "start:dev": "node setup.js start"
+    "start:dev": "node setup.js start",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "cypress run --spec \"cypress/e2e/sync-analytics.cy.js\"",
+    "test:visual": "cypress run --spec \"cypress/e2e/visual-regression.cy.js\"",
+    "test:visual:update": "cypress run --spec \"cypress/e2e/visual-regression.cy.js\" --env updateSnapshots=true",
+    "test:a11y": "cypress run --spec \"cypress/e2e/accessibility.cy.js\"",
+    "test:all": "cypress run --spec \"cypress/e2e/**/*.cy.js\""
   },
   "eslintConfig": {
     "extends": [
@@ -47,5 +54,12 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "cypress": "^13.6.0",
+    "@testing-library/cypress": "^10.0.1",
+    "cypress-image-snapshot": "^4.0.1",
+    "cypress-axe": "^1.5.0",
+    "axe-core": "^4.8.2"
   }
 }

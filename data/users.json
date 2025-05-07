@@ -36,5 +36,17 @@
     "active": true,
     "createdAt": "2025-04-29T12:48:02.918Z",
     "updatedAt": "2025-04-29T12:48:02.918Z"
+  },
+  "user-1746608592673": {
+    "id": "user-1746608592673",
+    "name": "Test Provider",
+    "email": "test@example.com",
+    "role": "provider",
+    "specialty": "general",
+    "passwordHash": "d94d7d3df9734fe7b972d3401cc3b0f0feffca0d7720f51483584dab2e46ceaf380026b7519d47e4533b5d7c4fd03537786984af417538a2968d5aa4611e346a",
+    "passwordSalt": "3333b634ae2825a700789cb1f5835d40",
+    "active": true,
+    "createdAt": "2025-05-07T09:03:12.679Z",
+    "updatedAt": "2025-05-07T09:03:12.679Z"
   }
 }

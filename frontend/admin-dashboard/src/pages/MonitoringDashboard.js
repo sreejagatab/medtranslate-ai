@@ -51,6 +51,7 @@ import {
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { API_URL } from '../config';
+import { SystemStatusDashboard } from '../../../shared/components';
 
 // Chart colors
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FF6B6B', '#6B66FF'];
@@ -161,11 +162,11 @@ const MonitoringDashboard = () => {
   // Format bytes to human-readable size
   const formatBytes = (bytes) => {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
@@ -231,7 +232,7 @@ const MonitoringDashboard = () => {
 
       // Refresh data
       fetchData();
-      
+
       // Close dialog
       setResolveDialogOpen(false);
       setSelectedAlert(null);
@@ -292,58 +293,10 @@ const MonitoringDashboard = () => {
           </Alert>
         )}
 
-        {/* System Status */}
-        {systemHealth && (
-          <Paper sx={{ p: 3, mb: 4 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h5">
-                System Status
-              </Typography>
-              <Chip
-                icon={getStatusIcon(systemHealth.status)}
-                label={systemHealth.status.toUpperCase()}
-                color={
-                  systemHealth.status === 'healthy' ? 'success' :
-                  systemHealth.status === 'degraded' ? 'warning' : 'error'
-                }
-              />
-            </Box>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              Last updated: {format(new Date(systemHealth.timestamp), 'yyyy-MM-dd HH:mm:ss')}
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-            
-            <Grid container spacing={3}>
-              {Object.entries(systemHealth.components).map(([component, data]) => (
-                <Grid item xs={12} sm={6} md={4} key={component}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6" component="div">
-                          {component.replace(/_/g, ' ')}
-                        </Typography>
-                        {getStatusIcon(data.status)}
-                      </Box>
-                      <Typography variant="body2" color="textSecondary" gutterBottom>
-                        Response time: {data.responseTime}ms
-                      </Typography>
-                      {data.details.error && (
-                        <Alert severity="error" sx={{ mt: 1 }}>
-                          {data.details.error}
-                        </Alert>
-                      )}
-                      {data.details.warnings && data.details.warnings.length > 0 && (
-                        <Alert severity="warning" sx={{ mt: 1 }}>
-                          {data.details.warnings.join(', ')}
-                        </Alert>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        )}
+        {/* System Status Dashboard */}
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <SystemStatusDashboard refreshInterval={refreshInterval} />
+        </Paper>
 
         {/* Active Alerts */}
         <Paper sx={{ p: 3, mb: 4 }}>
@@ -351,7 +304,7 @@ const MonitoringDashboard = () => {
             Active Alerts {activeAlerts.length > 0 && `(${activeAlerts.length})`}
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          
+
           {activeAlerts.length === 0 ? (
             <Alert severity="success">
               <AlertTitle>No Active Alerts</AlertTitle>
@@ -397,7 +350,7 @@ const MonitoringDashboard = () => {
               System Metrics
             </Typography>
             <Divider sx={{ mb: 3 }} />
-            
+
             <Grid container spacing={4}>
               {/* CPU Usage */}
               <Grid item xs={12} md={4}>
@@ -423,7 +376,7 @@ const MonitoringDashboard = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               {/* Memory Usage */}
               <Grid item xs={12} md={4}>
                 <Card>
@@ -448,7 +401,7 @@ const MonitoringDashboard = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               {/* Disk Usage */}
               <Grid item xs={12} md={4}>
                 <Card>
@@ -473,7 +426,7 @@ const MonitoringDashboard = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               {/* Process Memory */}
               <Grid item xs={12} md={6}>
                 <Card>
@@ -511,7 +464,7 @@ const MonitoringDashboard = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               {/* System Info */}
               <Grid item xs={12} md={6}>
                 <Card>

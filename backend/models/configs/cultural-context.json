@@ -1,0 +1,169 @@
+{
+  "version": "1.0.0",
+  "description": "Cultural context adaptation configuration for MedTranslate AI",
+  "languageAdaptations": {
+    "zh": {
+      "name": "Chinese",
+      "defaultAdaptation": "tcm",
+      "contexts": {
+        "general": {
+          "adaptedContext": "general_tcm",
+          "description": "Traditional Chinese Medicine context",
+          "keyTerms": ["qi", "yin", "yang", "meridian", "acupuncture"],
+          "culturalNotes": "Traditional Chinese Medicine views health as a balance of yin and yang, with qi (vital energy) flowing through meridians."
+        },
+        "cardiology": {
+          "adaptedContext": "cardiology_tcm",
+          "description": "Cardiology with Traditional Chinese Medicine context",
+          "keyTerms": ["heart qi", "heart blood", "heart yin", "heart yang"],
+          "culturalNotes": "TCM views heart conditions in terms of heart qi, blood, yin, and yang balance."
+        },
+        "gastroenterology": {
+          "adaptedContext": "gastroenterology_tcm",
+          "description": "Gastroenterology with Traditional Chinese Medicine context",
+          "keyTerms": ["spleen qi", "stomach qi", "liver qi stagnation"],
+          "culturalNotes": "TCM associates digestive issues with spleen and stomach qi, and emotional factors like liver qi stagnation."
+        },
+        "psychiatry": {
+          "adaptedContext": "psychiatry_tcm",
+          "description": "Psychiatry with Traditional Chinese Medicine context",
+          "keyTerms": ["shen", "heart spirit", "liver qi stagnation"],
+          "culturalNotes": "TCM views mental health in terms of shen (spirit) and organ imbalances, particularly liver qi stagnation."
+        }
+      }
+    },
+    "ja": {
+      "name": "Japanese",
+      "defaultAdaptation": "kampo",
+      "contexts": {
+        "general": {
+          "adaptedContext": "general_kampo",
+          "description": "Kampo medicine context",
+          "keyTerms": ["ki", "ketsu", "sui", "hiesho", "kyo-sho"],
+          "culturalNotes": "Kampo medicine is a Japanese adaptation of Traditional Chinese Medicine, focusing on herbal formulations."
+        },
+        "psychiatry": {
+          "adaptedContext": "psychiatry_eastern",
+          "description": "Psychiatry with Eastern medicine context",
+          "keyTerms": ["ki stagnation", "ki deficiency", "blood stasis"],
+          "culturalNotes": "Japanese approaches to mental health often incorporate Kampo concepts of ki (energy) balance."
+        }
+      }
+    },
+    "ko": {
+      "name": "Korean",
+      "defaultAdaptation": "eastern",
+      "contexts": {
+        "general": {
+          "adaptedContext": "general_eastern",
+          "description": "Korean traditional medicine context",
+          "keyTerms": ["gi", "sasang", "hwa-byung"],
+          "culturalNotes": "Korean traditional medicine includes unique concepts like Sasang constitutional medicine and culture-bound syndromes like hwa-byung."
+        },
+        "psychiatry": {
+          "adaptedContext": "psychiatry_eastern",
+          "description": "Psychiatry with Eastern medicine context",
+          "keyTerms": ["gi stagnation", "hwa-byung", "han"],
+          "culturalNotes": "Korean approaches to mental health recognize culture-specific syndromes like hwa-byung (suppressed anger syndrome)."
+        }
+      }
+    },
+    "hi": {
+      "name": "Hindi",
+      "defaultAdaptation": "ayurveda",
+      "contexts": {
+        "general": {
+          "adaptedContext": "general_ayurveda",
+          "description": "Ayurvedic medicine context",
+          "keyTerms": ["dosha", "vata", "pitta", "kapha", "dhatu", "agni"],
+          "culturalNotes": "Ayurveda classifies individuals by dosha (vata, pitta, kapha) and views health as balance between these elements."
+        },
+        "gastroenterology": {
+          "adaptedContext": "gastroenterology_ayurveda",
+          "description": "Gastroenterology with Ayurvedic context",
+          "keyTerms": ["agni", "ama", "pachaka pitta"],
+          "culturalNotes": "Ayurveda views digestive health in terms of agni (digestive fire) and ama (toxins)."
+        },
+        "psychiatry": {
+          "adaptedContext": "psychiatry_ayurveda",
+          "description": "Psychiatry with Ayurvedic context",
+          "keyTerms": ["manas", "sadhaka pitta", "tarpaka kapha"],
+          "culturalNotes": "Ayurveda views mental health through the lens of manas (mind) and dosha imbalances."
+        }
+      }
+    },
+    "ar": {
+      "name": "Arabic",
+      "defaultAdaptation": "unani",
+      "contexts": {
+        "general": {
+          "adaptedContext": "general_unani",
+          "description": "Unani medicine context",
+          "keyTerms": ["mizaj", "akhlat", "asbab", "tabiat"],
+          "culturalNotes": "Unani medicine is based on the Greek humoral theory adapted to Islamic culture, focusing on mizaj (temperament)."
+        },
+        "psychiatry": {
+          "adaptedContext": "psychiatry_cultural",
+          "description": "Psychiatry with cultural context",
+          "keyTerms": ["nafs", "qalb", "aql", "ruh"],
+          "culturalNotes": "Islamic medicine views mental health through concepts of nafs (self/soul), qalb (heart), and aql (intellect)."
+        }
+      }
+    },
+    "es-419": {
+      "name": "Latin American Spanish",
+      "defaultAdaptation": "latinam",
+      "contexts": {
+        "general": {
+          "adaptedContext": "general_latinam",
+          "description": "Latin American cultural context",
+          "keyTerms": ["curanderismo", "mal de ojo", "susto", "empacho"],
+          "culturalNotes": "Latin American folk medicine includes concepts like curanderismo and culture-bound syndromes like susto (fright sickness)."
+        },
+        "psychiatry": {
+          "adaptedContext": "psychiatry_cultural",
+          "description": "Psychiatry with cultural context",
+          "keyTerms": ["nervios", "ataque de nervios", "susto"],
+          "culturalNotes": "Latin American concepts of mental health include culture-specific syndromes like 'ataque de nervios'."
+        }
+      }
+    }
+  },
+  "promptModifications": {
+    "tcm": {
+      "additions": [
+        "Consider Traditional Chinese Medicine concepts when translating.",
+        "Preserve references to qi, yin, yang, and meridians where appropriate.",
+        "Use culturally appropriate terminology for TCM concepts."
+      ]
+    },
+    "kampo": {
+      "additions": [
+        "Consider Japanese Kampo medicine concepts when translating.",
+        "Preserve references to ki, ketsu, and sui where appropriate.",
+        "Use culturally appropriate terminology for Kampo concepts."
+      ]
+    },
+    "ayurveda": {
+      "additions": [
+        "Consider Ayurvedic medicine concepts when translating.",
+        "Preserve references to doshas (vata, pitta, kapha), dhatus, and agni where appropriate.",
+        "Use culturally appropriate terminology for Ayurvedic concepts."
+      ]
+    },
+    "unani": {
+      "additions": [
+        "Consider Unani medicine concepts when translating.",
+        "Preserve references to mizaj (temperament) and akhlat (humors) where appropriate.",
+        "Use culturally appropriate terminology for Unani concepts."
+      ]
+    },
+    "latinam": {
+      "additions": [
+        "Consider Latin American folk medicine concepts when translating.",
+        "Preserve references to culture-specific syndromes like susto and empacho where appropriate.",
+        "Use culturally appropriate terminology for Latin American concepts."
+      ]
+    }
+  }
+}

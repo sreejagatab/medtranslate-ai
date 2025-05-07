@@ -13,6 +13,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Session from './pages/Session';
+import SystemStatus from './pages/SystemStatus';
 
 // Import context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -57,6 +58,11 @@ const AppRoutes = () => {
       <Route path="/session/:sessionId" element={
         <ProtectedRoute>
           <Session />
+        </ProtectedRoute>
+      } />
+      <Route path="/system-status" element={
+        <ProtectedRoute>
+          <SystemStatus />
         </ProtectedRoute>
       } />
       <Route path="/" element={<Navigate to="/dashboard" />} />

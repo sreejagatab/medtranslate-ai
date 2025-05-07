@@ -383,6 +383,273 @@ async function authenticateProvider(username, password, mfaToken = null) {
   }
 }
 
+/**
+ * Register a new user
+ *
+ * @param {Object} userData - User data
+ * @param {string} userData.name - User's full name
+ * @param {string} userData.email - User's email
+ * @param {string} userData.password - User's password
+ * @param {string} userData.role - User's role (default: 'provider')
+ * @param {string} userData.specialty - User's specialty (for providers)
+ * @returns {Promise<Object>} - Result of registration
+ */
+async function registerUser(userData) {
+  try {
+    // Validate required fields
+    if (!userData.name || !userData.email || !userData.password) {
+      return {
+        success: false,
+        error: 'Name, email, and password are required'
+      };
+    }
+
+    // For local development, use in-memory storage
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Registering user: ${userData.name}, ${userData.email}`);
+
+      // Generate a unique ID
+      const userId = `user-${Date.now()}`;
+
+      return {
+        success: true,
+        user: {
+          id: userId,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role || 'provider',
+          specialty: userData.specialty || 'general'
+        }
+      };
+    }
+
+    // Check if email already exists
+    const emailCheckResult = await dynamoDB.scan({
+      TableName: process.env.PROVIDERS_TABLE || 'MedTranslateProviders',
+      FilterExpression: 'email = :email',
+      ExpressionAttributeValues: {
+        ':email': userData.email
+      }
+    }).promise();
+
+    if (emailCheckResult.Items && emailCheckResult.Items.length > 0) {
+      return {
+        success: false,
+        error: 'Email already in use'
+      };
+    }
+
+    // Generate user ID and salt
+    const userId = crypto.randomUUID();
+    const salt = crypto.randomBytes(16).toString('hex');
+
+    // Hash password
+    const hashedPassword = crypto
+      .createHmac('sha256', salt)
+      .update(userData.password)
+      .digest('hex');
+
+    // Create user object
+    const newUser = {
+      providerId: userId,
+      username: userData.email,
+      email: userData.email,
+      password: hashedPassword,
+      salt,
+      name: userData.name,
+      role: userData.role || 'provider',
+      specialty: userData.specialty || 'general',
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+
+    // Save to database
+    await dynamoDB.put({
+      TableName: process.env.PROVIDERS_TABLE || 'MedTranslateProviders',
+      Item: newUser
+    }).promise();
+
+    // Return success with user info (excluding password)
+    const { password, salt: userSalt, ...userWithoutPassword } = newUser;
+    return {
+      success: true,
+      user: {
+        id: userId,
+        ...userWithoutPassword
+      }
+    };
+  } catch (error) {
+    console.error('Error registering user:', error);
+    return {
+      success: false,
+      error: 'Registration failed'
+    };
+  }
+}
+
+/**
+ * Get users with optional filtering
+ *
+ * @param {Object} options - Filter options
+ * @returns {Promise<Array>} - Array of users
+ */
+async function getUsers(options = {}) {
+  try {
+    // For local development, return mock data
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        {
+          id: 'provider-demo',
+          name: 'Demo Provider',
+          email: 'demo@example.com',
+          role: 'doctor',
+          specialty: 'general',
+          active: true
+        }
+      ];
+    }
+
+    // Scan the providers table
+    const result = await dynamoDB.scan({
+      TableName: process.env.PROVIDERS_TABLE || 'MedTranslateProviders'
+    }).promise();
+
+    // Filter and format users
+    let users = result.Items || [];
+
+    // Apply filters
+    if (options.role) {
+      users = users.filter(user => user.role === options.role);
+    }
+
+    if (options.active !== undefined) {
+      users = users.filter(user => user.active === options.active);
+    }
+
+    // Remove sensitive information
+    return users.map(user => {
+      const { password, salt, ...userWithoutPassword } = user;
+      return {
+        id: user.providerId,
+        ...userWithoutPassword
+      };
+    });
+  } catch (error) {
+    console.error('Error getting users:', error);
+    return [];
+  }
+}
+
+/**
+ * Update a user
+ *
+ * @param {string} userId - User ID
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<Object>} - Result of update
+ */
+async function updateUser(userId, updates) {
+  try {
+    // For local development, return mock data
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Updating user ${userId} with:`, updates);
+      return {
+        success: true,
+        user: {
+          id: userId,
+          name: updates.name || 'Updated User',
+          email: updates.email || 'updated@example.com',
+          role: updates.role || 'provider',
+          specialty: updates.specialty || 'general',
+          active: updates.active !== undefined ? updates.active : true
+        }
+      };
+    }
+
+    // Get the user
+    const userResult = await dynamoDB.get({
+      TableName: process.env.PROVIDERS_TABLE || 'MedTranslateProviders',
+      Key: { providerId: userId }
+    }).promise();
+
+    if (!userResult.Item) {
+      return {
+        success: false,
+        error: 'User not found'
+      };
+    }
+
+    // Prepare update expression
+    let updateExpression = 'SET ';
+    const expressionAttributeNames = {};
+    const expressionAttributeValues = {};
+
+    // Process each update field
+    Object.entries(updates).forEach(([key, value], index) => {
+      // Skip password for now (handle separately)
+      if (key === 'password') return;
+
+      const attrName = `#attr${index}`;
+      const attrValue = `:val${index}`;
+
+      expressionAttributeNames[attrName] = key;
+      expressionAttributeValues[attrValue] = value;
+
+      updateExpression += `${index > 0 ? ', ' : ''}${attrName} = ${attrValue}`;
+    });
+
+    // Add updatedAt
+    updateExpression += ', #updatedAt = :updatedAt';
+    expressionAttributeNames['#updatedAt'] = 'updatedAt';
+    expressionAttributeValues[':updatedAt'] = new Date().toISOString();
+
+    // Handle password update if provided
+    if (updates.password) {
+      const salt = crypto.randomBytes(16).toString('hex');
+      const hashedPassword = crypto
+        .createHmac('sha256', salt)
+        .update(updates.password)
+        .digest('hex');
+
+      updateExpression += ', #pwd = :pwd, #salt = :salt';
+      expressionAttributeNames['#pwd'] = 'password';
+      expressionAttributeNames['#salt'] = 'salt';
+      expressionAttributeValues[':pwd'] = hashedPassword;
+      expressionAttributeValues[':salt'] = salt;
+    }
+
+    // Update the user
+    await dynamoDB.update({
+      TableName: process.env.PROVIDERS_TABLE || 'MedTranslateProviders',
+      Key: { providerId: userId },
+      UpdateExpression: updateExpression,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues
+    }).promise();
+
+    // Get the updated user
+    const updatedUserResult = await dynamoDB.get({
+      TableName: process.env.PROVIDERS_TABLE || 'MedTranslateProviders',
+      Key: { providerId: userId }
+    }).promise();
+
+    // Return the updated user without sensitive information
+    const { password, salt, ...userWithoutPassword } = updatedUserResult.Item;
+    return {
+      success: true,
+      user: {
+        id: userId,
+        ...userWithoutPassword
+      }
+    };
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return {
+      success: false,
+      error: 'Update failed'
+    };
+  }
+}
+
 module.exports = {
   generateProviderToken,
   generatePatientSessionToken,
@@ -390,5 +657,8 @@ module.exports = {
   joinSessionWithCode,
   createSession,
   endSession,
-  authenticateProvider
+  authenticateProvider,
+  registerUser,
+  getUsers,
+  updateUser
 };
