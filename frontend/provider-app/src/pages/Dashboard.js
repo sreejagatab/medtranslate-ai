@@ -22,7 +22,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -30,13 +31,15 @@ import {
   Translate as TranslateIcon,
   Person as PersonIcon,
   Storage as StorageIcon,
-  Speed as SpeedIcon
+  Speed as SpeedIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { API_URL, LANGUAGES, MEDICAL_CONTEXTS } from '../config';
 import CacheStatusPanel from '../components/CacheStatusPanel';
 import OfflineStatusIndicator from '../components/OfflineStatusIndicator';
+import { EnhancedNetworkStatusIndicator } from '../../../shared/components';
 
 /**
  * Provider dashboard page
@@ -240,6 +243,30 @@ const Dashboard = () => {
             {/* Offline Status Indicator */}
             <Box sx={{ mt: 3 }}>
               <OfflineStatusIndicator />
+            </Box>
+
+            {/* Enhanced Network Status Indicator */}
+            <Box sx={{ mt: 3 }}>
+              <Paper sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="subtitle2" color="textSecondary">
+                    Network Status
+                  </Typography>
+                  <Tooltip title="Real-time network quality monitoring with enhanced analytics">
+                    <InfoIcon fontSize="small" color="action" />
+                  </Tooltip>
+                </Box>
+                <Box sx={{ mt: 1 }}>
+                  <EnhancedNetworkStatusIndicator
+                    style={{
+                      container: { margin: 0 },
+                      indicator: { width: '100%', justifyContent: 'center' }
+                    }}
+                    offlineReadiness={75}
+                    offlineRisk={0.3}
+                  />
+                </Box>
+              </Paper>
             </Box>
 
             {/* System Status Link */}
