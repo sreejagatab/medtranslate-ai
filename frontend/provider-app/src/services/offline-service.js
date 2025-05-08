@@ -1,6 +1,6 @@
 /**
  * Offline Service for MedTranslate AI
- * 
+ *
  * This service provides functionality for offline operations, including:
  * - Offline readiness information
  * - Manual sync operations
@@ -24,7 +24,7 @@ const ENDPOINTS = {
 
 /**
  * Get offline readiness information
- * 
+ *
  * @returns {Promise<Object>} - Offline readiness information
  */
 const getOfflineReadiness = async () => {
@@ -45,7 +45,7 @@ const getOfflineReadiness = async () => {
 
 /**
  * Perform manual sync
- * 
+ *
  * @returns {Promise<Object>} - Sync result
  */
 const manualSync = async () => {
@@ -60,16 +60,56 @@ const manualSync = async () => {
 
 /**
  * Prepare for offline mode
- * 
+ *
  * @param {Object} options - Preparation options
  * @param {boolean} options.forcePrepare - Force preparation even if not needed
  * @param {boolean} options.highPriority - High priority preparation
+ * @param {Function} options.progressCallback - Callback for progress updates (progress, stage)
  * @returns {Promise<Object>} - Preparation result
  */
 const prepareForOffline = async (options = {}) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.PREPARE_OFFLINE}`, options);
-    return response.data;
+    // Extract the progress callback
+    const { progressCallback, ...requestOptions } = options;
+
+    // If we have a progress callback, simulate progress updates
+    // In a real implementation, this would use server-sent events or WebSocket
+    if (typeof progressCallback === 'function') {
+      // Initial progress
+      progressCallback(0, 'Initializing');
+
+      // Make the actual request
+      const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.PREPARE_OFFLINE}`, requestOptions);
+
+      // Simulate progress updates while waiting for the server
+      // In a real implementation, the server would send progress updates
+      const simulateProgress = async () => {
+        // Stages of preparation
+        const stages = [
+          { progress: 20, stage: 'Checking requirements' },
+          { progress: 40, stage: 'Caching medical data' },
+          { progress: 60, stage: 'Optimizing storage' },
+          { progress: 80, stage: 'Preparing translation models' },
+          { progress: 100, stage: 'Finalizing offline readiness' }
+        ];
+
+        // Simulate progress through each stage
+        for (const stage of stages) {
+          // Wait a bit before updating to the next stage
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          progressCallback(stage.progress, stage.stage);
+        }
+      };
+
+      // Start progress simulation
+      await simulateProgress();
+
+      return response.data;
+    } else {
+      // If no progress callback, just make the request
+      const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.PREPARE_OFFLINE}`, options);
+      return response.data;
+    }
   } catch (error) {
     console.error('Error preparing for offline:', error);
     throw error;
@@ -78,7 +118,7 @@ const prepareForOffline = async (options = {}) => {
 
 /**
  * Get storage information
- * 
+ *
  * @returns {Promise<Object>} - Storage information
  */
 const getStorageInfo = async () => {
@@ -100,7 +140,7 @@ const getStorageInfo = async () => {
 
 /**
  * Optimize storage
- * 
+ *
  * @param {Object} options - Optimization options
  * @param {boolean} options.force - Force optimization even if not needed
  * @returns {Promise<Object>} - Optimization result
@@ -117,7 +157,7 @@ const optimizeStorage = async (options = {}) => {
 
 /**
  * Set auto-sync configuration
- * 
+ *
  * @param {boolean} enabled - Whether auto-sync is enabled
  * @returns {Promise<Object>} - Configuration result
  */

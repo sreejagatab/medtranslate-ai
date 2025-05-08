@@ -97,11 +97,8 @@ async function translateLocally(text, sourceLanguage, targetLanguage, context = 
 
     // For testing, we'll use a simpler approach
     if (MOCK_MODE) {
-      // Call mock inference script directly
-      const modelPath = path.join(MODEL_DIR, `${sourceLanguage}-${targetLanguage}.bin`);
-      result = await callPythonInference(
-        modelPath, text, sourceLanguage, targetLanguage, context
-      );
+      // Use mock translation function directly
+      result = await modelManager.mockTranslate(text, sourceLanguage, targetLanguage, context);
     } else {
       // Check if language pair is directly supported
       if (modelManager.isLanguagePairSupported(sourceLanguage, targetLanguage)) {

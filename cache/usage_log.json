@@ -1,29 +1,27 @@
 [
   {
-    "timestamp": 1746240102845,
+    "timestamp": 1746346912343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "orthopedics",
+    "context": "cardiology",
     "text": "Sample text 0",
     "translatedText": "Translated text 0",
     "hour": 0,
     "day": 0,
     "terms": [
+      "respiration",
       "liver",
-      "medication",
-      "liver",
-      "heart",
-      "respiration"
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.3084658161224514,
-      "memoryUsage": 60.99148817934332,
-      "cpuUsage": 46.443422334002136
+      "batteryLevel": 0.6277932440093117,
+      "memoryUsage": 61.95523269415795,
+      "cpuUsage": 5.951692958736543
     }
   },
   {
-    "timestamp": 1746243702845,
+    "timestamp": 1746350512343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -32,57 +30,57 @@
     "hour": 1,
     "day": 0,
     "terms": [
-      "pulse"
+      "pain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9511709495733445,
-      "memoryUsage": 99.01700332331156,
-      "cpuUsage": 37.80280867400527
+      "batteryLevel": 0.308168090424352,
+      "memoryUsage": 25.162501059152476,
+      "cpuUsage": 19.968846326931498
     }
   },
   {
-    "timestamp": 1746247302845,
-    "sourceLanguage": "en",
-    "targetLanguage": "es",
+    "timestamp": 1746354112343,
+    "sourceLanguage": "fr",
+    "targetLanguage": "en",
     "context": "cardiology",
     "text": "Sample text 2",
     "translatedText": "Translated text 2",
     "hour": 2,
     "day": 0,
     "terms": [
-      "liver"
+      "brain",
+      "lungs"
     ],
     "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.9830669413287241,
-      "memoryUsage": 98.63953549873649,
-      "cpuUsage": 54.062277697155416
+      "batteryLevel": 0.26244336777186117,
+      "memoryUsage": 6.498393027331617,
+      "cpuUsage": 4.929034368949914
     }
   },
   {
-    "timestamp": 1746250902845,
+    "timestamp": 1746357712343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "orthopedics",
+    "context": "cardiology",
     "text": "Sample text 3",
     "translatedText": "Translated text 3",
     "hour": 3,
     "day": 0,
     "terms": [
-      "kidney",
-      "liver",
-      "heart"
+      "symptoms",
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.6814168444062545,
-      "memoryUsage": 64.3827846939757,
-      "cpuUsage": 53.60959189076993
+      "batteryLevel": 0.9530056345921467,
+      "memoryUsage": 80.01067687980246,
+      "cpuUsage": 35.26672596992177
     }
   },
   {
-    "timestamp": 1746254502845,
+    "timestamp": 1746361312343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -91,20 +89,19 @@
     "hour": 4,
     "day": 0,
     "terms": [
-      "temperature",
-      "prognosis",
-      "heart",
-      "liver"
+      "pain",
+      "kidney",
+      "treatment"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.9663142594126879,
-      "memoryUsage": 1.0462609232327003,
-      "cpuUsage": 63.48334957328503
+      "batteryLevel": 0.04027326368316686,
+      "memoryUsage": 44.462330564960475,
+      "cpuUsage": 96.98213952861381
     }
   },
   {
-    "timestamp": 1746258102845,
+    "timestamp": 1746364912343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -113,19 +110,20 @@
     "hour": 5,
     "day": 0,
     "terms": [
-      "treatment",
-      "symptoms",
-      "temperature"
+      "brain",
+      "brain",
+      "lungs",
+      "prognosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.3061252091924487,
-      "memoryUsage": 5.575550013435393,
-      "cpuUsage": 33.96194087884719
+      "batteryLevel": 0.9179598369243174,
+      "memoryUsage": 62.440172509900506,
+      "cpuUsage": 71.44714313326676
     }
   },
   {
-    "timestamp": 1746261702845,
+    "timestamp": 1746368512343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -134,20 +132,21 @@
     "hour": 6,
     "day": 0,
     "terms": [
+      "brain",
+      "prognosis",
+      "respiration",
       "lungs",
-      "kidney",
-      "diagnosis",
-      "blood pressure"
+      "liver"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.3305722777410327,
-      "memoryUsage": 97.83710067363583,
-      "cpuUsage": 88.48367092761646
+      "batteryLevel": 0.4104184510278741,
+      "memoryUsage": 8.33981847699794,
+      "cpuUsage": 5.52379425727636
     }
   },
   {
-    "timestamp": 1746265302845,
+    "timestamp": 1746372112343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -156,59 +155,63 @@
     "hour": 7,
     "day": 0,
     "terms": [
+      "medication",
       "treatment",
-      "kidney",
+      "symptoms",
       "respiration",
-      "lungs"
+      "treatment"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.5066059284561852,
-      "memoryUsage": 11.131009455124797,
-      "cpuUsage": 98.19198132343718
+      "batteryLevel": 0.9753967186797088,
+      "memoryUsage": 96.4216415707259,
+      "cpuUsage": 82.33146507441396
     }
   },
   {
-    "timestamp": 1746268902845,
+    "timestamp": 1746375712343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "neurology",
+    "context": "pediatrics",
     "text": "Sample text 8",
     "translatedText": "Translated text 8",
     "hour": 8,
     "day": 0,
     "terms": [
-      "kidney"
+      "brain",
+      "respiration"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7036284121823149,
-      "memoryUsage": 72.4136843815458,
-      "cpuUsage": 28.493908312560645
+      "batteryLevel": 0.6043189103113689,
+      "memoryUsage": 16.46581639142579,
+      "cpuUsage": 83.91880273246952
     }
   },
   {
-    "timestamp": 1746272502845,
+    "timestamp": 1746379312343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "neurology",
+    "context": "general",
     "text": "Sample text 9",
     "translatedText": "Translated text 9",
     "hour": 9,
     "day": 0,
     "terms": [
+      "liver",
+      "temperature",
       "treatment",
-      "liver"
+      "blood pressure"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.6751637058727491,
-      "memoryUsage": 97.47312519148088,
-      "cpuUsage": 21.018068521192212
+      "batteryLevel": 0.3724380464618522,
+      "memoryUsage": 65.46025528445468,
+      "cpuUsage": 76.85975116012558
     }
   },
   {
-    "timestamp": 1746276102845,
+    "timestamp": 1746382912343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -217,17 +220,21 @@
     "hour": 10,
     "day": 0,
     "terms": [
-      "brain"
+      "heart",
+      "respiration",
+      "prognosis",
+      "treatment",
+      "pulse"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.2041094699591801,
-      "memoryUsage": 27.883899942303113,
-      "cpuUsage": 70.37944528467273
+      "batteryLevel": 0.9921420438132738,
+      "memoryUsage": 13.72834379183927,
+      "cpuUsage": 69.09145629173068
     }
   },
   {
-    "timestamp": 1746279702845,
+    "timestamp": 1746386512343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -236,17 +243,17 @@
     "hour": 11,
     "day": 0,
     "terms": [
-      "kidney"
+      "medication"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.14969240535569672,
-      "memoryUsage": 2.0800787451114022,
-      "cpuUsage": 41.69254646308185
+      "batteryLevel": 0.9259238937249856,
+      "memoryUsage": 72.83706163727565,
+      "cpuUsage": 96.93201404776401
     }
   },
   {
-    "timestamp": 1746283302845,
+    "timestamp": 1746390112343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -255,17 +262,20 @@
     "hour": 12,
     "day": 0,
     "terms": [
-      "respiration"
+      "medication",
+      "temperature",
+      "prognosis",
+      "prognosis"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.6772258723965898,
-      "memoryUsage": 78.31797726608369,
-      "cpuUsage": 27.157594293912556
+      "batteryLevel": 0.7822722137098255,
+      "memoryUsage": 30.521170777549923,
+      "cpuUsage": 85.34883689695985
     }
   },
   {
-    "timestamp": 1746286902845,
+    "timestamp": 1746393712343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -274,86 +284,85 @@
     "hour": 13,
     "day": 0,
     "terms": [
-      "temperature",
-      "medication",
-      "treatment",
-      "pulse"
+      "liver",
+      "respiration",
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.2983575267312082,
-      "memoryUsage": 16.451501898378098,
-      "cpuUsage": 26.73627296704939
+      "batteryLevel": 0.5916618873948274,
+      "memoryUsage": 76.89356162260704,
+      "cpuUsage": 92.46008094002833
     }
   },
   {
-    "timestamp": 1746290502845,
+    "timestamp": 1746397312343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "orthopedics",
+    "context": "pediatrics",
     "text": "Sample text 14",
     "translatedText": "Translated text 14",
     "hour": 14,
     "day": 0,
     "terms": [
-      "medication",
-      "liver",
       "pain",
-      "prognosis",
-      "brain"
+      "temperature",
+      "lungs",
+      "heart"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9420918251849073,
-      "memoryUsage": 14.485719692659615,
-      "cpuUsage": 80.96543678481845
+      "batteryLevel": 0.7498923028377886,
+      "memoryUsage": 74.98914224738043,
+      "cpuUsage": 9.09196246767683
     }
   },
   {
-    "timestamp": 1746294102845,
-    "sourceLanguage": "en",
-    "targetLanguage": "fr",
+    "timestamp": 1746400912343,
+    "sourceLanguage": "fr",
+    "targetLanguage": "en",
     "context": "neurology",
     "text": "Sample text 15",
     "translatedText": "Translated text 15",
     "hour": 15,
     "day": 0,
     "terms": [
-      "symptoms",
-      "heart",
-      "pain"
+      "medication",
+      "lungs",
+      "respiration",
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.049349967047755294,
-      "memoryUsage": 80.5321443946816,
-      "cpuUsage": 47.65261092511881
+      "batteryLevel": 0.760826975552781,
+      "memoryUsage": 34.92102683704466,
+      "cpuUsage": 12.717506065121253
     }
   },
   {
-    "timestamp": 1746297702845,
-    "sourceLanguage": "en",
-    "targetLanguage": "de",
+    "timestamp": 1746404512343,
+    "sourceLanguage": "fr",
+    "targetLanguage": "en",
     "context": "orthopedics",
     "text": "Sample text 16",
     "translatedText": "Translated text 16",
     "hour": 16,
     "day": 0,
     "terms": [
-      "pain",
-      "prognosis",
-      "medication",
-      "symptoms"
+      "diagnosis",
+      "brain",
+      "blood pressure",
+      "heart"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.036749171041458695,
-      "memoryUsage": 32.20503056640871,
-      "cpuUsage": 69.80861321434233
+      "batteryLevel": 0.5713091798144698,
+      "memoryUsage": 59.07383378939708,
+      "cpuUsage": 70.21506683592432
     }
   },
   {
-    "timestamp": 1746301302845,
+    "timestamp": 1746408112343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -362,19 +371,19 @@
     "hour": 17,
     "day": 0,
     "terms": [
-      "symptoms",
-      "treatment",
-      "respiration"
+      "diagnosis",
+      "brain",
+      "liver"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7672575102454855,
-      "memoryUsage": 14.641055870026554,
-      "cpuUsage": 95.54153781059523
+      "batteryLevel": 0.322231210263376,
+      "memoryUsage": 65.1373006545856,
+      "cpuUsage": 66.81445090619174
     }
   },
   {
-    "timestamp": 1746304902845,
+    "timestamp": 1746411712343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -383,43 +392,38 @@
     "hour": 18,
     "day": 0,
     "terms": [
-      "diagnosis",
-      "medication",
-      "heart",
-      "respiration",
-      "diagnosis"
+      "brain",
+      "heart"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7421626689653775,
-      "memoryUsage": 15.402094211195694,
-      "cpuUsage": 83.59258544747101
+      "batteryLevel": 0.5135889065452877,
+      "memoryUsage": 18.26788393746177,
+      "cpuUsage": 92.55262917459251
     }
   },
   {
-    "timestamp": 1746308502845,
+    "timestamp": 1746415312343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
-    "context": "orthopedics",
+    "context": "cardiology",
     "text": "Sample text 19",
     "translatedText": "Translated text 19",
     "hour": 19,
     "day": 0,
     "terms": [
-      "kidney",
-      "blood pressure",
-      "medication",
-      "medication"
+      "temperature",
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.48659114329196407,
-      "memoryUsage": 51.76264560561208,
-      "cpuUsage": 39.480860391682505
+      "batteryLevel": 0.12251573725093734,
+      "memoryUsage": 61.05048607376749,
+      "cpuUsage": 96.77851744195203
     }
   },
   {
-    "timestamp": 1746312102845,
+    "timestamp": 1746418912343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -428,143 +432,142 @@
     "hour": 20,
     "day": 0,
     "terms": [
+      "temperature",
+      "prognosis",
       "symptoms",
-      "lungs",
-      "symptoms"
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.030542718961635407,
-      "memoryUsage": 2.2889861989714433,
-      "cpuUsage": 93.09259561642962
+      "batteryLevel": 0.8262649403159938,
+      "memoryUsage": 90.77414622469011,
+      "cpuUsage": 37.75772281503331
     }
   },
   {
-    "timestamp": 1746315702845,
+    "timestamp": 1746422512343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
-    "context": "pediatrics",
+    "context": "orthopedics",
     "text": "Sample text 21",
     "translatedText": "Translated text 21",
     "hour": 21,
     "day": 0,
     "terms": [
-      "respiration"
+      "liver"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9188657443339461,
-      "memoryUsage": 56.271594770544795,
-      "cpuUsage": 10.820297921579968
+      "batteryLevel": 0.27929951187671165,
+      "memoryUsage": 81.2612766325904,
+      "cpuUsage": 71.65894661837655
     }
   },
   {
-    "timestamp": 1746319302845,
-    "sourceLanguage": "en",
-    "targetLanguage": "de",
+    "timestamp": 1746426112343,
+    "sourceLanguage": "es",
+    "targetLanguage": "en",
     "context": "orthopedics",
     "text": "Sample text 22",
     "translatedText": "Translated text 22",
     "hour": 22,
     "day": 0,
     "terms": [
-      "blood pressure",
-      "kidney",
-      "heart",
-      "liver"
+      "prognosis",
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.5200983335447524,
-      "memoryUsage": 72.23153760149546,
-      "cpuUsage": 79.64402391500877
+      "batteryLevel": 0.1320539047207896,
+      "memoryUsage": 45.54422013562558,
+      "cpuUsage": 51.575551243368345
     }
   },
   {
-    "timestamp": 1746322902845,
+    "timestamp": 1746429712343,
     "sourceLanguage": "en",
-    "targetLanguage": "es",
+    "targetLanguage": "de",
     "context": "orthopedics",
     "text": "Sample text 23",
     "translatedText": "Translated text 23",
     "hour": 23,
     "day": 0,
     "terms": [
-      "prognosis",
-      "blood pressure",
+      "respiration",
       "liver",
-      "blood pressure",
-      "brain"
+      "respiration",
+      "pulse"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.1308331701303731,
-      "memoryUsage": 45.928803303507195,
-      "cpuUsage": 11.097255745919309
+      "batteryLevel": 0.05591033352605601,
+      "memoryUsage": 0.8302729734243508,
+      "cpuUsage": 95.96459836964098
     }
   },
   {
-    "timestamp": 1746326502845,
+    "timestamp": 1746433312343,
     "sourceLanguage": "en",
-    "targetLanguage": "de",
+    "targetLanguage": "es",
     "context": "cardiology",
     "text": "Sample text 24",
     "translatedText": "Translated text 24",
     "hour": 0,
     "day": 1,
     "terms": [
+      "lungs",
       "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.8393268044663167,
-      "memoryUsage": 72.18826225170041,
-      "cpuUsage": 24.435416637898456
+      "batteryLevel": 0.27335465260727565,
+      "memoryUsage": 11.628416438356082,
+      "cpuUsage": 69.45626632962762
     }
   },
   {
-    "timestamp": 1746330102845,
+    "timestamp": 1746436912343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "cardiology",
+    "context": "general",
     "text": "Sample text 25",
     "translatedText": "Translated text 25",
     "hour": 1,
     "day": 1,
     "terms": [
-      "respiration",
-      "kidney",
-      "respiration",
-      "blood pressure"
+      "brain",
+      "pain",
+      "heart",
+      "symptoms"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.6658425328729973,
-      "memoryUsage": 35.42998755393407,
-      "cpuUsage": 30.704960150881867
+      "batteryLevel": 0.15868738017770734,
+      "memoryUsage": 7.758341159355009,
+      "cpuUsage": 99.36431372121174
     }
   },
   {
-    "timestamp": 1746333702845,
+    "timestamp": 1746440512343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "general",
+    "context": "cardiology",
     "text": "Sample text 26",
     "translatedText": "Translated text 26",
     "hour": 2,
     "day": 1,
     "terms": [
-      "blood pressure"
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.45099762653870146,
-      "memoryUsage": 61.04692876258868,
-      "cpuUsage": 18.128010693734865
+      "batteryLevel": 0.9317679781785877,
+      "memoryUsage": 79.76486132100177,
+      "cpuUsage": 61.220428255104494
     }
   },
   {
-    "timestamp": 1746337302845,
+    "timestamp": 1746444112343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -573,59 +576,64 @@
     "hour": 3,
     "day": 1,
     "terms": [
-      "prognosis"
+      "kidney",
+      "brain",
+      "heart",
+      "kidney",
+      "respiration"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.3719808582340436,
-      "memoryUsage": 61.337672224289896,
-      "cpuUsage": 23.559713290174635
+      "batteryLevel": 0.9383000194577458,
+      "memoryUsage": 45.911406673008855,
+      "cpuUsage": 86.12653435115027
     }
   },
   {
-    "timestamp": 1746340902845,
+    "timestamp": 1746447712343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "cardiology",
+    "context": "pediatrics",
     "text": "Sample text 28",
     "translatedText": "Translated text 28",
     "hour": 4,
     "day": 1,
     "terms": [
-      "prognosis",
-      "medication",
-      "pulse"
+      "pain",
+      "brain",
+      "respiration"
     ],
     "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.7616638800540858,
-      "memoryUsage": 54.13764398455434,
-      "cpuUsage": 51.08487357740443
+      "batteryLevel": 0.04830888460898963,
+      "memoryUsage": 1.6259769788267375,
+      "cpuUsage": 92.96760435888329
     }
   },
   {
-    "timestamp": 1746344502845,
-    "sourceLanguage": "es",
-    "targetLanguage": "en",
+    "timestamp": 1746451312343,
+    "sourceLanguage": "en",
+    "targetLanguage": "de",
     "context": "cardiology",
     "text": "Sample text 29",
     "translatedText": "Translated text 29",
     "hour": 5,
     "day": 1,
     "terms": [
-      "heart",
-      "heart",
-      "pain"
+      "respiration",
+      "lungs",
+      "pain",
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.025463608111396807,
-      "memoryUsage": 0.14523993274802027,
-      "cpuUsage": 26.91361020515519
+      "batteryLevel": 0.6875156641283755,
+      "memoryUsage": 39.81658771830408,
+      "cpuUsage": 74.19013269288833
     }
   },
   {
-    "timestamp": 1746348102845,
+    "timestamp": 1746454912343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -634,20 +642,20 @@
     "hour": 6,
     "day": 1,
     "terms": [
-      "heart",
-      "brain",
+      "temperature",
       "pulse",
-      "respiration"
+      "medication",
+      "pulse"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.27775972775505764,
-      "memoryUsage": 58.685868869494094,
-      "cpuUsage": 49.180038867386514
+      "batteryLevel": 0.5323056367269574,
+      "memoryUsage": 24.46478690425822,
+      "cpuUsage": 87.58786129144434
     }
   },
   {
-    "timestamp": 1746351702845,
+    "timestamp": 1746458512343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -656,19 +664,17 @@
     "hour": 7,
     "day": 1,
     "terms": [
-      "brain",
-      "temperature",
-      "temperature"
+      "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.755480392101858,
-      "memoryUsage": 80.33292884623519,
-      "cpuUsage": 44.678264792591385
+      "batteryLevel": 0.7150855380874761,
+      "memoryUsage": 76.5477042946168,
+      "cpuUsage": 20.1688442074484
     }
   },
   {
-    "timestamp": 1746355302845,
+    "timestamp": 1746462112343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -677,86 +683,81 @@
     "hour": 8,
     "day": 1,
     "terms": [
-      "liver",
-      "pulse",
-      "brain",
       "symptoms",
-      "treatment"
+      "pain",
+      "pulse",
+      "lungs"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.2342887613796294,
-      "memoryUsage": 94.56110786688308,
-      "cpuUsage": 44.2126717779699
+      "batteryLevel": 0.6724534208639514,
+      "memoryUsage": 91.7110553903184,
+      "cpuUsage": 90.12528212525382
     }
   },
   {
-    "timestamp": 1746358902845,
+    "timestamp": 1746465712343,
     "sourceLanguage": "en",
-    "targetLanguage": "fr",
+    "targetLanguage": "de",
     "context": "neurology",
     "text": "Sample text 33",
     "translatedText": "Translated text 33",
     "hour": 9,
     "day": 1,
     "terms": [
-      "pulse",
-      "lungs",
-      "brain",
-      "lungs"
+      "liver"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.30459767405588667,
-      "memoryUsage": 74.23083660441883,
-      "cpuUsage": 11.6779915102194
+      "batteryLevel": 0.4381844887650852,
+      "memoryUsage": 4.76517455479466,
+      "cpuUsage": 90.81040119772533
     }
   },
   {
-    "timestamp": 1746362502845,
+    "timestamp": 1746469312343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "cardiology",
+    "context": "neurology",
     "text": "Sample text 34",
     "translatedText": "Translated text 34",
     "hour": 10,
     "day": 1,
     "terms": [
-      "blood pressure",
-      "symptoms",
+      "liver",
+      "heart",
+      "liver",
+      "diagnosis",
       "respiration"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.10615390202608044,
-      "memoryUsage": 47.6095979168627,
-      "cpuUsage": 82.47172468928878
+      "batteryLevel": 0.441584581409747,
+      "memoryUsage": 98.11173214969908,
+      "cpuUsage": 55.08990321083329
     }
   },
   {
-    "timestamp": 1746366102845,
+    "timestamp": 1746472912343,
     "sourceLanguage": "en",
-    "targetLanguage": "es",
+    "targetLanguage": "fr",
     "context": "neurology",
     "text": "Sample text 35",
     "translatedText": "Translated text 35",
     "hour": 11,
     "day": 1,
     "terms": [
-      "prognosis",
-      "brain",
-      "diagnosis",
-      "lungs"
+      "heart"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.6959885209109866,
-      "memoryUsage": 21.59864661398585,
-      "cpuUsage": 25.853035193340943
+      "batteryLevel": 0.5129357540734107,
+      "memoryUsage": 97.29398554764583,
+      "cpuUsage": 65.54554540608083
     }
   },
   {
-    "timestamp": 1746369702845,
+    "timestamp": 1746476512343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -765,65 +766,57 @@
     "hour": 12,
     "day": 1,
     "terms": [
-      "diagnosis",
-      "symptoms",
-      "medication",
-      "diagnosis",
-      "pulse"
+      "kidney"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.2202908144411937,
-      "memoryUsage": 97.64171608823628,
-      "cpuUsage": 96.04367261305069
+      "batteryLevel": 0.17238104854627911,
+      "memoryUsage": 67.4985159440209,
+      "cpuUsage": 41.43538377132805
     }
   },
   {
-    "timestamp": 1746373302845,
+    "timestamp": 1746480112343,
     "sourceLanguage": "en",
-    "targetLanguage": "fr",
+    "targetLanguage": "es",
     "context": "neurology",
     "text": "Sample text 37",
     "translatedText": "Translated text 37",
     "hour": 13,
     "day": 1,
     "terms": [
-      "pulse",
-      "treatment",
-      "respiration",
-      "pain",
-      "lungs"
+      "temperature",
+      "blood pressure"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.13141593728106193,
-      "memoryUsage": 73.41432966183574,
-      "cpuUsage": 82.47626169891238
+      "batteryLevel": 0.2019250511323729,
+      "memoryUsage": 38.135196160944474,
+      "cpuUsage": 51.64408488859258
     }
   },
   {
-    "timestamp": 1746376902845,
-    "sourceLanguage": "fr",
-    "targetLanguage": "en",
+    "timestamp": 1746483712343,
+    "sourceLanguage": "en",
+    "targetLanguage": "fr",
     "context": "neurology",
     "text": "Sample text 38",
     "translatedText": "Translated text 38",
     "hour": 14,
     "day": 1,
     "terms": [
-      "lungs",
       "respiration",
-      "blood pressure"
+      "treatment"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.5107543782186583,
-      "memoryUsage": 57.44739222531741,
-      "cpuUsage": 68.68430068799123
+      "batteryLevel": 0.13566733402823083,
+      "memoryUsage": 2.226732183930036,
+      "cpuUsage": 47.852365557766575
     }
   },
   {
-    "timestamp": 1746380502845,
+    "timestamp": 1746487312343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -832,149 +825,142 @@
     "hour": 15,
     "day": 1,
     "terms": [
-      "pain",
-      "symptoms",
       "treatment",
-      "respiration",
-      "kidney"
+      "medication"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9561039284899833,
-      "memoryUsage": 56.71926528826419,
-      "cpuUsage": 5.996959408124902
+      "batteryLevel": 0.5769245151952469,
+      "memoryUsage": 80.61358925144742,
+      "cpuUsage": 79.03297654058514
     }
   },
   {
-    "timestamp": 1746384102845,
-    "sourceLanguage": "en",
-    "targetLanguage": "de",
+    "timestamp": 1746490912343,
+    "sourceLanguage": "fr",
+    "targetLanguage": "en",
     "context": "orthopedics",
     "text": "Sample text 40",
     "translatedText": "Translated text 40",
     "hour": 16,
     "day": 1,
     "terms": [
-      "pulse",
-      "blood pressure"
+      "medication",
+      "pulse"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.7232324361321101,
-      "memoryUsage": 23.514082672743154,
-      "cpuUsage": 90.48891313939758
+      "batteryLevel": 0.19078520884160066,
+      "memoryUsage": 74.00110272219769,
+      "cpuUsage": 88.86507073635408
     }
   },
   {
-    "timestamp": 1746387702845,
+    "timestamp": 1746494512343,
     "sourceLanguage": "en",
-    "targetLanguage": "de",
+    "targetLanguage": "es",
     "context": "orthopedics",
     "text": "Sample text 41",
     "translatedText": "Translated text 41",
     "hour": 17,
     "day": 1,
     "terms": [
-      "kidney",
+      "pain",
+      "respiration",
       "liver",
-      "treatment",
-      "blood pressure",
-      "diagnosis"
+      "respiration",
+      "medication"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.1504515613891244,
-      "memoryUsage": 13.182816258979857,
-      "cpuUsage": 26.860645599643917
+      "batteryLevel": 0.9595675538773465,
+      "memoryUsage": 72.33073713681104,
+      "cpuUsage": 57.11295449750209
     }
   },
   {
-    "timestamp": 1746391302845,
+    "timestamp": 1746498112343,
     "sourceLanguage": "en",
-    "targetLanguage": "de",
+    "targetLanguage": "es",
     "context": "orthopedics",
     "text": "Sample text 42",
     "translatedText": "Translated text 42",
     "hour": 18,
     "day": 1,
     "terms": [
-      "diagnosis",
-      "pulse",
-      "pain",
-      "pain",
-      "respiration"
+      "symptoms",
+      "heart",
+      "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.05710954865848472,
-      "memoryUsage": 76.44016546992407,
-      "cpuUsage": 79.50627835092673
+      "batteryLevel": 0.545973833888522,
+      "memoryUsage": 67.48011938939042,
+      "cpuUsage": 33.329086851457305
     }
   },
   {
-    "timestamp": 1746394902845,
+    "timestamp": 1746501712343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
-    "context": "pediatrics",
+    "context": "orthopedics",
     "text": "Sample text 43",
     "translatedText": "Translated text 43",
     "hour": 19,
     "day": 1,
     "terms": [
-      "liver",
-      "brain"
+      "treatment"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.972951187612962,
-      "memoryUsage": 90.59646009955225,
-      "cpuUsage": 37.77562967928978
+      "batteryLevel": 0.0744812237521355,
+      "memoryUsage": 64.85286733374387,
+      "cpuUsage": 64.42663753299817
     }
   },
   {
-    "timestamp": 1746398502845,
+    "timestamp": 1746505312343,
     "sourceLanguage": "en",
-    "targetLanguage": "de",
-    "context": "cardiology",
+    "targetLanguage": "fr",
+    "context": "orthopedics",
     "text": "Sample text 44",
     "translatedText": "Translated text 44",
     "hour": 20,
     "day": 1,
     "terms": [
-      "respiration"
+      "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.5761555810255643,
-      "memoryUsage": 24.607430506268123,
-      "cpuUsage": 69.54654602050678
+      "batteryLevel": 0.9769239221310939,
+      "memoryUsage": 60.11668552044749,
+      "cpuUsage": 5.3579501005390995
     }
   },
   {
-    "timestamp": 1746402102845,
-    "sourceLanguage": "es",
-    "targetLanguage": "en",
-    "context": "neurology",
+    "timestamp": 1746508912343,
+    "sourceLanguage": "en",
+    "targetLanguage": "de",
+    "context": "orthopedics",
     "text": "Sample text 45",
     "translatedText": "Translated text 45",
     "hour": 21,
     "day": 1,
     "terms": [
-      "temperature",
-      "medication",
       "lungs",
-      "lungs",
-      "pulse"
+      "symptoms",
+      "pulse",
+      "lungs"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.19524611046867912,
-      "memoryUsage": 89.01172336234484,
-      "cpuUsage": 40.559669860585814
+      "batteryLevel": 0.29719793878545864,
+      "memoryUsage": 8.408953569907496,
+      "cpuUsage": 23.317711154706622
     }
   },
   {
-    "timestamp": 1746405702845,
+    "timestamp": 1746512512343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -983,20 +969,17 @@
     "hour": 22,
     "day": 1,
     "terms": [
-      "respiration",
-      "respiration",
-      "diagnosis",
       "liver"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.6403323230561706,
-      "memoryUsage": 99.65281963675625,
-      "cpuUsage": 45.6087846401114
+      "batteryLevel": 0.7587927106701995,
+      "memoryUsage": 97.96518527597804,
+      "cpuUsage": 6.67145446029993
     }
   },
   {
-    "timestamp": 1746409302845,
+    "timestamp": 1746516112343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1005,38 +988,38 @@
     "hour": 23,
     "day": 1,
     "terms": [
-      "heart",
-      "pulse"
+      "treatment",
+      "lungs",
+      "heart"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.12574770105473543,
-      "memoryUsage": 93.69490470916868,
-      "cpuUsage": 70.38444856982969
+      "batteryLevel": 0.5792930401326815,
+      "memoryUsage": 32.35097579943407,
+      "cpuUsage": 43.231621663438105
     }
   },
   {
-    "timestamp": 1746412902845,
+    "timestamp": 1746519712343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "cardiology",
+    "context": "pediatrics",
     "text": "Sample text 48",
     "translatedText": "Translated text 48",
     "hour": 0,
     "day": 2,
     "terms": [
-      "brain",
-      "kidney"
+      "prognosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.0006043228711043458,
-      "memoryUsage": 38.5303293406839,
-      "cpuUsage": 58.9518899298376
+      "batteryLevel": 0.6561640466034921,
+      "memoryUsage": 66.62470992920993,
+      "cpuUsage": 97.17484664614769
     }
   },
   {
-    "timestamp": 1746416502845,
+    "timestamp": 1746523312343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -1046,80 +1029,83 @@
     "day": 2,
     "terms": [
       "symptoms",
-      "symptoms"
+      "blood pressure",
+      "kidney",
+      "treatment",
+      "prognosis"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.9304288906968976,
-      "memoryUsage": 27.796119484640336,
-      "cpuUsage": 49.330769075069924
+      "batteryLevel": 0.7809077232065393,
+      "memoryUsage": 62.373539134566336,
+      "cpuUsage": 64.16064482272294
     }
   },
   {
-    "timestamp": 1746420102845,
-    "sourceLanguage": "fr",
-    "targetLanguage": "en",
+    "timestamp": 1746526912343,
+    "sourceLanguage": "en",
+    "targetLanguage": "de",
     "context": "cardiology",
     "text": "Sample text 50",
     "translatedText": "Translated text 50",
     "hour": 2,
     "day": 2,
     "terms": [
-      "lungs",
-      "temperature",
-      "liver",
-      "medication"
+      "treatment",
+      "heart"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.36479916820357405,
-      "memoryUsage": 24.129756695922524,
-      "cpuUsage": 95.21021335859842
+      "batteryLevel": 0.4043302569918703,
+      "memoryUsage": 79.8213336118064,
+      "cpuUsage": 36.350607446260376
     }
   },
   {
-    "timestamp": 1746423702845,
+    "timestamp": 1746530512343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "cardiology",
+    "context": "pediatrics",
     "text": "Sample text 51",
     "translatedText": "Translated text 51",
     "hour": 3,
     "day": 2,
     "terms": [
-      "liver",
       "diagnosis",
-      "lungs"
+      "prognosis",
+      "symptoms"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.015051609843530711,
-      "memoryUsage": 93.69545945816968,
-      "cpuUsage": 24.063084350132225
+      "batteryLevel": 0.42923704443945554,
+      "memoryUsage": 19.43988219280135,
+      "cpuUsage": 83.90426090576608
     }
   },
   {
-    "timestamp": 1746427302845,
-    "sourceLanguage": "es",
-    "targetLanguage": "en",
-    "context": "cardiology",
+    "timestamp": 1746534112343,
+    "sourceLanguage": "en",
+    "targetLanguage": "es",
+    "context": "neurology",
     "text": "Sample text 52",
     "translatedText": "Translated text 52",
     "hour": 4,
     "day": 2,
     "terms": [
+      "pulse",
       "pain",
-      "liver"
+      "pain",
+      "prognosis"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.024459589461187425,
-      "memoryUsage": 30.019296647016148,
-      "cpuUsage": 72.03495589394954
+      "batteryLevel": 0.505623457131577,
+      "memoryUsage": 52.83580545927129,
+      "cpuUsage": 54.39202250211741
     }
   },
   {
-    "timestamp": 1746430902845,
+    "timestamp": 1746537712343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -1128,42 +1114,43 @@
     "hour": 5,
     "day": 2,
     "terms": [
+      "heart",
       "prognosis",
-      "liver",
-      "kidney",
-      "respiration"
+      "blood pressure",
+      "symptoms"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.18597660450149345,
-      "memoryUsage": 21.24743954333166,
-      "cpuUsage": 55.066664004858
+      "batteryLevel": 0.03224123419774716,
+      "memoryUsage": 10.433776973303566,
+      "cpuUsage": 73.70050765335014
     }
   },
   {
-    "timestamp": 1746434502845,
+    "timestamp": 1746541312343,
     "sourceLanguage": "en",
-    "targetLanguage": "de",
-    "context": "general",
+    "targetLanguage": "es",
+    "context": "cardiology",
     "text": "Sample text 54",
     "translatedText": "Translated text 54",
     "hour": 6,
     "day": 2,
     "terms": [
-      "blood pressure",
-      "pain",
-      "brain",
-      "diagnosis"
+      "respiration",
+      "pulse",
+      "treatment",
+      "diagnosis",
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9702283310580868,
-      "memoryUsage": 86.32058116874606,
-      "cpuUsage": 83.43940903453664
+      "batteryLevel": 0.3214514818944585,
+      "memoryUsage": 2.2267033576385042,
+      "cpuUsage": 22.71246229594439
     }
   },
   {
-    "timestamp": 1746438102845,
+    "timestamp": 1746544912343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -1172,21 +1159,20 @@
     "hour": 7,
     "day": 2,
     "terms": [
-      "kidney",
-      "pulse",
       "respiration",
       "symptoms",
-      "lungs"
+      "diagnosis",
+      "prognosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.506459972172741,
-      "memoryUsage": 47.473424028092296,
-      "cpuUsage": 37.001426824701845
+      "batteryLevel": 0.43576057791282286,
+      "memoryUsage": 8.140234561539227,
+      "cpuUsage": 74.16319579413353
     }
   },
   {
-    "timestamp": 1746441702845,
+    "timestamp": 1746548512343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -1195,40 +1181,43 @@
     "hour": 8,
     "day": 2,
     "terms": [
-      "pain"
+      "symptoms",
+      "pain",
+      "pulse",
+      "temperature"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.5160138134225918,
-      "memoryUsage": 73.40230369280887,
-      "cpuUsage": 64.77324488228138
+      "batteryLevel": 0.6710767947612375,
+      "memoryUsage": 46.05149247183255,
+      "cpuUsage": 93.37015380888359
     }
   },
   {
-    "timestamp": 1746445302845,
+    "timestamp": 1746552112343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "neurology",
+    "context": "general",
     "text": "Sample text 57",
     "translatedText": "Translated text 57",
     "hour": 9,
     "day": 2,
     "terms": [
-      "treatment",
-      "lungs",
-      "lungs",
-      "pulse",
-      "treatment"
+      "symptoms",
+      "diagnosis",
+      "respiration",
+      "respiration",
+      "prognosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.07139679747234129,
-      "memoryUsage": 91.50030118069752,
-      "cpuUsage": 2.999866001333129
+      "batteryLevel": 0.8819934373347982,
+      "memoryUsage": 85.9892255413059,
+      "cpuUsage": 78.43398997244246
     }
   },
   {
-    "timestamp": 1746448902845,
+    "timestamp": 1746555712343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -1237,42 +1226,40 @@
     "hour": 10,
     "day": 2,
     "terms": [
-      "prognosis",
       "pain",
-      "temperature",
-      "kidney"
+      "heart"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.9878149981960118,
-      "memoryUsage": 26.046225727085147,
-      "cpuUsage": 32.2818389585684
+      "batteryLevel": 0.6231495729547549,
+      "memoryUsage": 11.831764903267562,
+      "cpuUsage": 21.51628392021201
     }
   },
   {
-    "timestamp": 1746452502845,
+    "timestamp": 1746559312343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "orthopedics",
+    "context": "neurology",
     "text": "Sample text 59",
     "translatedText": "Translated text 59",
     "hour": 11,
     "day": 2,
     "terms": [
-      "kidney",
-      "brain",
-      "treatment",
-      "blood pressure"
+      "pain",
+      "pulse",
+      "diagnosis",
+      "treatment"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9742711468841319,
-      "memoryUsage": 55.0148657657074,
-      "cpuUsage": 44.383835984627716
+      "batteryLevel": 0.603332888849563,
+      "memoryUsage": 90.85252533354135,
+      "cpuUsage": 52.83251952522716
     }
   },
   {
-    "timestamp": 1746456102845,
+    "timestamp": 1746562912343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -1281,17 +1268,18 @@
     "hour": 12,
     "day": 2,
     "terms": [
-      "kidney"
+      "blood pressure",
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.470555181754577,
-      "memoryUsage": 10.804863775595175,
-      "cpuUsage": 34.75026167771
+      "batteryLevel": 0.39391967418377294,
+      "memoryUsage": 21.65682201869277,
+      "cpuUsage": 6.648627046524691
     }
   },
   {
-    "timestamp": 1746459702845,
+    "timestamp": 1746566512343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -1300,39 +1288,40 @@
     "hour": 13,
     "day": 2,
     "terms": [
-      "heart"
+      "medication",
+      "medication",
+      "medication",
+      "liver"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.65956948588644,
-      "memoryUsage": 49.91656152335355,
-      "cpuUsage": 34.55187749993514
+      "batteryLevel": 0.18251433126399474,
+      "memoryUsage": 0.12947409150034783,
+      "cpuUsage": 32.281237668641396
     }
   },
   {
-    "timestamp": 1746463302845,
+    "timestamp": 1746570112343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "general",
+    "context": "neurology",
     "text": "Sample text 62",
     "translatedText": "Translated text 62",
     "hour": 14,
     "day": 2,
     "terms": [
       "prognosis",
-      "heart",
-      "brain",
-      "brain"
+      "pain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.015129478464871893,
-      "memoryUsage": 11.478927887902746,
-      "cpuUsage": 16.370728208475207
+      "batteryLevel": 0.28165039425391036,
+      "memoryUsage": 33.07678942837748,
+      "cpuUsage": 47.121195685462716
     }
   },
   {
-    "timestamp": 1746466902845,
+    "timestamp": 1746573712343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -1341,41 +1330,36 @@
     "hour": 15,
     "day": 2,
     "terms": [
-      "blood pressure",
-      "pulse",
-      "brain",
-      "liver"
+      "diagnosis"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.20242792962643286,
-      "memoryUsage": 15.354163227307938,
-      "cpuUsage": 19.060315393929407
+      "batteryLevel": 0.3206065264900948,
+      "memoryUsage": 53.2787338829453,
+      "cpuUsage": 82.16313161565816
     }
   },
   {
-    "timestamp": 1746470502845,
+    "timestamp": 1746577312343,
     "sourceLanguage": "en",
-    "targetLanguage": "de",
-    "context": "pediatrics",
+    "targetLanguage": "es",
+    "context": "orthopedics",
     "text": "Sample text 64",
     "translatedText": "Translated text 64",
     "hour": 16,
     "day": 2,
     "terms": [
-      "pain",
-      "respiration",
-      "medication"
+      "blood pressure"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7245781264361271,
-      "memoryUsage": 10.59940589330548,
-      "cpuUsage": 57.312705409955655
+      "batteryLevel": 0.19526286272852644,
+      "memoryUsage": 40.17549305804944,
+      "cpuUsage": 34.88552637489417
     }
   },
   {
-    "timestamp": 1746474102845,
+    "timestamp": 1746580912343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1384,19 +1368,21 @@
     "hour": 17,
     "day": 2,
     "terms": [
+      "prognosis",
+      "prognosis",
+      "respiration",
       "brain",
-      "symptoms",
-      "temperature"
+      "lungs"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.07025728411047072,
-      "memoryUsage": 81.46619145814886,
-      "cpuUsage": 99.21274467155834
+      "batteryLevel": 0.5792076256604872,
+      "memoryUsage": 68.67718962864176,
+      "cpuUsage": 70.57429026994552
     }
   },
   {
-    "timestamp": 1746477702845,
+    "timestamp": 1746584512343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1405,37 +1391,39 @@
     "hour": 18,
     "day": 2,
     "terms": [
-      "blood pressure"
+      "medication"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7061009589232343,
-      "memoryUsage": 87.3147923170919,
-      "cpuUsage": 19.95786839728746
+      "batteryLevel": 0.6196486900087317,
+      "memoryUsage": 45.217218086995636,
+      "cpuUsage": 17.302772457191363
     }
   },
   {
-    "timestamp": 1746481302845,
+    "timestamp": 1746588112343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
-    "context": "neurology",
+    "context": "orthopedics",
     "text": "Sample text 67",
     "translatedText": "Translated text 67",
     "hour": 19,
     "day": 2,
     "terms": [
+      "brain",
+      "temperature",
       "pain",
-      "pulse"
+      "prognosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7721749635582487,
-      "memoryUsage": 7.945459889522377,
-      "cpuUsage": 48.73739095610392
+      "batteryLevel": 0.6375090001361436,
+      "memoryUsage": 5.127334005413053,
+      "cpuUsage": 12.780577626156564
     }
   },
   {
-    "timestamp": 1746484902845,
+    "timestamp": 1746591712343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1444,41 +1432,40 @@
     "hour": 20,
     "day": 2,
     "terms": [
-      "symptoms",
-      "treatment",
+      "liver",
+      "heart",
+      "kidney",
       "kidney"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.8954795291095277,
-      "memoryUsage": 64.53397662444755,
-      "cpuUsage": 78.18294205626506
+      "batteryLevel": 0.813502967785718,
+      "memoryUsage": 51.931265785337374,
+      "cpuUsage": 13.847618911507587
     }
   },
   {
-    "timestamp": 1746488502845,
+    "timestamp": 1746595312343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
-    "context": "orthopedics",
+    "context": "neurology",
     "text": "Sample text 69",
     "translatedText": "Translated text 69",
     "hour": 21,
     "day": 2,
     "terms": [
-      "kidney",
-      "lungs",
-      "liver",
-      "brain"
+      "heart",
+      "treatment"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.4666858575032846,
-      "memoryUsage": 75.50113651778685,
-      "cpuUsage": 78.75110505462747
+      "batteryLevel": 0.1949325816156664,
+      "memoryUsage": 57.020523377819046,
+      "cpuUsage": 69.451833601538
     }
   },
   {
-    "timestamp": 1746492102845,
+    "timestamp": 1746598912343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1487,19 +1474,17 @@
     "hour": 22,
     "day": 2,
     "terms": [
-      "pain",
-      "temperature",
       "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.5425015534923148,
-      "memoryUsage": 23.363611077018298,
-      "cpuUsage": 91.3108151842372
+      "batteryLevel": 0.21681528420719287,
+      "memoryUsage": 70.54951860600667,
+      "cpuUsage": 49.687158882597934
     }
   },
   {
-    "timestamp": 1746495702845,
+    "timestamp": 1746602512343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1508,61 +1493,64 @@
     "hour": 23,
     "day": 2,
     "terms": [
-      "pain",
-      "respiration",
-      "kidney"
+      "lungs",
+      "treatment",
+      "pulse",
+      "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.0671899046216835,
-      "memoryUsage": 14.26332834724482,
-      "cpuUsage": 39.46466821786074
+      "batteryLevel": 0.7563070813815886,
+      "memoryUsage": 37.15052208570946,
+      "cpuUsage": 19.117733019641104
     }
   },
   {
-    "timestamp": 1746499302845,
+    "timestamp": 1746606112343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "cardiology",
+    "context": "neurology",
     "text": "Sample text 72",
     "translatedText": "Translated text 72",
     "hour": 0,
     "day": 3,
     "terms": [
-      "kidney",
-      "medication",
-      "medication"
+      "temperature",
+      "heart",
+      "prognosis"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7987670589384004,
-      "memoryUsage": 22.432949022135173,
-      "cpuUsage": 17.904005607803764
+      "batteryLevel": 0.6887785726290943,
+      "memoryUsage": 93.698316505452,
+      "cpuUsage": 9.062281658188077
     }
   },
   {
-    "timestamp": 1746502902845,
+    "timestamp": 1746609712343,
     "sourceLanguage": "en",
-    "targetLanguage": "es",
-    "context": "orthopedics",
+    "targetLanguage": "de",
+    "context": "cardiology",
     "text": "Sample text 73",
     "translatedText": "Translated text 73",
     "hour": 1,
     "day": 3,
     "terms": [
-      "medication",
-      "treatment",
-      "respiration"
+      "lungs",
+      "kidney",
+      "symptoms",
+      "symptoms",
+      "treatment"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.22704522614997047,
-      "memoryUsage": 23.89782440285679,
-      "cpuUsage": 53.29406929026976
+      "batteryLevel": 0.7882403813850798,
+      "memoryUsage": 2.9034296660156445,
+      "cpuUsage": 29.752260565649525
     }
   },
   {
-    "timestamp": 1746506502845,
+    "timestamp": 1746613312343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -1571,20 +1559,20 @@
     "hour": 2,
     "day": 3,
     "terms": [
-      "lungs",
       "kidney",
-      "kidney",
-      "liver"
+      "respiration",
+      "pain",
+      "diagnosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.07838944951481897,
-      "memoryUsage": 32.367768171206876,
-      "cpuUsage": 78.17912767323256
+      "batteryLevel": 0.8843140835822774,
+      "memoryUsage": 38.659757595745646,
+      "cpuUsage": 10.364646933649645
     }
   },
   {
-    "timestamp": 1746510102845,
+    "timestamp": 1746616912343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -1593,38 +1581,38 @@
     "hour": 3,
     "day": 3,
     "terms": [
-      "lungs",
-      "liver"
+      "heart",
+      "blood pressure"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.883532449183303,
-      "memoryUsage": 71.92153517516522,
-      "cpuUsage": 42.864623271952
+      "batteryLevel": 0.5452046239464321,
+      "memoryUsage": 27.103826480341375,
+      "cpuUsage": 18.700884337872424
     }
   },
   {
-    "timestamp": 1746513702845,
-    "sourceLanguage": "es",
-    "targetLanguage": "en",
+    "timestamp": 1746620512343,
+    "sourceLanguage": "en",
+    "targetLanguage": "es",
     "context": "cardiology",
     "text": "Sample text 76",
     "translatedText": "Translated text 76",
     "hour": 4,
     "day": 3,
     "terms": [
-      "medication",
-      "treatment"
+      "pulse",
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.8172540762313665,
-      "memoryUsage": 18.274103907771753,
-      "cpuUsage": 53.887623085069556
+      "batteryLevel": 0.47717227736740786,
+      "memoryUsage": 51.94781834976852,
+      "cpuUsage": 73.09232083039501
     }
   },
   {
-    "timestamp": 1746517302845,
+    "timestamp": 1746624112343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -1633,42 +1621,40 @@
     "hour": 5,
     "day": 3,
     "terms": [
-      "blood pressure",
-      "liver",
-      "symptoms"
+      "medication",
+      "respiration",
+      "lungs",
+      "brain",
+      "kidney"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.02322871347157629,
-      "memoryUsage": 31.78298734304079,
-      "cpuUsage": 87.32928686061427
+      "batteryLevel": 0.26013857832945075,
+      "memoryUsage": 53.861704864712976,
+      "cpuUsage": 24.25517986649053
     }
   },
   {
-    "timestamp": 1746520902845,
+    "timestamp": 1746627712343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
-    "context": "orthopedics",
+    "context": "cardiology",
     "text": "Sample text 78",
     "translatedText": "Translated text 78",
     "hour": 6,
     "day": 3,
     "terms": [
-      "kidney",
-      "pain",
-      "liver",
-      "blood pressure",
       "symptoms"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7525735260602886,
-      "memoryUsage": 14.30388126916704,
-      "cpuUsage": 6.289648459471953
+      "batteryLevel": 0.8167793358492637,
+      "memoryUsage": 89.09337023950525,
+      "cpuUsage": 99.43525546726826
     }
   },
   {
-    "timestamp": 1746524502845,
+    "timestamp": 1746631312343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -1677,17 +1663,17 @@
     "hour": 7,
     "day": 3,
     "terms": [
-      "pulse"
+      "heart"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9545299206082112,
-      "memoryUsage": 10.333218788417353,
-      "cpuUsage": 90.38033529363344
+      "batteryLevel": 0.5147595635811961,
+      "memoryUsage": 52.45722162696682,
+      "cpuUsage": 10.384835260783976
     }
   },
   {
-    "timestamp": 1746528102845,
+    "timestamp": 1746634912343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -1696,151 +1682,150 @@
     "hour": 8,
     "day": 3,
     "terms": [
-      "heart",
-      "pulse"
+      "temperature",
+      "treatment",
+      "pain",
+      "symptoms"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7376373912478817,
-      "memoryUsage": 95.358331380732,
-      "cpuUsage": 94.92125186160916
+      "batteryLevel": 0.501446181155063,
+      "memoryUsage": 79.10597689137894,
+      "cpuUsage": 30.5358650613891
     }
   },
   {
-    "timestamp": 1746531702845,
+    "timestamp": 1746638512343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "pediatrics",
+    "context": "neurology",
     "text": "Sample text 81",
     "translatedText": "Translated text 81",
     "hour": 9,
     "day": 3,
     "terms": [
-      "prognosis",
-      "pain",
-      "brain"
+      "treatment",
+      "blood pressure",
+      "kidney",
+      "liver",
+      "medication"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.6626085593560109,
-      "memoryUsage": 11.79200999879475,
-      "cpuUsage": 28.995251546936718
+      "batteryLevel": 0.898790683327608,
+      "memoryUsage": 40.61265576181814,
+      "cpuUsage": 34.96550137105088
     }
   },
   {
-    "timestamp": 1746535302845,
-    "sourceLanguage": "en",
-    "targetLanguage": "fr",
+    "timestamp": 1746642112343,
+    "sourceLanguage": "es",
+    "targetLanguage": "en",
     "context": "neurology",
     "text": "Sample text 82",
     "translatedText": "Translated text 82",
     "hour": 10,
     "day": 3,
     "terms": [
-      "treatment",
+      "brain",
+      "temperature",
+      "temperature",
       "prognosis",
-      "lungs",
-      "respiration"
+      "pain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.18713522378180802,
-      "memoryUsage": 8.344453997504232,
-      "cpuUsage": 41.2130633001645
+      "batteryLevel": 0.37351639172735673,
+      "memoryUsage": 31.391267291910264,
+      "cpuUsage": 47.864418723152724
     }
   },
   {
-    "timestamp": 1746538902845,
-    "sourceLanguage": "en",
-    "targetLanguage": "fr",
-    "context": "cardiology",
+    "timestamp": 1746645712343,
+    "sourceLanguage": "es",
+    "targetLanguage": "en",
+    "context": "general",
     "text": "Sample text 83",
     "translatedText": "Translated text 83",
     "hour": 11,
     "day": 3,
     "terms": [
-      "pulse",
-      "prognosis",
+      "diagnosis",
+      "brain",
+      "blood pressure",
       "liver",
-      "lungs",
-      "symptoms"
+      "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.5690821191501865,
-      "memoryUsage": 2.1802327719306014,
-      "cpuUsage": 36.86350334412256
+      "batteryLevel": 0.7032912747260922,
+      "memoryUsage": 51.121116348337715,
+      "cpuUsage": 48.00734874776993
     }
   },
   {
-    "timestamp": 1746542502845,
+    "timestamp": 1746649312343,
     "sourceLanguage": "en",
-    "targetLanguage": "es",
+    "targetLanguage": "fr",
     "context": "neurology",
     "text": "Sample text 84",
     "translatedText": "Translated text 84",
     "hour": 12,
     "day": 3,
     "terms": [
-      "brain",
-      "symptoms",
-      "symptoms",
       "respiration",
-      "diagnosis"
+      "pain",
+      "lungs",
+      "liver",
+      "respiration"
     ],
     "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.1393608045905197,
-      "memoryUsage": 82.08445464103579,
-      "cpuUsage": 89.27158215201898
+      "batteryLevel": 0.5118927950657386,
+      "memoryUsage": 49.91886674555703,
+      "cpuUsage": 36.31172926189723
     }
   },
   {
-    "timestamp": 1746546102845,
+    "timestamp": 1746652912343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
-    "context": "neurology",
+    "context": "orthopedics",
     "text": "Sample text 85",
     "translatedText": "Translated text 85",
     "hour": 13,
     "day": 3,
     "terms": [
-      "brain",
-      "diagnosis",
-      "kidney",
-      "brain",
-      "pulse"
+      "treatment"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.6228869695540884,
-      "memoryUsage": 62.65009976415883,
-      "cpuUsage": 5.563559437341636
+      "batteryLevel": 0.5899576921253717,
+      "memoryUsage": 50.866563178876056,
+      "cpuUsage": 43.40720745673021
     }
   },
   {
-    "timestamp": 1746549702845,
+    "timestamp": 1746656512343,
     "sourceLanguage": "en",
-    "targetLanguage": "de",
+    "targetLanguage": "fr",
     "context": "neurology",
     "text": "Sample text 86",
     "translatedText": "Translated text 86",
     "hour": 14,
     "day": 3,
     "terms": [
-      "pulse",
-      "respiration",
-      "lungs"
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.6402292493080621,
-      "memoryUsage": 34.94028217652054,
-      "cpuUsage": 89.80668929647038
+      "batteryLevel": 0.9752297603354021,
+      "memoryUsage": 24.338281251010542,
+      "cpuUsage": 23.474263958367448
     }
   },
   {
-    "timestamp": 1746553302845,
+    "timestamp": 1746660112343,
     "sourceLanguage": "en",
     "targetLanguage": "fr",
     "context": "neurology",
@@ -1850,19 +1835,20 @@
     "day": 3,
     "terms": [
       "temperature",
-      "heart",
-      "lungs",
-      "medication"
+      "diagnosis",
+      "diagnosis",
+      "brain",
+      "blood pressure"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.9730085553059293,
-      "memoryUsage": 65.25236712948848,
-      "cpuUsage": 76.82666306826333
+      "batteryLevel": 0.4778695793260903,
+      "memoryUsage": 11.087881448875493,
+      "cpuUsage": 5.344324354043706
     }
   },
   {
-    "timestamp": 1746556902845,
+    "timestamp": 1746663712343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1871,17 +1857,17 @@
     "hour": 16,
     "day": 3,
     "terms": [
-      "lungs"
+      "treatment"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.8677395375629557,
-      "memoryUsage": 28.562316166111312,
-      "cpuUsage": 52.95908528673539
+      "batteryLevel": 0.4159249384278061,
+      "memoryUsage": 55.866986044247156,
+      "cpuUsage": 76.52539194553944
     }
   },
   {
-    "timestamp": 1746560502845,
+    "timestamp": 1746667312343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1890,41 +1876,44 @@
     "hour": 17,
     "day": 3,
     "terms": [
+      "treatment",
+      "temperature",
       "diagnosis",
-      "pain",
-      "diagnosis",
-      "lungs"
+      "brain",
+      "pain"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.7335580305918104,
-      "memoryUsage": 12.88083515192775,
-      "cpuUsage": 48.58647469992285
+      "batteryLevel": 0.3556959833468789,
+      "memoryUsage": 1.4132105687926444,
+      "cpuUsage": 63.68160227261692
     }
   },
   {
-    "timestamp": 1746564102845,
-    "sourceLanguage": "es",
-    "targetLanguage": "en",
+    "timestamp": 1746670912343,
+    "sourceLanguage": "en",
+    "targetLanguage": "de",
     "context": "orthopedics",
     "text": "Sample text 90",
     "translatedText": "Translated text 90",
     "hour": 18,
     "day": 3,
     "terms": [
+      "medication",
       "temperature",
-      "brain",
-      "pulse"
+      "pulse",
+      "pulse",
+      "brain"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.19889113655174073,
-      "memoryUsage": 63.61129406286929,
-      "cpuUsage": 74.2133161895167
+      "batteryLevel": 0.2811225824632426,
+      "memoryUsage": 95.90488603105467,
+      "cpuUsage": 62.53495302029146
     }
   },
   {
-    "timestamp": 1746567702845,
+    "timestamp": 1746674512343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1933,39 +1922,38 @@
     "hour": 19,
     "day": 3,
     "terms": [
-      "liver",
-      "brain"
+      "heart",
+      "diagnosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.5369273377025496,
-      "memoryUsage": 37.148639382570316,
-      "cpuUsage": 86.5662341911599
+      "batteryLevel": 0.5543487606618922,
+      "memoryUsage": 49.74061091430697,
+      "cpuUsage": 3.8639543279628485
     }
   },
   {
-    "timestamp": 1746571302845,
+    "timestamp": 1746678112343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
-    "context": "pediatrics",
+    "context": "orthopedics",
     "text": "Sample text 92",
     "translatedText": "Translated text 92",
     "hour": 20,
     "day": 3,
     "terms": [
-      "heart",
-      "pulse",
-      "heart"
+      "blood pressure",
+      "prognosis"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.316962611413691,
-      "memoryUsage": 58.749563099011894,
-      "cpuUsage": 2.7525991335957345
+      "batteryLevel": 0.07095228227011319,
+      "memoryUsage": 62.758655816932894,
+      "cpuUsage": 80.65901384625775
     }
   },
   {
-    "timestamp": 1746574902845,
+    "timestamp": 1746681712343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1974,17 +1962,20 @@
     "hour": 21,
     "day": 3,
     "terms": [
-      "respiration"
+      "brain",
+      "pain",
+      "liver",
+      "pulse"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.28996765610651787,
-      "memoryUsage": 6.091886458861029,
-      "cpuUsage": 68.9703697897984
+      "batteryLevel": 0.373500579408099,
+      "memoryUsage": 10.241229304327737,
+      "cpuUsage": 14.573089820026187
     }
   },
   {
-    "timestamp": 1746578502845,
+    "timestamp": 1746685312343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -1993,21 +1984,21 @@
     "hour": 22,
     "day": 3,
     "terms": [
-      "lungs",
-      "pain",
-      "treatment",
-      "kidney",
-      "symptoms"
+      "medication",
+      "diagnosis",
+      "temperature",
+      "heart",
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.1914860849851061,
-      "memoryUsage": 69.94247381774323,
-      "cpuUsage": 66.00620946588973
+      "batteryLevel": 0.41635100432120953,
+      "memoryUsage": 32.00010538481863,
+      "cpuUsage": 42.71635218263401
     }
   },
   {
-    "timestamp": 1746582102845,
+    "timestamp": 1746688912343,
     "sourceLanguage": "en",
     "targetLanguage": "de",
     "context": "orthopedics",
@@ -2016,19 +2007,20 @@
     "hour": 23,
     "day": 3,
     "terms": [
-      "medication",
-      "symptoms",
-      "respiration"
+      "blood pressure",
+      "liver",
+      "pulse",
+      "lungs"
     ],
-    "networkStatus": "online",
+    "networkStatus": "offline",
     "devicePerformance": {
-      "batteryLevel": 0.4098874273308808,
-      "memoryUsage": 55.86867248365446,
-      "cpuUsage": 35.03521375108147
+      "batteryLevel": 0.7382921543118897,
+      "memoryUsage": 51.359830652631786,
+      "cpuUsage": 26.10693558507695
     }
   },
   {
-    "timestamp": 1746585702845,
+    "timestamp": 1746692512343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -2037,19 +2029,20 @@
     "hour": 0,
     "day": 4,
     "terms": [
-      "blood pressure",
+      "temperature",
       "heart",
-      "pain"
+      "diagnosis",
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.37677181427628303,
-      "memoryUsage": 93.34476332452329,
-      "cpuUsage": 91.43800011788359
+      "batteryLevel": 0.7434681345912701,
+      "memoryUsage": 16.86711174359332,
+      "cpuUsage": 48.68930475070516
     }
   },
   {
-    "timestamp": 1746589302845,
+    "timestamp": 1746696112343,
     "sourceLanguage": "en",
     "targetLanguage": "es",
     "context": "cardiology",
@@ -2058,59 +2051,57 @@
     "hour": 1,
     "day": 4,
     "terms": [
-      "kidney",
-      "prognosis",
-      "respiration"
+      "lungs",
+      "prognosis"
     ],
-    "networkStatus": "offline",
+    "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.059744036197175276,
-      "memoryUsage": 11.766991152905026,
-      "cpuUsage": 7.339334656194074
+      "batteryLevel": 0.7232809585530757,
+      "memoryUsage": 55.011285070890594,
+      "cpuUsage": 20.021295861431597
     }
   },
   {
-    "timestamp": 1746592902845,
-    "sourceLanguage": "en",
-    "targetLanguage": "es",
+    "timestamp": 1746699712343,
+    "sourceLanguage": "fr",
+    "targetLanguage": "en",
     "context": "general",
     "text": "Sample text 98",
     "translatedText": "Translated text 98",
     "hour": 2,
     "day": 4,
     "terms": [
-      "prognosis",
-      "heart",
       "respiration",
-      "respiration",
-      "heart"
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.7477883941896943,
-      "memoryUsage": 15.099305887899895,
-      "cpuUsage": 12.869712395050104
+      "batteryLevel": 0.04118597891947973,
+      "memoryUsage": 55.3647987026078,
+      "cpuUsage": 74.86008669165471
     }
   },
   {
-    "timestamp": 1746596502845,
+    "timestamp": 1746703312343,
     "sourceLanguage": "en",
-    "targetLanguage": "fr",
+    "targetLanguage": "es",
     "context": "cardiology",
     "text": "Sample text 99",
     "translatedText": "Translated text 99",
     "hour": 3,
     "day": 4,
     "terms": [
-      "pain",
-      "liver",
-      "kidney"
+      "diagnosis",
+      "temperature",
+      "diagnosis",
+      "treatment",
+      "temperature"
     ],
     "networkStatus": "online",
     "devicePerformance": {
-      "batteryLevel": 0.8691740710063216,
-      "memoryUsage": 56.175593432201644,
-      "cpuUsage": 27.608026185787903
+      "batteryLevel": 0.23611014216185944,
+      "memoryUsage": 12.851359000172579,
+      "cpuUsage": 19.60633018293869
     }
   }
 ]

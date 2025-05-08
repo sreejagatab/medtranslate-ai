@@ -1,6 +1,6 @@
 /**
  * Localization Testing Tool for MedTranslate AI
- * 
+ *
  * This tool tests the localization implementation across all supported languages.
  */
 
@@ -11,7 +11,7 @@ const puppeteer = require('puppeteer');
 
 // Configuration
 const config = {
-  baseUrl: process.env.APP_URL || 'http://localhost:3000',
+  baseUrl: process.env.APP_URL || 'http://localhost:4003',
   outputDir: path.join(__dirname, '../../test-reports/localization'),
   screenshotsDir: path.join(__dirname, '../../test-reports/localization/screenshots'),
   translationsDir: path.join(__dirname, '../../frontend/shared/localization/translations')
@@ -44,13 +44,13 @@ const TEST_SCREENS = [
 
 /**
  * Analyze translation files for completeness
- * 
+ *
  * @returns {Promise<Object>} - Analysis results
  */
 async function analyzeTranslationFiles() {
   try {
     console.log('Analyzing translation files...');
-    
+
     const results = {
       languages: {},
       missingKeys: {},
@@ -60,20 +60,20 @@ async function analyzeTranslationFiles() {
         completeLanguages: 0
       }
     };
-    
+
     // Load English translations as reference
     const enTranslationsPath = path.join(config.translationsDir, 'en.json');
     const enTranslations = JSON.parse(fs.readFileSync(enTranslationsPath, 'utf8'));
-    
+
     // Get all keys from English translations
     const allKeys = getAllKeys(enTranslations);
     results.summary.totalKeys = allKeys.length;
-    
+
     // Check each language
     for (const language of SUPPORTED_LANGUAGES) {
       const langCode = language.code;
       const translationsPath = path.join(config.translationsDir, `${langCode}.json`);
-      
+
       // Skip if translation file doesn't exist
       if (!fs.existsSync(translationsPath)) {
         results.languages[langCode] = {
@@ -88,10 +88,10 @@ async function analyzeTranslationFiles() {
         results.missingKeys[langCode] = allKeys;
         continue;
       }
-      
+
       // Load translations
       const translations = JSON.parse(fs.readFileSync(translationsPath, 'utf8'));
-      
+
       // Check for missing keys
       const missingKeys = [];
       for (const key of allKeys) {
@@ -99,11 +99,11 @@ async function analyzeTranslationFiles() {
           missingKeys.push(key);
         }
       }
-      
+
       // Calculate completeness
       const keyCount = allKeys.length - missingKeys.length;
       const completeness = Math.round((keyCount / allKeys.length) * 100);
-      
+
       // Store results
       results.languages[langCode] = {
         name: language.name,
@@ -114,15 +114,15 @@ async function analyzeTranslationFiles() {
         missingCount: missingKeys.length,
         completeness
       };
-      
+
       results.missingKeys[langCode] = missingKeys;
-      
+
       // Update summary
       if (missingKeys.length === 0) {
         results.summary.completeLanguages++;
       }
     }
-    
+
     return results;
   } catch (error) {
     console.error('Error analyzing translation files:', error);
@@ -132,30 +132,30 @@ async function analyzeTranslationFiles() {
 
 /**
  * Get all keys from a nested object
- * 
+ *
  * @param {Object} obj - Object to get keys from
  * @param {string} prefix - Key prefix
  * @returns {Array<string>} - All keys
  */
 function getAllKeys(obj, prefix = '') {
   let keys = [];
-  
+
   for (const key in obj) {
     const newKey = prefix ? `${prefix}.${key}` : key;
-    
+
     if (typeof obj[key] === 'object' && obj[key] !== null) {
       keys = keys.concat(getAllKeys(obj[key], newKey));
     } else {
       keys.push(newKey);
     }
   }
-  
+
   return keys;
 }
 
 /**
  * Check if an object has a nested key
- * 
+ *
  * @param {Object} obj - Object to check
  * @param {string} key - Key to check
  * @returns {boolean} - Whether the key exists
@@ -163,96 +163,96 @@ function getAllKeys(obj, prefix = '') {
 function hasNestedKey(obj, key) {
   const parts = key.split('.');
   let current = obj;
-  
+
   for (const part of parts) {
     if (current === undefined || current === null || typeof current !== 'object') {
       return false;
     }
-    
+
     current = current[part];
   }
-  
+
   return current !== undefined;
 }
 
 /**
  * Take screenshots of the app in different languages
- * 
+ *
  * @returns {Promise<Object>} - Screenshot results
  */
 async function takeScreenshots() {
   try {
     console.log('Taking screenshots...');
-    
+
     // Create screenshots directory if it doesn't exist
     if (!fs.existsSync(config.screenshotsDir)) {
       fs.mkdirSync(config.screenshotsDir, { recursive: true });
     }
-    
+
     const results = {
       screenshots: {},
       errors: {}
     };
-    
+
     // Launch browser
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-    
+
     // Test each language
     for (const language of SUPPORTED_LANGUAGES) {
       const langCode = language.code;
       console.log(`Testing language: ${language.name} (${langCode})`);
-      
+
       results.screenshots[langCode] = [];
       results.errors[langCode] = [];
-      
+
       // Create language directory
       const langDir = path.join(config.screenshotsDir, langCode);
       if (!fs.existsSync(langDir)) {
         fs.mkdirSync(langDir, { recursive: true });
       }
-      
+
       // Test each screen
       for (const screen of TEST_SCREENS) {
         try {
           // Open new page
           const page = await browser.newPage();
-          
+
           // Set viewport size
           await page.setViewport({
             width: 1280,
             height: 800
           });
-          
+
           // Set language
           await page.setExtraHTTPHeaders({
             'Accept-Language': langCode
           });
-          
+
           // Navigate to screen
           const url = `${config.baseUrl}${screen.path}?lang=${langCode}`;
           await page.goto(url, { waitUntil: 'networkidle2' });
-          
+
           // Wait for content to load
           await page.waitForSelector('body', { timeout: 5000 });
-          
+
           // Take screenshot
           const screenshotPath = path.join(langDir, `${screen.name.toLowerCase()}.png`);
           await page.screenshot({ path: screenshotPath, fullPage: true });
-          
+
           // Store result
           results.screenshots[langCode].push({
             screen: screen.name,
             path: screenshotPath
           });
-          
+
           // Close page
           await page.close();
         } catch (error) {
           console.error(`Error taking screenshot for ${screen.name} in ${language.name}:`, error);
-          
+
           // Store error
           results.errors[langCode].push({
             screen: screen.name,
@@ -261,10 +261,10 @@ async function takeScreenshots() {
         }
       }
     }
-    
+
     // Close browser
     await browser.close();
-    
+
     return results;
   } catch (error) {
     console.error('Error taking screenshots:', error);
@@ -274,92 +274,92 @@ async function takeScreenshots() {
 
 /**
  * Test RTL layout
- * 
+ *
  * @returns {Promise<Object>} - RTL test results
  */
 async function testRtlLayout() {
   try {
     console.log('Testing RTL layout...');
-    
+
     const results = {
       rtlLanguages: SUPPORTED_LANGUAGES.filter(lang => lang.rtl),
       issues: {}
     };
-    
+
     // Skip if no RTL languages
     if (results.rtlLanguages.length === 0) {
       console.log('No RTL languages to test.');
       return results;
     }
-    
+
     // Launch browser
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-    
+
     // Test each RTL language
     for (const language of results.rtlLanguages) {
       const langCode = language.code;
       console.log(`Testing RTL layout for ${language.name} (${langCode})`);
-      
+
       results.issues[langCode] = [];
-      
+
       // Test each screen
       for (const screen of TEST_SCREENS) {
         try {
           // Open new page
           const page = await browser.newPage();
-          
+
           // Set viewport size
           await page.setViewport({
             width: 1280,
             height: 800
           });
-          
+
           // Set language
           await page.setExtraHTTPHeaders({
             'Accept-Language': langCode
           });
-          
+
           // Navigate to screen
           const url = `${config.baseUrl}${screen.path}?lang=${langCode}`;
           await page.goto(url, { waitUntil: 'networkidle2' });
-          
+
           // Wait for content to load
           await page.waitForSelector('body', { timeout: 5000 });
-          
+
           // Check if body has RTL direction
           const isRtl = await page.evaluate(() => {
             const dir = document.documentElement.dir || document.body.dir;
             const style = window.getComputedStyle(document.body);
             const direction = style.getPropertyValue('direction');
-            
+
             return dir === 'rtl' || direction === 'rtl';
           });
-          
+
           if (!isRtl) {
             results.issues[langCode].push({
               screen: screen.name,
               issue: 'Page does not have RTL direction'
             });
           }
-          
+
           // Check for common RTL issues
           const rtlIssues = await page.evaluate(() => {
             const issues = [];
-            
+
             // Check for elements with explicit left/right positioning
             const elementsWithExplicitPosition = Array.from(document.querySelectorAll('*')).filter(el => {
               const style = window.getComputedStyle(el);
               return (
-                style.position !== 'static' && 
+                style.position !== 'static' &&
                 (style.left || style.right) &&
                 !style.getPropertyValue('left').includes('auto') &&
                 !style.getPropertyValue('right').includes('auto')
               );
             });
-            
+
             if (elementsWithExplicitPosition.length > 0) {
               issues.push({
                 type: 'explicit_positioning',
@@ -367,7 +367,7 @@ async function testRtlLayout() {
                 elements: elementsWithExplicitPosition.slice(0, 5).map(el => el.tagName + (el.className ? '.' + el.className.replace(/\s+/g, '.') : ''))
               });
             }
-            
+
             // Check for elements with non-flipped margins/paddings
             const elementsWithNonFlippedSpacing = Array.from(document.querySelectorAll('*')).filter(el => {
               const style = window.getComputedStyle(el);
@@ -376,7 +376,7 @@ async function testRtlLayout() {
                 style.paddingLeft !== style.paddingRight
               );
             });
-            
+
             if (elementsWithNonFlippedSpacing.length > 0) {
               issues.push({
                 type: 'non_flipped_spacing',
@@ -384,22 +384,22 @@ async function testRtlLayout() {
                 elements: elementsWithNonFlippedSpacing.slice(0, 5).map(el => el.tagName + (el.className ? '.' + el.className.replace(/\s+/g, '.') : ''))
               });
             }
-            
+
             return issues;
           });
-          
+
           if (rtlIssues.length > 0) {
             results.issues[langCode].push({
               screen: screen.name,
               issues: rtlIssues
             });
           }
-          
+
           // Close page
           await page.close();
         } catch (error) {
           console.error(`Error testing RTL layout for ${screen.name} in ${language.name}:`, error);
-          
+
           // Store error
           results.issues[langCode].push({
             screen: screen.name,
@@ -408,10 +408,10 @@ async function testRtlLayout() {
         }
       }
     }
-    
+
     // Close browser
     await browser.close();
-    
+
     return results;
   } catch (error) {
     console.error('Error testing RTL layout:', error);
@@ -421,7 +421,7 @@ async function testRtlLayout() {
 
 /**
  * Generate localization test report
- * 
+ *
  * @param {Object} analysisResults - Translation file analysis results
  * @param {Object} screenshotResults - Screenshot results
  * @param {Object} rtlResults - RTL test results
@@ -430,15 +430,15 @@ async function testRtlLayout() {
 async function generateReport(analysisResults, screenshotResults, rtlResults) {
   try {
     console.log('Generating localization test report...');
-    
+
     // Create output directory if it doesn't exist
     if (!fs.existsSync(config.outputDir)) {
       fs.mkdirSync(config.outputDir, { recursive: true });
     }
-    
+
     // Generate report timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    
+
     // Generate JSON report
     const jsonReport = {
       timestamp,
@@ -446,11 +446,11 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
       screenshots: screenshotResults,
       rtl: rtlResults
     };
-    
+
     // Save JSON report
     const jsonReportPath = path.join(config.outputDir, `localization-test-${timestamp}.json`);
     fs.writeFileSync(jsonReportPath, JSON.stringify(jsonReport, null, 2));
-    
+
     // Generate HTML report
     let htmlReport = `
       <!DOCTYPE html>
@@ -550,7 +550,7 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
       <body>
         <h1>MedTranslate AI Localization Test Report</h1>
         <p>Generated: ${new Date().toLocaleString()}</p>
-        
+
         <h2>Translation Files Analysis</h2>
         <div class="summary">
           <div class="summary-item">
@@ -566,7 +566,7 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
             <p>${analysisResults.summary.completeLanguages} / ${analysisResults.summary.totalLanguages}</p>
           </div>
         </div>
-        
+
         <h3>Language Completeness</h3>
         <table>
           <tr>
@@ -579,11 +579,11 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
             <th>Completeness</th>
           </tr>
     `;
-    
+
     // Add language rows
     for (const langCode in analysisResults.languages) {
       const lang = analysisResults.languages[langCode];
-      
+
       htmlReport += `
         <tr ${lang.rtl ? 'class="rtl"' : ''}>
           <td>${lang.name} (${langCode})</td>
@@ -601,58 +601,58 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
         </tr>
       `;
     }
-    
+
     htmlReport += `</table>`;
-    
+
     // Add missing keys section
     htmlReport += `<h3>Missing Keys</h3>`;
-    
+
     for (const langCode in analysisResults.missingKeys) {
       const missingKeys = analysisResults.missingKeys[langCode];
       const lang = analysisResults.languages[langCode];
-      
+
       if (missingKeys.length === 0) {
         continue;
       }
-      
+
       htmlReport += `
         <h4>${lang.name} (${langCode}) - ${missingKeys.length} missing keys</h4>
         <ul>
       `;
-      
+
       for (const key of missingKeys.slice(0, 20)) {
         htmlReport += `<li>${key}</li>`;
       }
-      
+
       if (missingKeys.length > 20) {
         htmlReport += `<li>... and ${missingKeys.length - 20} more</li>`;
       }
-      
+
       htmlReport += `</ul>`;
     }
-    
+
     // Add screenshots section
     htmlReport += `
       <h2>Screenshots</h2>
       <p>Screenshots were taken for each language and screen to verify the UI adaptation.</p>
     `;
-    
+
     for (const langCode in screenshotResults.screenshots) {
       const screenshots = screenshotResults.screenshots[langCode];
       const lang = analysisResults.languages[langCode];
-      
+
       if (screenshots.length === 0) {
         continue;
       }
-      
+
       htmlReport += `
         <h3>${lang.name} (${langCode})</h3>
         <div class="screenshot-grid">
       `;
-      
+
       for (const screenshot of screenshots) {
         const relativePath = path.relative(config.outputDir, screenshot.path).replace(/\\/g, '/');
-        
+
         htmlReport += `
           <div class="screenshot-item">
             <img src="${relativePath}" alt="${screenshot.screen} in ${lang.name}">
@@ -660,18 +660,18 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
           </div>
         `;
       }
-      
+
       htmlReport += `</div>`;
-      
+
       // Add errors
       const errors = screenshotResults.errors[langCode];
-      
+
       if (errors && errors.length > 0) {
         htmlReport += `
           <h4>Errors</h4>
           <ul class="issue-list">
         `;
-        
+
         for (const error of errors) {
           htmlReport += `
             <li class="issue-item">
@@ -679,31 +679,31 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
             </li>
           `;
         }
-        
+
         htmlReport += `</ul>`;
       }
     }
-    
+
     // Add RTL section
     if (rtlResults.rtlLanguages.length > 0) {
       htmlReport += `
         <h2>RTL Layout Testing</h2>
         <p>Testing the right-to-left layout for RTL languages.</p>
       `;
-      
+
       for (const langCode in rtlResults.issues) {
         const issues = rtlResults.issues[langCode];
         const lang = analysisResults.languages[langCode];
-        
+
         htmlReport += `<h3>${lang.name} (${langCode})</h3>`;
-        
+
         if (issues.length === 0) {
           htmlReport += `<p>No RTL issues found.</p>`;
           continue;
         }
-        
+
         htmlReport += `<ul class="issue-list">`;
-        
+
         for (const issue of issues) {
           if (issue.error) {
             htmlReport += `
@@ -723,7 +723,7 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
                 <strong>${issue.screen}:</strong>
                 <ul>
             `;
-            
+
             for (const rtlIssue of issue.issues) {
               htmlReport += `
                 <li>
@@ -733,28 +733,28 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
                 </li>
               `;
             }
-            
+
             htmlReport += `</ul></li>`;
           }
         }
-        
+
         htmlReport += `</ul>`;
       }
     }
-    
+
     htmlReport += `
       </body>
       </html>
     `;
-    
+
     // Save HTML report
     const htmlReportPath = path.join(config.outputDir, `localization-test-${timestamp}.html`);
     fs.writeFileSync(htmlReportPath, htmlReport);
-    
+
     console.log(`Reports generated:`);
     console.log(`- JSON: ${jsonReportPath}`);
     console.log(`- HTML: ${htmlReportPath}`);
-    
+
     return {
       jsonReportPath,
       htmlReportPath
@@ -767,27 +767,27 @@ async function generateReport(analysisResults, screenshotResults, rtlResults) {
 
 /**
  * Run localization tests
- * 
+ *
  * @returns {Promise<Object>} - Test results
  */
 async function runLocalizationTests() {
   try {
     console.log('Starting localization tests...');
-    
+
     // Analyze translation files
     const analysisResults = await analyzeTranslationFiles();
-    
+
     // Take screenshots
     const screenshotResults = await takeScreenshots();
-    
+
     // Test RTL layout
     const rtlResults = await testRtlLayout();
-    
+
     // Generate report
     const report = await generateReport(analysisResults, screenshotResults, rtlResults);
-    
+
     console.log('Localization tests completed.');
-    
+
     return {
       analysis: analysisResults,
       screenshots: screenshotResults,
@@ -808,7 +808,7 @@ if (require.main === module) {
       console.log(`- Total languages: ${analysis.summary.totalLanguages}`);
       console.log(`- Complete languages: ${analysis.summary.completeLanguages}`);
       console.log(`- Total keys: ${analysis.summary.totalKeys}`);
-      
+
       // Exit with non-zero code if not all languages are complete
       process.exit(analysis.summary.completeLanguages < analysis.summary.totalLanguages ? 1 : 0);
     })

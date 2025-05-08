@@ -1,6 +1,6 @@
 /**
  * Enhanced Edge Connection Context for MedTranslate AI Patient App
- * 
+ *
  * This context provides functions for connecting to and communicating with
  * the MedTranslate AI edge device or cloud service, with support for offline mode,
  * enhanced edge device discovery, and error handling.
@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import * as EdgeDiscoveryService from '../../shared/services/enhanced-edge-discovery';
+import * as EdgeDiscoveryService from '../shared/services/enhanced-edge-discovery';
 
 // API endpoints
 const API_ENDPOINTS = {
@@ -81,16 +81,16 @@ export const EdgeConnectionProvider = ({ children }) => {
 
         // Initialize enhanced edge discovery service
         const discoveryState = await EdgeDiscoveryService.initialize();
-        
+
         setDiscoveredDevices(discoveryState.discoveredDevices || []);
         setPreferredDevice(discoveryState.preferredDevice || null);
-        
+
         // If we have a preferred device, update edge endpoint
         if (discoveryState.preferredDevice) {
           const deviceEndpoint = `http://${discoveryState.preferredDevice.ipAddress}:${discoveryState.preferredDevice.port || 3000}`;
           API_ENDPOINTS.EDGE = deviceEndpoint;
           setActiveEndpoint(deviceEndpoint);
-          
+
           // Save the edge device IP for future use
           await AsyncStorage.setItem(CACHE_KEYS.EDGE_DEVICE_IP, deviceEndpoint);
         }
@@ -187,26 +187,26 @@ export const EdgeConnectionProvider = ({ children }) => {
   const discoverEdgeDevices = async (options = {}) => {
     try {
       setIsDiscovering(true);
-      
+
       const result = await EdgeDiscoveryService.discoverEdgeDevices(options);
-      
+
       // Update state
       setDiscoveredDevices(result.discoveredDevices || []);
-      
+
       // Get preferred device
       const newPreferredDevice = EdgeDiscoveryService.getPreferredDevice();
       setPreferredDevice(newPreferredDevice);
-      
+
       // If we have a preferred device, update edge endpoint
       if (newPreferredDevice) {
         const deviceEndpoint = `http://${newPreferredDevice.ipAddress}:${newPreferredDevice.port || 3000}`;
         API_ENDPOINTS.EDGE = deviceEndpoint;
         setActiveEndpoint(deviceEndpoint);
-        
+
         // Save the edge device IP for future use
         await AsyncStorage.setItem(CACHE_KEYS.EDGE_DEVICE_IP, deviceEndpoint);
       }
-      
+
       setIsDiscovering(false);
       return result;
     } catch (error) {
@@ -225,7 +225,7 @@ export const EdgeConnectionProvider = ({ children }) => {
     try {
       // Use enhanced discovery
       const result = await discoverEdgeDevices();
-      
+
       // Return success if we have a preferred device
       return result.success;
     } catch (error) {
@@ -342,7 +342,7 @@ export const EdgeConnectionProvider = ({ children }) => {
           }
         } catch (error) {
           console.log('Edge device audio translation failed, falling back to cloud:', error);
-          
+
           // Fall back to cloud
           setActiveEndpoint(API_ENDPOINTS.CLOUD);
         }
@@ -350,7 +350,7 @@ export const EdgeConnectionProvider = ({ children }) => {
 
       // Use cloud endpoint
       console.log('Using cloud endpoint for audio translation');
-      
+
       const response = await fetch(`${API_ENDPOINTS.CLOUD}/translate/audio`, {
         method: 'POST',
         headers: {
@@ -448,7 +448,7 @@ export const EdgeConnectionProvider = ({ children }) => {
           }
         } catch (error) {
           console.log('Edge device translation failed, falling back to cloud:', error);
-          
+
           // Fall back to cloud
           setActiveEndpoint(API_ENDPOINTS.CLOUD);
         }
@@ -456,7 +456,7 @@ export const EdgeConnectionProvider = ({ children }) => {
 
       // Use cloud endpoint
       console.log('Using cloud endpoint for translation');
-      
+
       const response = await fetch(`${API_ENDPOINTS.CLOUD}/translate`, {
         method: 'POST',
         headers: {

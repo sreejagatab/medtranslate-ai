@@ -1,15 +1,15 @@
 {
-  "timestamp": "2025-05-07T08:11:34.059Z",
+  "timestamp": "2025-05-08T12:26:05.602Z",
   "config": {
-    "edgeUrl": "http://localhost:4000",
+    "edgeUrl": "http://localhost:3002",
     "backendUrl": "http://localhost:4001",
     "testDataDir": "C:\\Users\\AKjag\\OneDrive\\Desktop\\ganeshsharing\\medtranslate-ai\\tests\\test-data"
   },
   "results": {
-    "connection": false,
-    "offlineTranslation": false,
-    "queueAccumulation": false,
-    "synchronization": false,
-    "performanceComparison": false
+    "connection": true,
+    "offlineTranslation": true,
+    "queueAccumulation": true,
+    "synchronization": true,
+    "performanceComparison": true
   }
 }

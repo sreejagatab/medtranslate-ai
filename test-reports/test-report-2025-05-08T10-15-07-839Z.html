@@ -1,0 +1,377 @@
+
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MedTranslate AI Test Report</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+          }
+          h1, h2, h3 {
+            color: #0077CC;
+          }
+          .summary {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+          }
+          .summary-item {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+          }
+          .passed {
+            background-color: #DFF0D8;
+            color: #3C763D;
+          }
+          .failed {
+            background-color: #F2DEDE;
+            color: #A94442;
+          }
+          .skipped {
+            background-color: #FCF8E3;
+            color: #8A6D3B;
+          }
+          .suite {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+          }
+          .suite-header {
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+          }
+          .suite-header.passed {
+            background-color: #DFF0D8;
+          }
+          .suite-header.failed {
+            background-color: #F2DEDE;
+          }
+          .suite-header.skipped {
+            background-color: #FCF8E3;
+          }
+          .suite-content {
+            padding: 10px;
+            display: none;
+            background-color: #f5f5f5;
+            border-top: 1px solid #ddd;
+          }
+          .suite-content pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+          }
+          .show {
+            display: block;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>MedTranslate AI Test Report</h1>
+        <p>Generated: Invalid Date</p>
+        
+        <h2>Summary</h2>
+        <div class="summary">
+          <div class="summary-item">
+            <h3>Total</h3>
+            <p>4</p>
+          </div>
+          <div class="summary-item passed">
+            <h3>Passed</h3>
+            <p>1</p>
+          </div>
+          <div class="summary-item failed">
+            <h3>Failed</h3>
+            <p>3</p>
+          </div>
+          <div class="summary-item skipped">
+            <h3>Skipped</h3>
+            <p>0</p>
+          </div>
+        </div>
+        
+        <h2>Test Suites</h2>
+    
+        <div class="suite">
+          <div class="suite-header failed" onclick="toggleSuite(0)">
+            <h3>Edge Device Integration</h3>
+            <div>
+              <span>FAILED</span>
+              
+            </div>
+          </div>
+          <div id="suite-0" class="suite-content">
+            <pre>=== MedTranslate AI Edge Device Integration Test ===
+Date: 2025-05-08T10:15:07.974Z
+Edge URL: http://localhost:4000
+Backend URL: http://localhost:4001
+
+=== Testing Edge Device Connection ===
+
+=== Test Summary ===
+Edge Device Connection: ❌ FAIL
+Offline Translation: ❌ FAIL
+Queue Accumulation: ❌ FAIL
+Synchronization: ❌ FAIL
+Performance Comparison: ❌ FAIL
+
+Overall Result: ❌ FAIL
+
+Test results saved to C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\tests\test-data\edge-integration-results.json
+</pre>
+          </div>
+        </div>
+      
+        <div class="suite">
+          <div class="suite-header passed" onclick="toggleSuite(1)">
+            <h3>Security Audit</h3>
+            <div>
+              <span>PASSED</span>
+              <span>(2123ms)</span>
+            </div>
+          </div>
+          <div id="suite-1" class="suite-content">
+            <pre>Starting security audit...
+Parsing security audit checklist...
+Found 139 checklist items.
+Running automated security checks...
+[1/139] Multi-factor authentication (MFA): MANUAL CHECK REQUIRED
+[2/139] Password policies: MANUAL CHECK REQUIRED
+[3/139] Account lockout: MANUAL CHECK REQUIRED
+[4/139] Session management: MANUAL CHECK REQUIRED
+Found JWT expiration in: C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\backend\auth\auth-service.js
+[5/139] JWT tokens: PASS
+[6/139] Refresh token: MANUAL CHECK REQUIRED
+[7/139] Patient session codes: MANUAL CHECK REQUIRED
+[8/139] Role-based access control (RBAC): MANUAL CHECK REQUIRED
+[9/139] Principle of least privilege: MANUAL CHECK REQUIRED
+[10/139] API endpoints: MANUAL CHECK REQUIRED
+[11/139] Frontend routes: MANUAL CHECK REQUIRED
+[12/139] Resource-level permissions: MANUAL CHECK REQUIRED
+[13/139] Administrative functions: MANUAL CHECK REQUIRED
+[14/139] Database encryption: MANUAL CHECK REQUIRED
+Found S3 encryption in: C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\infrastructure\cloudformation\main.yaml
+[15/139] S3 bucket encryption: PASS
+[16/139] DynamoDB encryption: PASS
+[17/139] KMS keys: MANUAL CHECK REQUIRED
+[18/139] Encryption keys: MANUAL CHECK REQUIRED
+[19/139] Edge device storage: MANUAL CHECK REQUIRED
+[20/139] TLS 1.2+: MANUAL CHECK REQUIRED
+[21/139] HTTPS: MANUAL CHECK REQUIRED
+[22/139] WebSocket connections: MANUAL CHECK REQUIRED
+[23/139] API Gateway: MANUAL CHECK REQUIRED
+[24/139] Certificate management: MANUAL CHECK REQUIRED
+[25/139] Edge device communications: MANUAL CHECK REQUIRED
+[26/139] Only necessary data: MANUAL CHECK REQUIRED
+[27/139] Data retention policies: MANUAL CHECK REQUIRED
+[28/139] Automatic data deletion: MANUAL CHECK REQUIRED
+[29/139] PII/PHI: MANUAL CHECK REQUIRED
+[30/139] Data anonymization: MANUAL CHECK REQUIRED
+[31/139] Transcripts: MANUAL CHECK REQUIRED
+[32/139] API Gateway: MANUAL CHECK REQUIRED
+[33/139] CORS policies: MANUAL CHECK REQUIRED
+[34/139] Input validation: MANUAL CHECK REQUIRED
+[35/139] Output encoding: MANUAL CHECK REQUIRED
+[36/139] Rate limiting: MANUAL CHECK REQUIRED
+[37/139] API keys: MANUAL CHECK REQUIRED
+[38/139] VPC configuration: MANUAL CHECK REQUIRED
+[39/139] Security groups: MANUAL CHECK REQUIRED
+[40/139] Network ACLs: MANUAL CHECK REQUIRED
+[41/139] WAF: MANUAL CHECK REQUIRED
+[42/139] DDoS protection: MANUAL CHECK REQUIRED
+[43/139] Infrastructure as Code: MANUAL CHECK REQUIRED
+[44/139] Code obfuscation: MANUAL CHECK REQUIRED
+[45/139] Certificate pinning: MANUAL CHECK REQUIRED
+[46/139] Jailbreak/root detection: MANUAL CHECK REQUIRED
+[47/139] Secure storage: MANUAL CHECK REQUIRED
+[48/139] Memory protection: MANUAL CHECK REQUIRED
+[49/139] Secure coding practices: MANUAL CHECK REQUIRED
+[50/139] App permissions: MANUAL CHECK REQUIRED
+[51/139] Privacy policy: MANUAL CHECK REQUIRED
+[52/139] Terms of service: MANUAL CHECK REQUIRED
+[53/139] App store guidelines: MANUAL CHECK REQUIRED
+[54/139] App signing: MANUAL CHECK REQUIRED
+[55/139] App updates: MANUAL CHECK REQUIRED
+[56/139] Secure boot: MANUAL CHECK REQUIRED
+[57/139] Firmware updates: MANUAL CHECK REQUIRED
+[58/139] Device authentication: MANUAL CHECK REQUIRED
+[59/139] Device authorization: MANUAL CHECK REQUIRED
+[60/139] Physical security: MANUAL CHECK REQUIRED
+[61/139] Tamper detection: MANUAL CHECK REQUIRED
+[62/139] Model encryption: PASS
+[63/139] Model integrity: MANUAL CHECK REQUIRED
+[64/139] Model updates: MANUAL CHECK REQUIRED
+[65/139] Model access: MANUAL CHECK REQUIRED
+[66/139] Inference security: MANUAL CHECK REQUIRED
+[67/139] Model versioning: MANUAL CHECK REQUIRED
+[68/139] Centralized logging: MANUAL CHECK REQUIRED
+[69/139] Log retention: MANUAL CHECK REQUIRED
+[70/139] Sensitive data: MANUAL CHECK REQUIRED
+[71/139] Log integrity: MANUAL CHECK REQUIRED
+[72/139] Log format: MANUAL CHECK REQUIRED
+[73/139] Log levels: MANUAL CHECK REQUIRED
+[74/139] Real-time monitoring: MANUAL CHECK REQUIRED
+[75/139] Alerting: MANUAL CHECK REQUIRED
+[76/139] Metrics collection: MANUAL CHECK REQUIRED
+[77/139] Anomaly detection: MANUAL CHECK REQUIRED
+[78/139] Dashboard: MANUAL CHECK REQUIRED
+[79/139] Incident response: MANUAL CHECK REQUIRED
+[80/139] Business Associate Agreements (BAAs): MANUAL CHECK REQUIRED
+[81/139] Risk assessment: MANUAL CHECK REQUIRED
+[82/139] Security policies: MANUAL CHECK REQUIRED
+[83/139] Employee training: MANUAL CHECK REQUIRED
+[84/139] Audit controls: MANUAL CHECK REQUIRED
+[85/139] Contingency plans: MANUAL CHECK REQUIRED
+[86/139] Data Processing Agreements (DPAs): MANUAL CHECK REQUIRED
+[87/139] Privacy by design: MANUAL CHECK REQUIRED
+[88/139] Data subject rights: MANUAL CHECK REQUIRED
+[89/139] Consent management: MANUAL CHECK REQUIRED
+[90/139] Data Protection Impact Assessment (DPIA): MANUAL CHECK REQUIRED
+[91/139] Data breach notification: MANUAL CHECK REQUIRED
+[92/139] CCPA/CPRA: MANUAL CHECK REQUIRED
+[93/139] LGPD: MANUAL CHECK REQUIRED
+[94/139] PIPEDA: MANUAL CHECK REQUIRED
+[95/139] Industry-specific regulations: MANUAL CHECK REQUIRED
+[96/139] International data transfer: MANUAL CHECK REQUIRED
+[97/139] Regular compliance reviews: MANUAL CHECK REQUIRED
+[98/139] Incident response plan: MANUAL CHECK REQUIRED
+[99/139] Roles and responsibilities: MANUAL CHECK REQUIRED
+[100/139] Contact information: MANUAL CHECK REQUIRED
+[101/139] Communication templates: MANUAL CHECK REQUIRED
+[102/139] Escalation procedures: MANUAL CHECK REQUIRED
+[103/139] Training exercises: MANUAL CHECK REQUIRED
+[104/139] Monitoring systems: MANUAL CHECK REQUIRED
+[105/139] Alert thresholds: MANUAL CHECK REQUIRED
+[106/139] Incident classification: MANUAL CHECK REQUIRED
+[107/139] Forensic capabilities: MANUAL CHECK REQUIRED
+[108/139] Analysis procedures: MANUAL CHECK REQUIRED
+[109/139] Evidence collection: MANUAL CHECK REQUIRED
+[110/139] Containment strategies: MANUAL CHECK REQUIRED
+[111/139] System isolation: MANUAL CHECK REQUIRED
+[112/139] Malware removal: MANUAL CHECK REQUIRED
+[113/139] Vulnerability patching: MANUAL CHECK REQUIRED
+[114/139] Service restoration: MANUAL CHECK REQUIRED
+[115/139] Root cause analysis: MANUAL CHECK REQUIRED
+[116/139] Recovery procedures: MANUAL CHECK REQUIRED
+[117/139] Data restoration: MANUAL CHECK REQUIRED
+[118/139] System hardening: MANUAL CHECK REQUIRED
+[119/139] Post-incident review: MANUAL CHECK REQUIRED
+[120/139] Lessons learned: MANUAL CHECK REQUIRED
+[121/139] Incident documentation: MANUAL CHECK REQUIRED
+[122/139] Audit scope: MANUAL CHECK REQUIRED
+[123/139] Audit team: MANUAL CHECK REQUIRED
+[124/139] Audit schedule: MANUAL CHECK REQUIRED
+[125/139] Audit tools: MANUAL CHECK REQUIRED
+[126/139] Documentation: MANUAL CHECK REQUIRED
+[127/139] Environment access: MANUAL CHECK REQUIRED
+[128/139] Regular status updates: MANUAL CHECK REQUIRED
+[129/139] Issues are documented: MANUAL CHECK REQUIRED
+[130/139] Evidence is collected: MANUAL CHECK REQUIRED
+[131/139] Remediation guidance: MANUAL CHECK REQUIRED
+[132/139] Communication channels: MANUAL CHECK REQUIRED
+[133/139] Interim reports: MANUAL CHECK REQUIRED
+[134/139] Final report: MANUAL CHECK REQUIRED
+[135/139] Executive summary: MANUAL CHECK REQUIRED
+[136/139] Remediation plan: MANUAL CHECK REQUIRED
+[137/139] Follow-up schedule: MANUAL CHECK REQUIRED
+[138/139] Lessons learned: MANUAL CHECK REQUIRED
+[139/139] Continuous improvement: MANUAL CHECK REQUIRED
+Generating security audit report...
+
+================================================================================
+[1m[36mSECURITY AUDIT COMPLETED[0m
+================================================================================
+[1mRisk Score: [32m100%[0m
+
+[1mSummary:[0m
+- Total checks: 139
+- [32mPassed: 4[0m
+- [31mFailed: 0[0m
+- [33mManual verification required: 135[0m
+- Skipped: 0
+- Errors: 0
+
+[1mReports generated:[0m
+- JSON: C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\test-reports\security\security-audit-2025-05-08T10-15-10-100Z.json
+- HTML: C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\test-reports\security\security-audit-2025-05-08T10-15-10-100Z.html
+- Markdown: C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\test-reports\security\security-audit-2025-05-08T10-15-10-100Z.md
+================================================================================
+
+Security audit completed.
+</pre>
+          </div>
+        </div>
+      
+        <div class="suite">
+          <div class="suite-header failed" onclick="toggleSuite(2)">
+            <h3>Localization Testing</h3>
+            <div>
+              <span>FAILED</span>
+              
+            </div>
+          </div>
+          <div id="suite-2" class="suite-content">
+            <pre>Starting localization tests...
+Analyzing translation files...
+Taking screenshots...
+Testing language: English (en)
+Testing language: Spanish (es)
+Testing language: French (fr)
+Testing language: German (de)
+Testing language: Chinese (Simplified) (zh)
+Testing language: Arabic (ar)
+Testing language: Russian (ru)
+Testing language: Portuguese (pt)
+Testing language: Japanese (ja)
+Testing language: Korean (ko)
+Testing language: Hindi (hi)
+Testing language: Italian (it)
+Testing RTL layout...
+Testing RTL layout for Arabic (ar)
+Generating localization test report...
+Reports generated:
+- JSON: C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\test-reports\localization\localization-test-2025-05-08T10-16-30-610Z.json
+- HTML: C:\Users\AKjag\OneDrive\Desktop\ganeshsharing\medtranslate-ai\test-reports\localization\localization-test-2025-05-08T10-16-30-610Z.html
+Localization tests completed.
+Localization test summary:
+- Total languages: 12
+- Complete languages: 2
+- Total keys: 447
+</pre>
+          </div>
+        </div>
+      
+        <div class="suite">
+          <div class="suite-header failed" onclick="toggleSuite(3)">
+            <h3>App Store Submission</h3>
+            <div>
+              <span>FAILED</span>
+              
+            </div>
+          </div>
+          <div id="suite-3" class="suite-content">
+            <pre>Starting app store submission preparation...
+Generating app icons...
+</pre>
+          </div>
+        </div>
+      
+        <script>
+          function toggleSuite(index) {
+            const content = document.getElementById('suite-' + index);
+            content.classList.toggle('show');
+          }
+        </script>
+      </body>
+      </html>
+    

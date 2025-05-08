@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateJWT } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 
 /**
  * @route GET /api/analytics/connection/stats
  * @desc Get connection statistics
  * @access Private
  */
-router.get('/connection/stats', authenticateJWT, (req, res) => {
+router.get('/connection/stats', authenticate, (req, res) => {
   // In a real implementation, this would fetch data from a database
   // For now, we'll return mock data
   const stats = {
@@ -22,7 +22,7 @@ router.get('/connection/stats', authenticateJWT, (req, res) => {
     patternCount: 12,
     userProfileCount: 8
   };
-  
+
   res.json(stats);
 });
 
@@ -31,25 +31,25 @@ router.get('/connection/stats', authenticateJWT, (req, res) => {
  * @desc Get connection predictions
  * @access Private
  */
-router.get('/connection/predictions', authenticateJWT, (req, res) => {
+router.get('/connection/predictions', authenticate, (req, res) => {
   // Parse query parameters
   const timeRange = req.query.timeRange || '24h';
   const riskThreshold = parseFloat(req.query.riskThreshold || '0.4');
-  
+
   // In a real implementation, this would fetch data from the ML model
   // For now, we'll return mock data
   const predictions = Array(24).fill(0).map((_, i) => ({
     hour: i,
     risk: Math.random() * (i % 12 === 0 ? 0.9 : i % 6 === 0 ? 0.6 : 0.3),
     confidence: 0.7 + (Math.random() * 0.3),
-    likelyIssueType: i % 12 === 0 ? 'regular_outage' : 
-                     i % 6 === 0 ? 'congestion' : 
+    likelyIssueType: i % 12 === 0 ? 'regular_outage' :
+                     i % 6 === 0 ? 'congestion' :
                      i % 3 === 0 ? 'poor_signal' : null
   }));
-  
+
   // Filter by risk threshold
   const filteredPredictions = predictions.filter(p => p.risk >= riskThreshold);
-  
+
   res.json(filteredPredictions);
 });
 
@@ -58,10 +58,10 @@ router.get('/connection/predictions', authenticateJWT, (req, res) => {
  * @desc Get user connection profiles
  * @access Private
  */
-router.get('/connection/user-profiles', authenticateJWT, (req, res) => {
+router.get('/connection/user-profiles', authenticate, (req, res) => {
   // Parse query parameters
   const userFilter = req.query.userFilter;
-  
+
   // In a real implementation, this would fetch data from the ML model
   // For now, we'll return mock data
   const userProfiles = [
@@ -70,12 +70,12 @@ router.get('/connection/user-profiles', authenticateJWT, (req, res) => {
     { userId: 'user3', issueFrequency: 0.23, averageQuality: 0.76, locationCount: 5 },
     { userId: 'user4', issueFrequency: 0.08, averageQuality: 0.88, locationCount: 1 }
   ];
-  
+
   // Filter by user if specified
-  const filteredProfiles = userFilter && userFilter !== 'all' 
+  const filteredProfiles = userFilter && userFilter !== 'all'
     ? userProfiles.filter(p => p.userId === userFilter)
     : userProfiles;
-  
+
   res.json(filteredProfiles);
 });
 
@@ -84,10 +84,10 @@ router.get('/connection/user-profiles', authenticateJWT, (req, res) => {
  * @desc Get recurring connection patterns
  * @access Private
  */
-router.get('/connection/recurring-patterns', authenticateJWT, (req, res) => {
+router.get('/connection/recurring-patterns', authenticate, (req, res) => {
   // Parse query parameters
   const locationFilter = req.query.locationFilter;
-  
+
   // In a real implementation, this would fetch data from the ML model
   // For now, we'll return mock data
   const patterns = [
@@ -97,12 +97,12 @@ router.get('/connection/recurring-patterns', authenticateJWT, (req, res) => {
     { type: 'location', location: 'Hospital Wing B', confidence: 0.91, description: 'Connection issues frequently occur at Hospital Wing B' },
     { type: 'location', location: 'Clinic Room 3', confidence: 0.87, description: 'Connection issues frequently occur at Clinic Room 3' }
   ];
-  
+
   // Filter by location if specified
-  const filteredPatterns = locationFilter && locationFilter !== 'all' 
+  const filteredPatterns = locationFilter && locationFilter !== 'all'
     ? patterns.filter(p => p.type === 'location' && p.location === locationFilter)
     : patterns;
-  
+
   res.json(filteredPatterns);
 });
 
@@ -111,10 +111,10 @@ router.get('/connection/recurring-patterns', authenticateJWT, (req, res) => {
  * @desc Get connection quality trends
  * @access Private
  */
-router.get('/connection/quality-trends', authenticateJWT, (req, res) => {
+router.get('/connection/quality-trends', authenticate, (req, res) => {
   // Parse query parameters
   const timeRange = req.query.timeRange || '24h';
-  
+
   // In a real implementation, this would fetch data from the database
   // For now, we'll return mock data
   const qualityTrends = Array(24).fill(0).map((_, i) => ({
@@ -123,7 +123,7 @@ router.get('/connection/quality-trends', authenticateJWT, (req, res) => {
     latency: 100 + (Math.cos(i / 2) * 50),
     packetLoss: Math.max(0, Math.sin(i) * 0.05)
   }));
-  
+
   res.json(qualityTrends);
 });
 
@@ -132,7 +132,7 @@ router.get('/connection/quality-trends', authenticateJWT, (req, res) => {
  * @desc Get connection issue types
  * @access Private
  */
-router.get('/connection/issue-types', authenticateJWT, (req, res) => {
+router.get('/connection/issue-types', authenticate, (req, res) => {
   // In a real implementation, this would fetch data from the database
   // For now, we'll return mock data
   const issueTypes = [
@@ -143,7 +143,7 @@ router.get('/connection/issue-types', authenticateJWT, (req, res) => {
     { type: 'bandwidth_limit', count: 12, percentage: 9 },
     { type: 'dns_issue', count: 5, percentage: 3 }
   ];
-  
+
   res.json(issueTypes);
 });
 

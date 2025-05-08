@@ -118,6 +118,98 @@ These tests verify the entire system workflow:
 
 ## New Test Components
 
+### Mobile App Tests
+
+The mobile app tests are located in the following files:
+
+- `unit/mobile-components.test.js`: Tests for mobile app components
+- `unit/mobile-hooks.test.js`: Tests for mobile app hooks
+- `unit/mobile-services.test.js`: Tests for mobile app services
+
+These tests verify:
+- Mobile system status dashboard
+- Offline capabilities
+- Push notifications
+- Security features
+- Edge device discovery
+- Translation status indicator
+- System status hooks
+- Edge connection hooks
+- Translation hooks
+- Offline queue hooks
+- API services
+- Notification services
+- Edge services
+- Storage services
+
+### Provider App Tests
+
+The provider app tests are located in the following files:
+
+- `unit/provider-components.test.js`: Tests for provider app components
+- `unit/provider-hooks.test.js`: Tests for provider app hooks
+
+These tests verify:
+- Session management panel
+- Patient history panel
+- Translation monitor panel
+- System status dashboard
+- Session hooks
+- Patient history hooks
+- Translation monitor hooks
+
+### Admin Dashboard Tests
+
+The admin dashboard tests are located in the following files:
+
+- `unit/admin-components.test.js`: Tests for admin dashboard components
+
+These tests verify:
+- Sync analytics dashboard
+- System health dashboard
+- User management panel
+- Configuration panel
+
+### Edge-Frontend Integration Tests
+
+The edge-frontend integration tests are located in the following files:
+
+- `integration/edge-frontend-connection.test.js`: Tests for edge device discovery and connection
+- `integration/edge-frontend-translation.test.js`: Tests for translation via edge device
+- `integration/edge-frontend-offline.test.js`: Tests for offline operation with edge device
+
+These tests verify:
+- Edge device discovery
+- Edge device connection
+- Edge device status monitoring
+- Text translation via edge device
+- Audio translation via edge device
+- Fallback to cloud when needed
+- Transition to offline mode
+- Translation during offline mode
+- Queue management during offline mode
+- Synchronization after reconnection
+
+### End-to-End Workflow Tests
+
+The end-to-end workflow tests are located in the following files:
+
+- `integration/offline-capability-flow.test.js`: Tests for the complete offline capability workflow
+- `integration/administrative-workflow.test.js`: Tests for the complete administrative workflow
+
+These tests verify:
+- Edge device connection
+- Network disconnection
+- Offline translation
+- Queue accumulation
+- Network reconnection
+- Synchronization
+- Admin login
+- System status monitoring
+- Configuration changes
+- User management
+- Analytics review
+
 ### Security Testing
 
 The security testing components are located in the following files:
@@ -157,6 +249,12 @@ These tests verify:
 - App binary validation
 - Submission process documentation
 
+### Test Implementation Tracker
+
+The test implementation tracker is located in the following file:
+
+- `test-implementation-tracker.js`: Script to track the implementation status of all tests
+
 ### Test Runner
 
 The test runner is located in the following file:
@@ -194,9 +292,20 @@ npm run test:websocket       # Run WebSocket communication tests
 # Run specific tests
 npm run test:complete-flow   # Run complete translation flow test
 npm run test:translation     # Run translation-related tests
+npm run test:offline:predictive  # Run predictive cache tests
+npm run test:offline:performance # Run offline performance tests
+npm run test:websocket:reconnection # Run WebSocket reconnection tests
+npm run test:error-handling # Run error handling tests
+
+# Run workflow tests
+node tests/integration/offline-capability-flow.test.js  # Run offline capability flow test
+node tests/integration/administrative-workflow.test.js  # Run administrative workflow test
+
+# Run other tools
 node tests/security/security-audit-tool.js  # Run security audit
 node tests/localization/localization-test.js  # Run localization tests
 node tests/app-store/app-store-submission-tool.js  # Run app store submission preparation
+node tests/test-implementation-tracker.js  # Check test implementation status
 ```
 
 ## Adding New Tests
@@ -239,10 +348,18 @@ Test failures block merges to ensure code quality.
 
 ## Comprehensive Test Plan
 
-For a detailed testing strategy, see the [Comprehensive Test Plan](./comprehensive-test-plan.md) document, which outlines:
+For a detailed testing strategy, see the [Comprehensive Test Plan](./testplan.md) document, which outlines:
 
 1. Test categories and coverage matrix
 2. Test implementation plan for all components
 3. Test execution strategy
 4. Test monitoring and reporting
 5. Test maintenance guidelines
+
+The test implementation status can be checked by running:
+
+```bash
+node tests/test-implementation-tracker.js
+```
+
+This will display the current implementation status of all test modules defined in the test plan.

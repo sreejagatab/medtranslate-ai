@@ -16,7 +16,7 @@ const SYNC_DIR = process.env.SYNC_DIR || '../../sync';
 const CONFIG_DIR = process.env.CONFIG_DIR || '../../config';
 const SYNC_INTERVAL = parseInt(process.env.SYNC_INTERVAL || '300000', 10); // 5 minutes
 const DEVICE_ID = process.env.DEVICE_ID || 'dev-edge-device';
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:4001';
 
 // Sync state
 let syncInProgress = false;

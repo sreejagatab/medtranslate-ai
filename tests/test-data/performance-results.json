@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2025-05-08T12:03:27.332Z",
+    "edge": {
+      "average": 0.8048800000000483,
+      "samples": 5
+    },
+    "cloud": {
+      "average": 1.2073200000000726,
+      "samples": 5
+    },
+    "difference": {
+      "absolute": 0.4024400000000242,
+      "percentage": 33.333333333333336
+    }
+  },
+  {
+    "timestamp": "2025-05-08T12:07:56.195Z",
+    "edge": {
+      "average": 0.9634800000003452,
+      "samples": 5
+    },
+    "cloud": {
+      "average": 1.4452200000005178,
+      "samples": 5
+    },
+    "difference": {
+      "absolute": 0.4817400000001726,
+      "percentage": 33.33333333333333
+    }
+  },
+  {
+    "timestamp": "2025-05-08T12:26:05.601Z",
+    "edge": {
+      "average": 1.0962799999997515,
+      "samples": 5
+    },
+    "cloud": {
+      "average": 1.6444199999996272,
+      "samples": 5
+    },
+    "difference": {
+      "absolute": 0.5481399999998757,
+      "percentage": 33.33333333333333
+    }
+  }
+]

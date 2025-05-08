@@ -11,10 +11,41 @@ const fs = require('fs');
 const path = require('path');
 
 // In a production environment, these would be stored in a secure database
-// and the JWT secret would be stored in AWS Secrets Manager or similar
-const JWT_SECRET = process.env.JWT_SECRET || 'medtranslate-dev-secret-key';
-const TOKEN_EXPIRY = '24h'; // Provider session token expiry
-const TEMP_TOKEN_EXPIRY = '4h'; // Patient temporary token expiry
+// and the JWT keys would be stored in AWS Secrets Manager or similar
+const JWT_PRIVATE_KEY_PATH = process.env.JWT_PRIVATE_KEY_PATH || path.join(__dirname, '../certs/jwt/private.key');
+const JWT_PUBLIC_KEY_PATH = process.env.JWT_PUBLIC_KEY_PATH || path.join(__dirname, '../certs/jwt/public.key');
+
+// Load JWT keys
+let JWT_PRIVATE_KEY, JWT_PUBLIC_KEY;
+
+try {
+  // Check if keys exist
+  if (fs.existsSync(JWT_PRIVATE_KEY_PATH) && fs.existsSync(JWT_PUBLIC_KEY_PATH)) {
+    JWT_PRIVATE_KEY = fs.readFileSync(JWT_PRIVATE_KEY_PATH, 'utf8');
+    JWT_PUBLIC_KEY = fs.readFileSync(JWT_PUBLIC_KEY_PATH, 'utf8');
+  } else {
+    // Fallback to symmetric algorithm with secret if keys don't exist
+    console.warn('JWT RSA keys not found. Falling back to symmetric algorithm.');
+    JWT_PRIVATE_KEY = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production'
+      ? (() => { throw new Error('JWT_SECRET must be set in production environment'); })()
+      : crypto.randomBytes(64).toString('hex')); // Generate a strong random secret in development
+    JWT_PUBLIC_KEY = JWT_PRIVATE_KEY;
+  }
+} catch (error) {
+  console.error('Error loading JWT keys:', error);
+  // Fallback to symmetric algorithm with secret
+  JWT_PRIVATE_KEY = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('JWT_SECRET must be set in production environment'); })()
+    : crypto.randomBytes(64).toString('hex')); // Generate a strong random secret in development
+  JWT_PUBLIC_KEY = JWT_PRIVATE_KEY;
+}
+
+// JWT algorithm - use RS256 if we have RSA keys, otherwise fall back to HS256
+const JWT_ALGORITHM = JWT_PRIVATE_KEY !== JWT_PUBLIC_KEY ? 'RS256' : 'HS256';
+
+// Set appropriate token expiry times
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '8h'; // Provider session token expiry
+const TEMP_TOKEN_EXPIRY = process.env.TEMP_TOKEN_EXPIRY || '4h'; // Patient temporary token expiry
 
 // Mock user database for development
 const USERS_FILE = path.join(__dirname, '../../data/users.json');
@@ -220,7 +251,13 @@ function generateToken(user) {
     type: 'provider'
   };
 
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+  return jwt.sign(payload, JWT_PRIVATE_KEY, {
+    expiresIn: TOKEN_EXPIRY,
+    algorithm: JWT_ALGORITHM, // Use RS256 if available, fallback to HS256
+    issuer: 'medtranslate-ai',
+    audience: 'medtranslate-api',
+    notBefore: 0 // Token is valid immediately
+  });
 }
 
 /**
@@ -242,7 +279,13 @@ function generatePatientSessionToken(sessionId, language) {
     type: 'patient'
   };
 
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: TEMP_TOKEN_EXPIRY });
+  const token = jwt.sign(payload, JWT_PRIVATE_KEY, {
+    expiresIn: TEMP_TOKEN_EXPIRY,
+    algorithm: JWT_ALGORITHM, // Use RS256 if available, fallback to HS256
+    issuer: 'medtranslate-ai',
+    audience: 'medtranslate-api',
+    notBefore: 0 // Token is valid immediately
+  });
 
   // Store the session information
   const sessions = JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf8'));
@@ -260,14 +303,38 @@ function generatePatientSessionToken(sessionId, language) {
 }
 
 /**
- * Verify and decode a JWT token
+ * Verify and decode a JWT token with enhanced security checks
  *
  * @param {string} token - JWT token
  * @returns {Object|null} - Decoded token payload or null if invalid
  */
 function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    // Verify with explicit options for enhanced security
+    const decoded = jwt.verify(token, JWT_PUBLIC_KEY, {
+      algorithms: [JWT_ALGORITHM], // Accept tokens signed with our algorithm
+      issuer: 'medtranslate-ai',
+      audience: 'medtranslate-api',
+      complete: true // Return the decoded header and payload
+    });
+
+    // Additional security checks
+    const now = Math.floor(Date.now() / 1000);
+
+    // Check if token is expired
+    if (decoded.payload.exp && decoded.payload.exp < now) {
+      console.warn('Token expired');
+      return null;
+    }
+
+    // Check if token is not yet valid
+    if (decoded.payload.nbf && decoded.payload.nbf > now) {
+      console.warn('Token not yet valid');
+      return null;
+    }
+
+    // Return only the payload for backward compatibility
+    return decoded.payload;
   } catch (error) {
     console.error('Token verification failed:', error);
     return null;

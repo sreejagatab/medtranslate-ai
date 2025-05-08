@@ -1,0 +1,20 @@
+{
+  "testId": "9fb76449",
+  "timestamp": "2025-05-08T12:29:22.819Z",
+  "models": [
+    {
+      "name": "default",
+      "timestamp": "2025-05-08T12:29:22.848Z",
+      "type": "training",
+      "trainingData": {
+        "sampleCount": 15,
+        "parameters": {
+          "learningRate": 0.01,
+          "epochs": 100,
+          "batchSize": 32
+        }
+      },
+      "error": ""
+    }
+  ]
+}

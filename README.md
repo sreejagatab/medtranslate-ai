@@ -332,23 +332,96 @@ MedTranslate AI includes comprehensive testing to ensure reliability, performanc
 
 ```bash
 # Run all tests
-npm run test:all
+npm test
 
-# Run specific test suites
-npm run test:unit            # Unit tests
-npm run test:integration     # Integration tests
-npm run test:edge            # Edge application tests
-npm run test:security        # Security tests
-npm run test:performance     # Performance tests
+# Run unit tests
+npm run test:unit                    # All unit tests
+npm run test:unit:mobile             # Mobile app unit tests
+npm run test:unit:provider           # Provider app unit tests
+npm run test:unit:admin              # Admin dashboard unit tests
+npm run test:edge:unit               # Edge component unit tests
+npm run test:backend:unit            # Backend unit tests
+
+# Run integration tests
+npm run test:integration             # All integration tests
+npm run test:integration:backend-edge    # Backend-Edge integration tests
+npm run test:integration:backend-frontend # Backend-Frontend integration tests
+npm run test:integration:edge-frontend   # Edge-Frontend integration tests
+npm run test:websocket:reconnection  # WebSocket reconnection tests
+npm run test:error-handling          # Error handling tests
+
+# Run end-to-end tests
+npm run test:e2e                     # All end-to-end tests
+npm run test:e2e:translation-flow    # Complete translation flow test
+npm run test:e2e:offline-flow        # Offline capability flow test
+npm run test:e2e:admin-flow          # Administrative workflow test
+
+# Run performance tests
+npm run test:performance             # All performance tests
+npm run test:performance:backend     # Backend performance tests
+npm run test:performance:edge        # Edge device performance tests
+npm run test:performance:mobile      # Mobile app performance tests
+npm run test:performance:translation # Translation performance tests
+npm run test:performance:cache       # Cache performance tests
+npm run test:performance:offline     # Offline performance tests
+
+# Run other tests
+npm run test:security                # Security tests
+npm run test:localization            # Localization tests
+npm run test:app-store               # App store submission tests
+
+# Generate test report
+npm run test:report                  # Generate comprehensive test report
 ```
 
-### Test Coverage
+For detailed instructions on running tests, see [RUNNING_TESTS.md](tests/RUNNING_TESTS.md).
 
-- **Unit Tests**: Test individual components and functions
+### Test Categories
+
+- **Unit Tests**: Test individual components and functions in isolation
+  - Mobile app components, hooks, and services
+  - Provider app components and hooks
+  - Admin dashboard components
+  - Edge components (translation, cache, sync, server)
+  - Backend services (authentication, translation, storage, WebSocket)
+
 - **Integration Tests**: Test interactions between components
-- **Edge Tests**: Test edge application functionality
+  - Backend-Edge integration (device discovery, translation sync, offline mode)
+  - Backend-Frontend integration (authentication flow, translation flow)
+  - Edge-Frontend integration (device connection, local translation, offline operation)
+  - WebSocket communication (real-time updates, reconnection handling)
+
+- **End-to-End Tests**: Test complete user workflows
+  - Complete translation flow (provider-patient translation session)
+  - Offline capability flow (edge device operation during network outage)
+  - Administrative workflow (system monitoring, configuration, user management)
+
+- **Performance Tests**: Measure system performance under various conditions
+  - Backend performance (response time, concurrent sessions, database queries)
+  - Edge device performance (translation speed, memory usage, battery consumption)
+  - Mobile app performance (startup time, UI responsiveness, memory usage)
+
 - **Security Tests**: Verify security implementations
-- **Performance Tests**: Measure system performance under load
+  - Authentication security (token security, password policies, MFA)
+  - Data security (encryption, secure storage, access control)
+  - API security (input validation, rate limiting, CSRF protection)
+
+- **Localization Tests**: Verify translation accuracy and UI adaptation
+  - Medical terminology translation accuracy
+  - UI adaptation to different languages
+  - RTL language support
+
+### Continuous Integration
+
+The project uses GitHub Actions for continuous integration, automatically running tests on code changes. The CI pipeline runs:
+
+1. Unit tests on every commit
+2. Integration tests on pull requests and merges to main branch
+3. End-to-end tests on merges to main branch
+4. Performance tests on a schedule (nightly)
+5. Security tests on a schedule (weekly)
+
+Test reports are automatically generated and available in the GitHub Actions artifacts.
 
 ## Security and Compliance
 

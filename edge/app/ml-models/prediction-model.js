@@ -402,9 +402,8 @@ class NetworkPatternModel {
     }
 
     // Record location-based patterns if location provided
-    if (location) {
-      const locationKey = typeof location === 'string' ? location :
-        `${location.latitude.toFixed(4)},${location.longitude.toFixed(4)}`;
+    if (location && typeof location === 'object' && location.latitude !== undefined && location.longitude !== undefined) {
+      const locationKey = `${location.latitude.toFixed(4)},${location.longitude.toFixed(4)}`;
 
       if (!this.locationPatterns[locationKey]) {
         this.locationPatterns[locationKey] = {
@@ -610,9 +609,8 @@ class NetworkPatternModel {
       issueTypes[type] = (issueTypes[type] || 0) + 1;
 
       // Track location-based issues
-      if (event.location) {
-        const locationKey = typeof event.location === 'string' ? event.location :
-          `${event.location.latitude.toFixed(4)},${event.location.longitude.toFixed(4)}`;
+      if (event.location && typeof event.location === 'object' && event.location.latitude !== undefined && event.location.longitude !== undefined) {
+        const locationKey = `${event.location.latitude.toFixed(4)},${event.location.longitude.toFixed(4)}`;
 
         if (!locationIssues[locationKey]) {
           locationIssues[locationKey] = {
@@ -737,9 +735,8 @@ class NetworkPatternModel {
       combinedRisk = Math.min(1.0, combinedRisk);
 
       // Adjust risk based on location if provided
-      if (location) {
-        const locationKey = typeof location === 'string' ? location :
-          `${location.latitude.toFixed(4)},${location.longitude.toFixed(4)}`;
+      if (location && typeof location === 'object' && location.latitude !== undefined && location.longitude !== undefined) {
+        const locationKey = `${location.latitude.toFixed(4)},${location.longitude.toFixed(4)}`;
 
         // Check if this location is in problematic locations
         const locationInfo = issuePatterns.patterns.problematicLocations.find(

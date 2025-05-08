@@ -43,7 +43,11 @@ export const API_ENDPOINTS = {
     PERFORMANCE: `${API_BASE_URL}/monitoring/performance`,
     RESOURCES: `${API_BASE_URL}/monitoring/resources`,
     ALERTS: `${API_BASE_URL}/monitoring/alerts`,
-    UPDATE_ALERT: (alertId) => `${API_BASE_URL}/monitoring/alerts/${alertId}`
+    UPDATE_ALERT: (alertId) => `${API_BASE_URL}/monitoring/alerts/${alertId}`,
+    TRANSLATION_QUALITY: `${API_BASE_URL}/monitoring/translation-quality`,
+    OFFLINE_METRICS: `${API_BASE_URL}/monitoring/offline-metrics`,
+    ML_PERFORMANCE: `${API_BASE_URL}/monitoring/ml-performance`,
+    USAGE_ANALYTICS: `${API_BASE_URL}/monitoring/usage-analytics`
   },
 
   // System endpoints

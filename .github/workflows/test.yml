@@ -1,13 +1,14 @@
-name: Test
+name: MedTranslate AI Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
-  test:
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +17,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: '18'
         cache: 'npm'
 
     - name: Install dependencies
@@ -24,24 +25,149 @@ jobs:
         npm ci
         cd backend && npm ci
         cd ../frontend/admin-dashboard && npm ci
+        cd ../frontend/provider-app && npm ci
+        cd ../../mobile/patient-app && npm ci
+        cd ../../edge && npm ci
 
     - name: Run backend unit tests
-      run: cd backend && npm test -- --testPathPattern=tests/unit/sync-analytics-controller.test.js
+      run: npm run test:unit
 
-    - name: Run backend integration tests
-      run: cd backend && npm test -- --testPathPattern=tests/integration/sync-analytics-websocket.test.js
+    - name: Run specific backend unit tests
+      run: cd backend && npm test -- --testPathPattern=tests/unit/
 
-    - name: Run frontend component tests
-      run: cd frontend/admin-dashboard && npm test -- --testPathPattern=src/components/__tests__/SyncAnalyticsDashboard.test.js
+    - name: Run edge unit tests
+      run: cd edge && npm test -- --testPathPattern=tests/unit/
 
-    - name: Run end-to-end tests
-      uses: cypress-io/github-action@v5
+    - name: Run mobile unit tests
+      run: cd mobile/patient-app && npm test -- --testPathPattern=src/components/__tests__/
+
+    - name: Run provider unit tests
+      run: cd frontend/provider-app && npm test -- --testPathPattern=src/components/__tests__/
+
+    - name: Run admin unit tests
+      run: cd frontend/admin-dashboard && npm test -- --testPathPattern=src/components/__tests__/
+
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v3
       with:
-        working-directory: frontend/admin-dashboard
-        build: npm run build
-        start: npm start
-        wait-on: 'http://localhost:3000'
-        spec: cypress/e2e/sync-analytics.cy.js
+        name: unit-test-results
+        path: test-results/unit
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      dynamodb-local:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd backend && npm ci
+        cd ../edge && npm ci
+
+    - name: Set up environment
+      run: |
+        npm run setup
+        npm run db:init
+
+    - name: Start backend server
+      run: cd backend && npm run server:start &
+
+    - name: Start edge server
+      run: cd edge && npm run edge:start &
+
+    - name: Wait for servers to start
+      run: sleep 10
+
+    - name: Run backend-edge integration tests
+      run: npm run test:integration:backend-edge
+
+    - name: Run backend-frontend integration tests
+      run: npm run test:integration:backend-frontend
+
+    - name: Run edge-frontend integration tests
+      run: npm run test:integration:edge-frontend
+
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-test-results
+        path: test-results/integration
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+
+    services:
+      dynamodb-local:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd backend && npm ci
+        cd ../edge && npm ci
+        cd ../frontend/provider-app && npm ci
+        cd ../admin-dashboard && npm ci
+        cd ../../mobile/patient-app && npm ci
+
+    - name: Set up environment
+      run: |
+        npm run setup
+        npm run db:init
+
+    - name: Start backend server
+      run: cd backend && npm run server:start &
+
+    - name: Start edge server
+      run: cd edge && npm run edge:start &
+
+    - name: Start provider app
+      run: cd frontend/provider-app && npm start &
+
+    - name: Start patient app
+      run: cd mobile/patient-app && npm start &
+
+    - name: Start admin dashboard
+      run: cd frontend/admin-dashboard && npm start &
+
+    - name: Wait for servers to start
+      run: sleep 20
+
+    - name: Run complete translation flow test
+      run: npm run test:complete-flow
+
+    - name: Run offline capability flow test
+      run: node tests/integration/offline-capability-flow.test.js
+
+    - name: Run administrative workflow test
+      run: node tests/integration/administrative-workflow.test.js
 
     - name: Run visual regression tests
       uses: cypress-io/github-action@v5
@@ -62,11 +188,138 @@ jobs:
     - name: Generate accessibility report
       run: cd frontend/admin-dashboard && node generate-a11y-report.js
 
-    - name: Upload test artifacts
+    - name: Upload e2e test results
       uses: actions/upload-artifact@v3
-      if: always()
       with:
-        name: test-artifacts
+        name: e2e-test-results
         path: |
+          test-results/e2e
           frontend/admin-dashboard/cypress/screenshots
           frontend/admin-dashboard/reports
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    services:
+      dynamodb-local:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd backend && npm ci
+        cd ../edge && npm ci
+        cd ../frontend/provider-app && npm ci
+        cd ../admin-dashboard && npm ci
+        cd ../../mobile/patient-app && npm ci
+
+    - name: Set up environment
+      run: |
+        npm run setup
+        npm run db:init
+
+    - name: Start backend server
+      run: cd backend && npm run server:start &
+
+    - name: Start edge server
+      run: cd edge && npm run edge:start &
+
+    - name: Start provider app
+      run: cd frontend/provider-app && npm start &
+
+    - name: Start patient app
+      run: cd mobile/patient-app && npm start &
+
+    - name: Wait for servers to start
+      run: sleep 20
+
+    - name: Run backend performance tests
+      run: node tests/performance/backend-performance.test.js
+
+    - name: Run edge performance tests
+      run: node tests/performance/edge-device-performance.test.js
+
+    - name: Run mobile performance tests
+      run: node tests/performance/mobile-app-performance.test.js
+
+    - name: Upload performance test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-test-results
+        path: test-results/performance
+
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run npm audit
+      run: npm audit --audit-level=high
+
+    - name: Run security audit tool
+      run: node tests/security/security-audit-tool.js
+
+    - name: Upload security test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-test-results
+        path: test-results/security
+
+  test-report:
+    name: Generate Test Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, performance-tests, security-tests]
+    if: always()
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download all test results
+      uses: actions/download-artifact@v3
+      with:
+        path: test-results
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate test report
+      run: node tests/generate-test-report.js
+
+    - name: Upload test report
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report
+        path: test-report

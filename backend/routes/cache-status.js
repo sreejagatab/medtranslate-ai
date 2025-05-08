@@ -7,8 +7,8 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticateJWT } = require('../middleware/auth');
-const logger = require('../utils/logger');
+const { authenticate } = require('../middleware/auth');
+const { logger } = require('../utils/logger');
 
 // Import edge application modules if available
 let edgeApp;
@@ -25,7 +25,7 @@ try {
  * @desc Get cache status information
  * @access Private
  */
-router.get('/status', authenticateJWT, async (req, res) => {
+router.get('/status', authenticate, async (req, res) => {
   try {
     logger.debug('Cache status request received');
 
@@ -116,7 +116,7 @@ router.get('/status', authenticateJWT, async (req, res) => {
  * @desc Get detailed cache metrics
  * @access Private
  */
-router.get('/metrics', authenticateJWT, async (req, res) => {
+router.get('/metrics', authenticate, async (req, res) => {
   try {
     logger.debug('Cache metrics request received');
 
@@ -151,7 +151,7 @@ router.get('/metrics', authenticateJWT, async (req, res) => {
  * @desc Trigger cache optimization
  * @access Private
  */
-router.post('/optimize', authenticateJWT, async (req, res) => {
+router.post('/optimize', authenticate, async (req, res) => {
   try {
     logger.info('Cache optimization request received');
 

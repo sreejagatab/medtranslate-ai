@@ -1,15 +1,30 @@
 {
-  "totalSyncs": 0,
-  "successfulSyncs": 0,
+  "totalSyncs": 10,
+  "successfulSyncs": 10,
   "failedSyncs": 0,
-  "itemsSynced": 0,
+  "itemsSynced": 30,
   "itemsFailed": 0,
   "conflicts": 0,
   "conflictsResolved": 0,
   "bytesUploaded": 0,
   "bytesDownloaded": 0,
   "compressionSavings": 0,
-  "lastReset": 1746135909337,
-  "syncDurations": [],
-  "lastUpdated": 1746138009497
+  "lastReset": 1746701989616,
+  "syncDurations": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+  ],
+  "lastUpdated": 1746709664529,
+  "averageDuration": 100,
+  "successRate": 100,
+  "conflictRate": 0,
+  "resolutionRate": 0
 }

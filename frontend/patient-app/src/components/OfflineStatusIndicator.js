@@ -1,16 +1,37 @@
 /**
- * OfflineStatusIndicator Component for MedTranslate AI Patient App
- * 
+ * Enhanced OfflineStatusIndicator Component for MedTranslate AI Patient App
+ *
  * This component displays the current connection status, offline queue information,
  * and network quality metrics. It provides visual feedback to patients about the
  * system's ability to operate in offline mode.
- * 
+ *
  * It's designed with a simpler interface than the provider version, focusing on
  * clear status indicators rather than detailed technical information.
+ *
+ * Enhanced features:
+ * - Clearer visual indicators for connection status with intuitive color coding
+ * - Simplified offline readiness indicator with user-friendly progress visualization
+ * - User-friendly error messages and guidance with actionable recommendations
+ * - Simple manual sync option with clear feedback on sync status
+ * - Animated indicators for critical status changes
+ * - Accessibility improvements for better readability
+ * - Responsive design for various screen sizes
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Badge, Chip, Tooltip, Button } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Badge,
+  Chip,
+  Tooltip,
+  Button,
+  CircularProgress,
+  Alert,
+  IconButton,
+  Collapse,
+  LinearProgress
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
@@ -18,7 +39,11 @@ import CloudSyncIcon from '@mui/icons-material/CloudSync';
 import CloudOffIcon from '@mui/icons-material/CloudOff';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SyncIcon from '@mui/icons-material/Sync';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import websocketService from '../services/websocket-service';
+import offlineService from '../services/offline-service';
 
 // Styled components
 const StatusContainer = styled(Box)(({ theme }) => ({
@@ -33,7 +58,7 @@ const StatusContainer = styled(Box)(({ theme }) => ({
 
 const StatusBadge = styled(Badge)(({ theme, status }) => ({
   '& .MuiBadge-badge': {
-    backgroundColor: 
+    backgroundColor:
       status === 'connected' ? theme.palette.success.main :
       status === 'reconnecting' ? theme.palette.warning.main :
       status === 'waiting_for_network' ? theme.palette.error.main :
@@ -56,19 +81,63 @@ const NetworkQualityIndicator = styled(Box)(({ theme, quality }) => ({
     left: 0,
     height: '100%',
     width: `${quality * 100}%`,
-    backgroundColor: 
+    backgroundColor:
       quality > 0.7 ? theme.palette.success.main :
       quality > 0.3 ? theme.palette.warning.main :
       theme.palette.error.main
   }
 }));
 
+const ReadinessProgressBar = styled(LinearProgress)(({ theme, value }) => ({
+  height: 8,
+  borderRadius: 4,
+  backgroundColor: theme.palette.grey[300],
+  '& .MuiLinearProgress-bar': {
+    backgroundColor:
+      value >= 80 ? theme.palette.success.main :
+      value >= 50 ? theme.palette.warning.main :
+      theme.palette.error.main
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+  marginRight: theme.spacing(1),
+  textTransform: 'none'
+}));
+
+const StatusChip = styled(Chip)(({ theme, severity }) => ({
+  backgroundColor:
+    severity === 'success' ? theme.palette.success.light :
+    severity === 'warning' ? theme.palette.warning.light :
+    severity === 'error' ? theme.palette.error.light :
+    theme.palette.info.light,
+  color:
+    severity === 'success' ? theme.palette.success.contrastText :
+    severity === 'warning' ? theme.palette.warning.contrastText :
+    severity === 'error' ? theme.palette.error.contrastText :
+    theme.palette.info.contrastText,
+  marginRight: theme.spacing(1),
+  marginBottom: theme.spacing(1)
+}));
+
 const OfflineStatusIndicator = () => {
+  // Connection and network state
   const [connectionState, setConnectionState] = useState('disconnected');
   const [networkStatus, setNetworkStatus] = useState({ online: navigator.onLine });
   const [queueStats, setQueueStats] = useState({ totalMessages: 0, sessionMessages: 0 });
   const [networkQuality, setNetworkQuality] = useState({ quality: 0.5 });
   const [showDetails, setShowDetails] = useState(false);
+
+  // Offline readiness state
+  const [offlineReadiness, setOfflineReadiness] = useState(0);
+  const [offlineRisk, setOfflineRisk] = useState(0);
+  const [showAlert, setShowAlert] = useState(false);
+
+  // Action states
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+  const [syncError, setSyncError] = useState(null);
 
   // Update connection state when it changes
   useEffect(() => {
@@ -139,6 +208,36 @@ const OfflineStatusIndicator = () => {
     };
   }, []);
 
+  // Fetch offline readiness information
+  useEffect(() => {
+    const updateOfflineReadiness = async () => {
+      try {
+        const readinessInfo = await offlineService.getOfflineReadiness();
+        setOfflineReadiness(readinessInfo.readinessPercentage || 0);
+        setOfflineRisk(readinessInfo.offlineRisk || 0);
+
+        // Show alert if high offline risk is detected
+        if (readinessInfo.offlineRisk > 0.7 && !showAlert) {
+          setShowAlert(true);
+        }
+      } catch (error) {
+        console.error('Error fetching offline readiness:', error);
+      }
+    };
+
+    // Initial update
+    updateOfflineReadiness();
+
+    // Set up periodic updates
+    const intervalId = setInterval(() => {
+      updateOfflineReadiness();
+    }, 30000); // Update every 30 seconds
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [showAlert]);
+
   // Update queue stats
   const updateQueueStats = async () => {
     try {
@@ -185,20 +284,103 @@ const OfflineStatusIndicator = () => {
   const getStatusMessage = () => {
     switch (connectionState) {
       case 'connected':
-        return 'Your connection is stable.';
+        return 'Your connection is stable. All translation features are available.';
       case 'reconnecting':
-        return 'Reconnecting to the server...';
+        return 'Reconnecting to the server... Please wait a moment while we restore your connection.';
       case 'waiting_for_network':
-        return 'Please check your internet connection.';
+        return 'Please check your internet connection. Make sure Wi-Fi or mobile data is turned on.';
       case 'failed':
-        return 'Unable to connect. Your messages will be sent when connection is restored.';
+        return 'Unable to connect to the server. Your translations will be saved and sent when your connection is restored.';
       default:
-        return 'Not connected to the server.';
+        return 'Not connected to the server. Some features may be limited.';
+    }
+  };
+
+  // Get user-friendly recommendation based on connection state and offline readiness
+  const getRecommendation = () => {
+    if (!networkStatus.online) {
+      return 'You are currently offline. Basic translation features will still work.';
+    }
+
+    if (connectionState === 'connected' && offlineReadiness >= 80) {
+      return 'Your app is fully prepared for offline use. You can continue using the app even if you lose connection.';
+    }
+
+    if (connectionState === 'connected' && offlineReadiness < 50) {
+      return 'Your app is not fully prepared for offline use. Stay connected to ensure all features work properly.';
+    }
+
+    if (connectionState === 'reconnecting') {
+      return 'Please wait while we restore your connection. Your data is being saved.';
+    }
+
+    if (offlineRisk > 0.7) {
+      return 'There is a high risk of losing connection. The app is preparing for offline mode.';
+    }
+
+    return '';
+  };
+
+  // Get offline readiness text
+  const getOfflineReadinessText = () => {
+    if (offlineReadiness >= 80) return 'Ready for offline use';
+    if (offlineReadiness >= 50) return 'Preparing for offline use';
+    return 'Limited offline capability';
+  };
+
+  // Handle manual sync
+  const handleManualSync = async () => {
+    if (isSyncing) return;
+
+    setIsSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+
+    try {
+      const result = await offlineService.manualSync();
+
+      // Update queue stats after sync
+      await updateQueueStats();
+
+      // Set sync result
+      setSyncResult({
+        itemsSynced: result?.itemsSynced || 0,
+        timestamp: new Date().toLocaleTimeString()
+      });
+
+      // Clear sync result after 5 seconds
+      setTimeout(() => {
+        setSyncResult(null);
+      }, 5000);
+    } catch (error) {
+      console.error('Error during manual sync:', error);
+      setSyncError(error.message);
+
+      // Clear sync error after 5 seconds
+      setTimeout(() => {
+        setSyncError(null);
+      }, 5000);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
   return (
     <Box>
+      {/* Alert for high offline risk */}
+      <Collapse in={showAlert}>
+        <Alert
+          severity="warning"
+          sx={{ mb: 1 }}
+          onClose={() => setShowAlert(false)}
+        >
+          <Typography variant="body2">
+            <strong>Offline risk detected!</strong> The app is preparing for possible offline operation.
+          </Typography>
+        </Alert>
+      </Collapse>
+
+      {/* Main Status Container */}
       <StatusContainer>
         <StatusBadge
           status={connectionState}
@@ -207,17 +389,17 @@ const OfflineStatusIndicator = () => {
         >
           <Box sx={{ mr: 1 }}>{getStatusIcon()}</Box>
         </StatusBadge>
-        
+
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="body2" fontWeight="medium">
             {getStatusText()}
           </Typography>
-          
+
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
             <Tooltip title={`Connection Quality: ${Math.round(networkQuality.quality * 100)}%`}>
               <NetworkQualityIndicator quality={networkQuality.quality} />
             </Tooltip>
-            
+
             {queueStats.totalMessages > 0 && (
               <Tooltip title={`${queueStats.totalMessages} messages waiting to be sent`}>
                 <Chip
@@ -230,24 +412,70 @@ const OfflineStatusIndicator = () => {
                 />
               </Tooltip>
             )}
+
+            {/* Offline Readiness Indicator */}
+            {offlineReadiness > 0 && (
+              <Tooltip title={`Offline Readiness: ${Math.round(offlineReadiness)}%`}>
+                <Chip
+                  size="small"
+                  label={getOfflineReadinessText()}
+                  color={
+                    offlineReadiness >= 80 ? "success" :
+                    offlineReadiness >= 50 ? "info" : "default"
+                  }
+                  variant="outlined"
+                  sx={{ ml: 1, height: 20 }}
+                />
+              </Tooltip>
+            )}
           </Box>
         </Box>
-        
-        <Button
+
+        <IconButton
           size="small"
           onClick={() => setShowDetails(!showDetails)}
           sx={{ minWidth: 'auto', p: 0.5 }}
         >
-          {showDetails ? 'Hide' : 'Details'}
-        </Button>
+          {showDetails ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
       </StatusContainer>
-      
-      {showDetails && (
-        <Box sx={{ mt: 1, p: 1, bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1 }}>
+
+      {/* Sync Result Message */}
+      <Collapse in={!!syncResult || !!syncError}>
+        <Box sx={{ mb: 1 }}>
+          {syncResult && (
+            <Alert severity="success" sx={{ mb: 1 }}>
+              Successfully synced {syncResult.itemsSynced} items at {syncResult.timestamp}
+            </Alert>
+          )}
+
+          {syncError && (
+            <Alert severity="error" sx={{ mb: 1 }}>
+              Sync error: {syncError}
+            </Alert>
+          )}
+        </Box>
+      </Collapse>
+
+      {/* Detailed Status Panel */}
+      <Collapse in={showDetails}>
+        <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1 }}>
           <Typography variant="body2" gutterBottom>
             {getStatusMessage()}
           </Typography>
-          
+
+          {getRecommendation() && (
+            <Alert
+              severity={
+                !networkStatus.online || offlineRisk > 0.7 ? "warning" :
+                offlineReadiness >= 80 ? "success" : "info"
+              }
+              sx={{ mt: 1, mb: 1 }}
+            >
+              {getRecommendation()}
+            </Alert>
+          )}
+
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
             {networkStatus.online ? (
               <CheckCircleIcon fontSize="small" color="success" sx={{ mr: 0.5 }} />
@@ -258,14 +486,56 @@ const OfflineStatusIndicator = () => {
               {networkStatus.online ? 'Internet connection available' : 'No internet connection'}
             </Typography>
           </Box>
-          
+
           {queueStats.totalMessages > 0 && (
             <Typography variant="body2" gutterBottom>
               {queueStats.totalMessages} message{queueStats.totalMessages !== 1 ? 's' : ''} will be sent automatically when connection is restored.
             </Typography>
           )}
+
+          {/* Offline Readiness Section */}
+          {offlineReadiness > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>Offline Readiness</Typography>
+              <Box sx={{ mb: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography variant="body2">Readiness Level:</Typography>
+                  <Typography variant="body2">{Math.round(offlineReadiness)}%</Typography>
+                </Box>
+                <ReadinessProgressBar
+                  variant="determinate"
+                  value={offlineReadiness}
+                  sx={{ mb: 1 }}
+                />
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {offlineReadiness >= 80 ?
+                    'Your app is fully prepared for offline use.' :
+                    offlineReadiness >= 50 ?
+                    'Your app is preparing for offline use. Some features may be limited if you go offline.' :
+                    'Limited offline capability. Many features may not work if you go offline.'
+                  }
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* Manual Sync Button */}
+          {networkStatus.online && (
+            <ActionButton
+              variant="contained"
+              color="primary"
+              size="small"
+              startIcon={isSyncing ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              fullWidth
+              sx={{ mt: 2 }}
+            >
+              {isSyncing ? 'Syncing...' : 'Manual Sync'}
+            </ActionButton>
+          )}
         </Box>
-      )}
+      </Collapse>
     </Box>
   );
 };

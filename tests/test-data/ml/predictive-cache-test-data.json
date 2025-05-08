@@ -1,0 +1,271 @@
+{
+  "training": {
+    "samples": [
+      {
+        "text": "How are you feeling today?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Where does it hurt?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Have you taken any medication?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Do you have any allergies?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "I need to check your blood pressure.",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Have you experienced chest pain?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Do you have a history of heart disease?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Are you taking any blood thinners?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Have you had any palpitations?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Do you get short of breath with exertion?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Have you had any headaches?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Have you experienced any numbness or tingling?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Have you had any seizures?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Do you have a history of stroke?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Have you had any memory problems?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      }
+    ],
+    "parameters": {
+      "learningRate": 0.01,
+      "epochs": 100,
+      "batchSize": 32
+    }
+  },
+  "testing": {
+    "samples": [
+      {
+        "context": {
+          "medicalContext": "general",
+          "recentPhrases": [
+            "How are you feeling today?",
+            "Where does it hurt?"
+          ],
+          "patientLanguage": "es",
+          "providerLanguage": "en"
+        },
+        "expected": [
+          {
+            "text": "Have you taken any medication?",
+            "sourceLanguage": "en",
+            "targetLanguage": "es"
+          },
+          {
+            "text": "Do you have any allergies?",
+            "sourceLanguage": "en",
+            "targetLanguage": "es"
+          }
+        ]
+      },
+      {
+        "context": {
+          "medicalContext": "cardiology",
+          "recentPhrases": [
+            "Have you experienced chest pain?"
+          ],
+          "patientLanguage": "es",
+          "providerLanguage": "en"
+        },
+        "expected": [
+          {
+            "text": "Do you have a history of heart disease?",
+            "sourceLanguage": "en",
+            "targetLanguage": "es"
+          },
+          {
+            "text": "Are you taking any blood thinners?",
+            "sourceLanguage": "en",
+            "targetLanguage": "es"
+          }
+        ]
+      },
+      {
+        "context": {
+          "medicalContext": "neurology",
+          "recentPhrases": [
+            "Have you had any headaches?"
+          ],
+          "patientLanguage": "es",
+          "providerLanguage": "en"
+        },
+        "expected": [
+          {
+            "text": "Have you experienced any numbness or tingling?",
+            "sourceLanguage": "en",
+            "targetLanguage": "es"
+          },
+          {
+            "text": "Have you had any seizures?",
+            "sourceLanguage": "en",
+            "targetLanguage": "es"
+          }
+        ]
+      }
+    ]
+  },
+  "alternativeModel": {
+    "samples": [
+      {
+        "text": "How are you feeling today?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Where does it hurt?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Have you taken any medication?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Do you have any allergies?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "I need to check your blood pressure.",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "general"
+      },
+      {
+        "text": "Have you experienced chest pain?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Do you have a history of heart disease?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Are you taking any blood thinners?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Have you had any palpitations?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Do you get short of breath with exertion?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "cardiology"
+      },
+      {
+        "text": "Have you had any headaches?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Have you experienced any numbness or tingling?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Have you had any seizures?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Do you have a history of stroke?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      },
+      {
+        "text": "Have you had any memory problems?",
+        "sourceLanguage": "en",
+        "targetLanguage": "es",
+        "medicalContext": "neurology"
+      }
+    ],
+    "parameters": {
+      "learningRate": 0.005,
+      "epochs": 200,
+      "batchSize": 16
+    }
+  }
+}

@@ -40,6 +40,9 @@ Resources:
             ProjectionType: ALL
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
 
   SessionsTable:
     Type: AWS::DynamoDB::Table
@@ -63,6 +66,9 @@ Resources:
             ProjectionType: ALL
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
 
   TranscriptsTable:
     Type: AWS::DynamoDB::Table
@@ -81,6 +87,9 @@ Resources:
           KeyType: RANGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
 
   # S3 Buckets
   TranscriptsBucket:

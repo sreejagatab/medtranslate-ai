@@ -1,5 +1,6 @@
 /**
  * Jest configuration for MedTranslate AI
+ * Enhanced with coverage thresholds and project organization
  */
 
 module.exports = {
@@ -31,7 +32,10 @@ module.exports = {
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
   testPathIgnorePatterns: [
-    '/node_modules/'
+    '/node_modules/',
+    '/dist/',
+    '/build/',
+    '/coverage/'
   ],
 
   // A map from regular expressions to paths to transformers
@@ -57,7 +61,81 @@ module.exports = {
   collectCoverageFrom: [
     'backend/**/*.js',
     'edge/**/*.js',
+    'frontend/**/*.js',
     '!**/node_modules/**',
-    '!**/vendor/**'
+    '!**/vendor/**',
+    '!**/dist/**',
+    '!**/build/**',
+    '!**/coverage/**'
+  ],
+
+  // A list of reporter names that Jest uses when writing coverage reports
+  coverageReporters: ['json', 'lcov', 'text', 'clover', 'html'],
+
+  // The threshold for coverage results
+  coverageThreshold: {
+    global: {
+      statements: 70,
+      branches: 60,
+      functions: 70,
+      lines: 70
+    },
+    './backend/': {
+      statements: 75,
+      branches: 65,
+      functions: 75,
+      lines: 75
+    },
+    './edge/': {
+      statements: 75,
+      branches: 65,
+      functions: 75,
+      lines: 75
+    }
+  },
+
+  // Projects configuration for monorepo setup
+  projects: [
+    {
+      displayName: 'backend',
+      testMatch: [
+        '<rootDir>/tests/unit/**/backend*.test.js',
+        '<rootDir>/tests/integration/**/backend*.test.js',
+        '<rootDir>/tests/unit/translation*.test.js',
+        '<rootDir>/tests/unit/auth*.test.js',
+        '<rootDir>/tests/unit/websocket*.test.js'
+      ],
+      testEnvironment: 'node'
+    },
+    {
+      displayName: 'edge',
+      testMatch: [
+        '<rootDir>/tests/unit/**/edge*.test.js',
+        '<rootDir>/tests/integration/**/edge*.test.js',
+        '<rootDir>/tests/unit/cache*.test.js',
+        '<rootDir>/tests/unit/sync*.test.js',
+        '<rootDir>/tests/performance/edge*.test.js'
+      ],
+      testEnvironment: 'node'
+    },
+    {
+      displayName: 'frontend',
+      testMatch: [
+        '<rootDir>/tests/unit/**/provider*.test.js',
+        '<rootDir>/tests/unit/**/patient*.test.js',
+        '<rootDir>/tests/unit/**/admin*.test.js',
+        '<rootDir>/tests/integration/**/frontend*.test.js'
+      ],
+      testEnvironment: 'jsdom'
+    },
+    {
+      displayName: 'e2e',
+      testMatch: [
+        '<rootDir>/tests/e2e/**/*.test.js',
+        '<rootDir>/tests/integration/complete-*.test.js'
+      ],
+      testEnvironment: 'node',
+      testTimeout: 60000 // 60 seconds for E2E tests
+    }
   ]
 };

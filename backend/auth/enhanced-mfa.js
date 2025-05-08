@@ -23,7 +23,7 @@ const TRUSTED_DEVICE_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /**
  * Generate a new TOTP secret for a user
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} email - User email
  * @returns {Promise<Object>} - TOTP setup information
@@ -62,7 +62,7 @@ async function generateTotpSecret(userId, email) {
 
 /**
  * Verify TOTP token and enable MFA if valid
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} token - TOTP token
  * @returns {Promise<Object>} - Verification result with backup codes
@@ -123,7 +123,7 @@ async function verifyAndEnableMfa(userId, token) {
 
 /**
  * Verify TOTP token for authentication
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} token - TOTP token or backup code
  * @returns {Promise<Object>} - Verification result
@@ -149,7 +149,7 @@ async function verifyMfa(userId, token) {
     if (mfa_backup_codes && mfa_backup_codes.includes(token)) {
       // Remove used backup code
       const updatedBackupCodes = mfa_backup_codes.filter(code => code !== token);
-      
+
       await db.query(
         'UPDATE users SET mfa_backup_codes = $1, mfa_last_used_at = NOW() WHERE id = $2',
         [updatedBackupCodes, userId]
@@ -170,7 +170,7 @@ async function verifyMfa(userId, token) {
     // Verify TOTP
     if (mfa_type === 'totp') {
       const secret = decryptSecret(mfa_secret);
-      
+
       const verified = speakeasy.totp.verify({
         secret,
         encoding: 'base32',
@@ -207,7 +207,7 @@ async function verifyMfa(userId, token) {
 
 /**
  * Generate backup codes for a user
- * 
+ *
  * @param {string} userId - User ID
  * @returns {Promise<Array<string>>} - Generated backup codes
  */
@@ -221,7 +221,7 @@ async function generateBackupCodes(userId) {
         .toString('hex')
         .slice(0, BACKUP_CODE_LENGTH)
         .toUpperCase();
-      
+
       // Format as XXXX-XXXX-XX
       const formattedCode = `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8)}`;
       backupCodes.push(formattedCode);
@@ -242,7 +242,7 @@ async function generateBackupCodes(userId) {
 
 /**
  * Disable MFA for a user
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} password - User password for verification
  * @returns {Promise<Object>} - Disable result
@@ -279,7 +279,7 @@ async function disableMfa(userId, password) {
 
 /**
  * Generate a recovery code for MFA
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} email - User email for verification
  * @returns {Promise<Object>} - Recovery result
@@ -326,7 +326,7 @@ async function generateRecoveryCode(userId, email) {
 
 /**
  * Recover MFA access using a recovery code
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} recoveryCode - Recovery code
  * @returns {Promise<Object>} - Recovery result
@@ -380,7 +380,7 @@ async function recoverMfaAccess(userId, recoveryCode) {
 
 /**
  * Register a trusted device
- * 
+ *
  * @param {string} userId - User ID
  * @param {Object} deviceInfo - Device information
  * @returns {Promise<Object>} - Registration result
@@ -420,7 +420,7 @@ async function registerTrustedDevice(userId, deviceInfo) {
 
 /**
  * Verify if a device is trusted
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} deviceId - Device ID
  * @returns {Promise<Object>} - Verification result
@@ -466,7 +466,7 @@ async function verifyTrustedDevice(userId, deviceId) {
 
 /**
  * Revoke a trusted device
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} deviceId - Device ID
  * @returns {Promise<Object>} - Revocation result
@@ -499,7 +499,7 @@ async function revokeTrustedDevice(userId, deviceId) {
 
 /**
  * Get all trusted devices for a user
- * 
+ *
  * @param {string} userId - User ID
  * @returns {Promise<Object>} - List of trusted devices
  */
@@ -524,32 +524,94 @@ async function getTrustedDevices(userId) {
 }
 
 /**
- * Encrypt a secret
- * 
+ * Encrypt a secret using AES-256-GCM
+ *
  * @param {string} secret - Secret to encrypt
- * @returns {string} - Encrypted secret
+ * @returns {string} - Encrypted secret in format: iv:authTag:encryptedData
  */
 function encryptSecret(secret) {
-  // In a real implementation, this would use a proper encryption method
-  // with a secure key. This is just a placeholder.
-  return `encrypted:${secret}`;
+  try {
+    // Get encryption key from environment or generate a secure one
+    // In production, this would be stored in a secure key management service
+    const key = process.env.MFA_ENCRYPTION_KEY ||
+      crypto.randomBytes(32).toString('hex'); // 256 bits
+
+    // Convert key to Buffer if it's a string
+    const keyBuffer = Buffer.isBuffer(key) ? key : Buffer.from(key, 'hex');
+
+    // Generate random IV
+    const iv = crypto.randomBytes(16);
+
+    // Create cipher
+    const cipher = crypto.createCipheriv('aes-256-gcm', keyBuffer, iv);
+
+    // Encrypt data
+    const encryptedData = Buffer.concat([
+      cipher.update(Buffer.from(secret, 'utf8')),
+      cipher.final()
+    ]);
+
+    // Get auth tag
+    const authTag = cipher.getAuthTag();
+
+    // Return encrypted data in format: iv:authTag:encryptedData
+    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encryptedData.toString('hex')}`;
+  } catch (error) {
+    console.error('Error encrypting secret:', error);
+    throw new Error('Failed to encrypt secret');
+  }
 }
 
 /**
- * Decrypt a secret
- * 
- * @param {string} encryptedSecret - Encrypted secret
+ * Decrypt a secret using AES-256-GCM
+ *
+ * @param {string} encryptedSecret - Encrypted secret in format: iv:authTag:encryptedData
  * @returns {string} - Decrypted secret
  */
 function decryptSecret(encryptedSecret) {
-  // In a real implementation, this would use a proper decryption method
-  // with a secure key. This is just a placeholder.
-  return encryptedSecret.replace('encrypted:', '');
+  try {
+    // Handle legacy format
+    if (encryptedSecret.startsWith('encrypted:')) {
+      return encryptedSecret.replace('encrypted:', '');
+    }
+
+    // Parse encrypted data
+    const [ivHex, authTagHex, encryptedDataHex] = encryptedSecret.split(':');
+
+    // Get encryption key from environment
+    const key = process.env.MFA_ENCRYPTION_KEY ||
+      crypto.randomBytes(32).toString('hex'); // 256 bits
+
+    // Convert key to Buffer if it's a string
+    const keyBuffer = Buffer.isBuffer(key) ? key : Buffer.from(key, 'hex');
+
+    // Convert components to Buffers
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const encryptedData = Buffer.from(encryptedDataHex, 'hex');
+
+    // Create decipher
+    const decipher = crypto.createDecipheriv('aes-256-gcm', keyBuffer, iv);
+
+    // Set auth tag
+    decipher.setAuthTag(authTag);
+
+    // Decrypt data
+    const decryptedData = Buffer.concat([
+      decipher.update(encryptedData),
+      decipher.final()
+    ]);
+
+    return decryptedData.toString('utf8');
+  } catch (error) {
+    console.error('Error decrypting secret:', error);
+    throw new Error('Failed to decrypt secret');
+  }
 }
 
 /**
  * Verify user password
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} password - Password to verify
  * @returns {Promise<boolean>} - Whether password is valid

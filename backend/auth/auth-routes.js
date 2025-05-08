@@ -6,6 +6,13 @@
 
 const express = require('express');
 const authService = require('./auth-service');
+const { validate } = require('../middleware/validation');
+const {
+  authSchemas,
+  sessionSchemas,
+  userSchemas,
+  paramSchemas
+} = require('../middleware/validation-schemas');
 
 const router = express.Router();
 
@@ -13,15 +20,8 @@ const router = express.Router();
  * Provider login endpoint
  * POST /auth/login
  */
-router.post('/login', (req, res) => {
+router.post('/login', validate({ body: authSchemas.login }), (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      error: 'Email and password are required'
-    });
-  }
 
   const user = authService.authenticateUser(email, password);
 
@@ -50,15 +50,8 @@ router.post('/login', (req, res) => {
  * Create a new session
  * POST /sessions
  */
-router.post('/sessions', (req, res) => {
+router.post('/sessions', validate({ body: sessionSchemas.createSession }), (req, res) => {
   const { providerId, patientLanguage, context } = req.body;
-
-  if (!providerId || !patientLanguage) {
-    return res.status(400).json({
-      success: false,
-      error: 'Provider ID and patient language are required'
-    });
-  }
 
   const session = authService.createSession(providerId, patientLanguage, context);
 
@@ -72,15 +65,8 @@ router.post('/sessions', (req, res) => {
  * Join a session with a session code
  * POST /sessions/join
  */
-router.post('/sessions/join', (req, res) => {
+router.post('/sessions/join', validate({ body: sessionSchemas.joinSession }), (req, res) => {
   const { sessionCode } = req.body;
-
-  if (!sessionCode) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session code is required'
-    });
-  }
 
   const result = authService.joinSessionWithCode(sessionCode);
 
@@ -95,7 +81,7 @@ router.post('/sessions/join', (req, res) => {
  * End a session
  * POST /sessions/:sessionId/end
  */
-router.post('/sessions/:sessionId/end', (req, res) => {
+router.post('/sessions/:sessionId/end', validate({ params: paramSchemas.sessionId }), (req, res) => {
   const { sessionId } = req.params;
 
   const result = authService.endSession(sessionId);
@@ -111,15 +97,8 @@ router.post('/sessions/:sessionId/end', (req, res) => {
  * Generate a patient token for a session
  * POST /sessions/patient-token
  */
-router.post('/sessions/patient-token', (req, res) => {
+router.post('/sessions/patient-token', validate({ body: sessionSchemas.generatePatientToken }), (req, res) => {
   const { sessionId, language } = req.body;
-
-  if (!sessionId || !language) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session ID and language are required'
-    });
-  }
 
   const result = authService.generatePatientSessionToken(sessionId, language);
 
@@ -134,15 +113,8 @@ router.post('/sessions/patient-token', (req, res) => {
  * Verify a token
  * POST /auth/verify
  */
-router.post('/verify', (req, res) => {
+router.post('/verify', validate({ body: authSchemas.verifyToken }), (req, res) => {
   const { token } = req.body;
-
-  if (!token) {
-    return res.status(400).json({
-      success: false,
-      error: 'Token is required'
-    });
-  }
 
   const decoded = authService.verifyToken(token);
 
@@ -163,16 +135,8 @@ router.post('/verify', (req, res) => {
  * Register a new user
  * POST /auth/register
  */
-router.post('/register', (req, res) => {
+router.post('/register', validate({ body: authSchemas.register }), (req, res) => {
   const { name, email, password, role, specialty } = req.body;
-
-  // Basic validation
-  if (!name || !email || !password) {
-    return res.status(400).json({
-      success: false,
-      error: 'Name, email, and password are required'
-    });
-  }
 
   // Register user
   const result = authService.registerUser({
@@ -201,7 +165,7 @@ router.post('/register', (req, res) => {
  * Get all users (admin only)
  * GET /users
  */
-router.get('/users', (req, res) => {
+router.get('/users', validate({ query: userSchemas.getUsers }), (req, res) => {
   // Get token from Authorization header
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -241,7 +205,11 @@ router.get('/users', (req, res) => {
  * Update a user
  * PUT /users/:userId
  */
-router.put('/users/:userId', (req, res) => {
+router.put('/users/:userId', validate({
+  params: paramSchemas.userId,
+  body: userSchemas.updateUser,
+  sanitizeBody: ['name', 'email', 'specialty']
+}), (req, res) => {
   // Get token from Authorization header
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

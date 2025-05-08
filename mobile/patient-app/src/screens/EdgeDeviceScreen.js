@@ -1,6 +1,6 @@
 /**
  * Edge Device Screen for MedTranslate AI Patient App
- * 
+ *
  * This screen allows users to discover and manage edge devices.
  */
 
@@ -17,20 +17,20 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { EdgeConnectionContext } from '../contexts/EdgeConnectionContext';
 import { ConnectionContext } from '../contexts/ConnectionContext';
-import EdgeDeviceDiscovery from '../../shared/components/EdgeDeviceDiscovery';
-import * as AccessibilityUtils from '../../shared/utils/accessibility-utils';
+import EdgeDeviceDiscovery from '../shared/components/EdgeDeviceDiscovery';
+import * as AccessibilityUtils from '../shared/utils/accessibility-utils';
 
 const EdgeDeviceScreen = ({ navigation }) => {
   // Contexts
   const edgeConnection = useContext(EdgeConnectionContext);
   const connection = useContext(ConnectionContext);
-  
+
   // State
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Check if we're on WiFi
   const isWifi = connection.connectionType === 'wifi';
-  
+
   // Handle device selection
   const handleDeviceSelected = (device) => {
     Alert.alert(
@@ -39,7 +39,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
       [{ text: 'OK' }]
     );
   };
-  
+
   // Render
   return (
     <View style={styles.container}>
@@ -50,7 +50,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
             Connect to a local edge device for improved performance and offline capabilities
           </Text>
         </View>
-        
+
         {/* Connection Status */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
@@ -64,7 +64,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.statusDetails}>
             {edgeConnection.isEdgeDevice ? (
               <>
@@ -74,23 +74,23 @@ const EdgeDeviceScreen = ({ navigation }) => {
                     {edgeConnection.preferredDevice?.name || 'Edge Device'}
                   </Text>
                 </View>
-                
+
                 <View style={styles.statusItem}>
                   <Text style={styles.statusLabel}>IP Address:</Text>
                   <Text style={styles.statusValue}>
                     {edgeConnection.preferredDevice?.ipAddress || 'Unknown'}
                   </Text>
                 </View>
-                
+
                 <View style={styles.statusItem}>
                   <Text style={styles.statusLabel}>Last Sync:</Text>
                   <Text style={styles.statusValue}>
-                    {edgeConnection.lastSyncTime 
-                      ? new Date(edgeConnection.lastSyncTime).toLocaleTimeString() 
+                    {edgeConnection.lastSyncTime
+                      ? new Date(edgeConnection.lastSyncTime).toLocaleTimeString()
                       : 'Never'}
                   </Text>
                 </View>
-                
+
                 <View style={styles.statusItem}>
                   <Text style={styles.statusLabel}>Offline Queue:</Text>
                   <Text style={styles.statusValue}>
@@ -100,14 +100,14 @@ const EdgeDeviceScreen = ({ navigation }) => {
               </>
             ) : (
               <Text style={styles.statusMessage}>
-                {isWifi 
+                {isWifi
                   ? 'No edge device connected. Use the discovery tool below to find and connect to an edge device on your network.'
                   : 'You need to be connected to WiFi to discover edge devices.'}
               </Text>
             )}
           </View>
         </View>
-        
+
         {/* Network Status */}
         <View style={styles.networkCard}>
           <View style={styles.networkHeader}>
@@ -121,7 +121,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.networkDetails}>
             <View style={styles.networkItem}>
               <Text style={styles.networkLabel}>Connection Type:</Text>
@@ -129,7 +129,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
                 {connection.connectionType}
               </Text>
             </View>
-            
+
             <View style={styles.networkItem}>
               <Text style={styles.networkLabel}>Internet Reachable:</Text>
               <Text style={styles.networkValue}>
@@ -138,11 +138,11 @@ const EdgeDeviceScreen = ({ navigation }) => {
             </View>
           </View>
         </View>
-        
+
         {/* Edge Device Discovery */}
         <View style={styles.discoveryCard}>
           <Text style={styles.discoveryTitle}>Edge Device Discovery</Text>
-          
+
           {!isWifi ? (
             <View style={styles.wifiWarning}>
               <Ionicons name="wifi-outline" size={24} color="#FFC107" />
@@ -151,17 +151,17 @@ const EdgeDeviceScreen = ({ navigation }) => {
               </Text>
             </View>
           ) : (
-            <EdgeDeviceDiscovery 
+            <EdgeDeviceDiscovery
               onDeviceSelected={handleDeviceSelected}
               style={styles.discoveryTool}
             />
           )}
         </View>
-        
+
         {/* Offline Models */}
         <View style={styles.modelsCard}>
           <Text style={styles.modelsTitle}>Offline Models</Text>
-          
+
           {Object.keys(edgeConnection.availableModels).length === 0 ? (
             <Text style={styles.modelsMessage}>
               No offline models available. Connect to an edge device to download models.
@@ -183,7 +183,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
               ))}
             </View>
           )}
-          
+
           <TouchableOpacity
             style={[
               styles.actionButton,
@@ -214,7 +214,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
             )}
           </TouchableOpacity>
         </View>
-        
+
         {/* Actions */}
         <View style={styles.actionsCard}>
           <TouchableOpacity
@@ -227,7 +227,7 @@ const EdgeDeviceScreen = ({ navigation }) => {
               try {
                 setIsLoading(true);
                 const result = await edgeConnection.syncOfflineData();
-                
+
                 if (result) {
                   Alert.alert(
                     'Sync Complete',

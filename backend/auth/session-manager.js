@@ -15,7 +15,35 @@ const { logger } = require('../utils/logger');
 const { getClientInfo } = require('../utils/device-fingerprint');
 
 // Configuration
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Should be in environment variables
+const fs = require('fs');
+const path = require('path');
+
+// Load JWT keys
+let JWT_PRIVATE_KEY, JWT_PUBLIC_KEY;
+const JWT_PRIVATE_KEY_PATH = process.env.JWT_PRIVATE_KEY_PATH || path.join(__dirname, '../certs/jwt/private.key');
+const JWT_PUBLIC_KEY_PATH = process.env.JWT_PUBLIC_KEY_PATH || path.join(__dirname, '../certs/jwt/public.key');
+
+try {
+  // Check if keys exist
+  if (fs.existsSync(JWT_PRIVATE_KEY_PATH) && fs.existsSync(JWT_PUBLIC_KEY_PATH)) {
+    JWT_PRIVATE_KEY = fs.readFileSync(JWT_PRIVATE_KEY_PATH, 'utf8');
+    JWT_PUBLIC_KEY = fs.readFileSync(JWT_PUBLIC_KEY_PATH, 'utf8');
+  } else {
+    // Fallback to symmetric algorithm with secret if keys don't exist
+    console.warn('JWT RSA keys not found. Falling back to symmetric algorithm.');
+    JWT_PRIVATE_KEY = process.env.JWT_SECRET || 'your-secret-key'; // Should be in environment variables
+    JWT_PUBLIC_KEY = JWT_PRIVATE_KEY;
+  }
+} catch (error) {
+  console.error('Error loading JWT keys:', error);
+  // Fallback to symmetric algorithm with secret
+  JWT_PRIVATE_KEY = process.env.JWT_SECRET || 'your-secret-key'; // Should be in environment variables
+  JWT_PUBLIC_KEY = JWT_PRIVATE_KEY;
+}
+
+// JWT algorithm - use RS256 if we have RSA keys, otherwise fall back to HS256
+const JWT_ALGORITHM = JWT_PRIVATE_KEY !== JWT_PUBLIC_KEY ? 'RS256' : 'HS256';
+
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '1h';
 const REFRESH_TOKEN_EXPIRY = parseInt(process.env.REFRESH_TOKEN_EXPIRY || '30') * 24 * 60 * 60 * 1000; // 30 days in ms
 const SESSION_INACTIVITY_TIMEOUT = parseInt(process.env.SESSION_INACTIVITY_TIMEOUT || '30') * 60 * 1000; // 30 minutes in ms
@@ -24,7 +52,7 @@ const ENABLE_DEVICE_FINGERPRINTING = process.env.ENABLE_DEVICE_FINGERPRINTING !=
 
 /**
  * Create a new session for a user
- * 
+ *
  * @param {Object} user - User object
  * @param {Object} req - Request object
  * @returns {Promise<Object>} - Session tokens
@@ -33,11 +61,11 @@ async function createSession(user, req) {
   try {
     // Generate session ID
     const sessionId = crypto.randomBytes(16).toString('hex');
-    
+
     // Get client information for device fingerprinting
     const clientInfo = ENABLE_DEVICE_FINGERPRINTING ? getClientInfo(req) : {};
     const deviceFingerprint = ENABLE_DEVICE_FINGERPRINTING ? generateDeviceFingerprint(clientInfo) : null;
-    
+
     // Generate JWT token
     const token = jwt.sign(
       {
@@ -46,19 +74,25 @@ async function createSession(user, req) {
         role: user.role,
         sessionId
       },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRY }
+      JWT_PRIVATE_KEY,
+      {
+        expiresIn: JWT_EXPIRY,
+        algorithm: JWT_ALGORITHM,
+        issuer: 'medtranslate-ai',
+        audience: 'medtranslate-api',
+        notBefore: 0 // Token is valid immediately
+      }
     );
-    
+
     // Generate refresh token
     const refreshToken = crypto.randomBytes(40).toString('hex');
     const refreshTokenHash = hashToken(refreshToken);
     const refreshTokenExpiry = new Date(Date.now() + REFRESH_TOKEN_EXPIRY);
-    
+
     // Store session in database
     await db.query(
-      `INSERT INTO user_sessions 
-       (user_id, session_id, refresh_token, expires_at, ip_address, user_agent, device_fingerprint, device_type, location) 
+      `INSERT INTO user_sessions
+       (user_id, session_id, refresh_token, expires_at, ip_address, user_agent, device_fingerprint, device_type, location)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         user.id,
@@ -72,10 +106,10 @@ async function createSession(user, req) {
         clientInfo.location || null
       ]
     );
-    
+
     // Check if user has too many active sessions
     await enforceSessionLimit(user.id);
-    
+
     // Log session creation
     logger.info('Session created', {
       userId: user.id,
@@ -83,7 +117,7 @@ async function createSession(user, req) {
       ip: req.ip,
       deviceType: clientInfo.deviceType
     });
-    
+
     return {
       success: true,
       token,
@@ -102,7 +136,7 @@ async function createSession(user, req) {
 
 /**
  * Refresh a session using a refresh token
- * 
+ *
  * @param {string} refreshToken - Refresh token
  * @param {Object} req - Request object
  * @returns {Promise<Object>} - New session tokens
@@ -111,7 +145,7 @@ async function refreshSession(refreshToken, req) {
   try {
     // Hash the refresh token for comparison
     const refreshTokenHash = hashToken(refreshToken);
-    
+
     // Find session with this refresh token
     const result = await db.query(
       `SELECT s.id, s.user_id, s.session_id, s.device_fingerprint, s.expires_at, u.email, u.role
@@ -120,21 +154,21 @@ async function refreshSession(refreshToken, req) {
        WHERE s.refresh_token = $1 AND s.revoked = false AND s.expires_at > NOW()`,
       [refreshTokenHash]
     );
-    
+
     if (result.rows.length === 0) {
       return {
         success: false,
         error: 'Invalid refresh token'
       };
     }
-    
+
     const session = result.rows[0];
-    
+
     // Verify device fingerprint if enabled
     if (ENABLE_DEVICE_FINGERPRINTING) {
       const clientInfo = getClientInfo(req);
       const currentFingerprint = generateDeviceFingerprint(clientInfo);
-      
+
       // If fingerprints don't match, this could be a token theft attempt
       if (session.device_fingerprint && currentFingerprint !== session.device_fingerprint) {
         // Log potential security issue
@@ -145,10 +179,10 @@ async function refreshSession(refreshToken, req) {
           currentFingerprint,
           ip: req.ip
         });
-        
+
         // Revoke this session as a security measure
         await revokeSession(session.session_id);
-        
+
         return {
           success: false,
           error: 'Security validation failed',
@@ -156,7 +190,7 @@ async function refreshSession(refreshToken, req) {
         };
       }
     }
-    
+
     // Generate new JWT token
     const token = jwt.sign(
       {
@@ -165,16 +199,22 @@ async function refreshSession(refreshToken, req) {
         role: session.role,
         sessionId: session.session_id
       },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRY }
+      JWT_PRIVATE_KEY,
+      {
+        expiresIn: JWT_EXPIRY,
+        algorithm: JWT_ALGORITHM,
+        issuer: 'medtranslate-ai',
+        audience: 'medtranslate-api',
+        notBefore: 0 // Token is valid immediately
+      }
     );
-    
+
     // Update session last activity
     await db.query(
       'UPDATE user_sessions SET last_activity = NOW() WHERE id = $1',
       [session.id]
     );
-    
+
     return {
       success: true,
       token,
@@ -193,16 +233,20 @@ async function refreshSession(refreshToken, req) {
 
 /**
  * Validate a session
- * 
+ *
  * @param {string} token - JWT token
  * @param {Object} req - Request object
  * @returns {Promise<Object>} - Validation result
  */
 async function validateSession(token, req) {
   try {
-    // Verify JWT token
-    const decoded = jwt.verify(token, JWT_SECRET);
-    
+    // Verify JWT token with explicit options for enhanced security
+    const decoded = jwt.verify(token, JWT_PUBLIC_KEY, {
+      algorithms: [JWT_ALGORITHM], // Accept tokens signed with our algorithm
+      issuer: 'medtranslate-ai',
+      audience: 'medtranslate-api'
+    });
+
     // Check if session exists and is not revoked
     const result = await db.query(
       `SELECT s.id, s.last_activity, s.device_fingerprint, s.inactivity_timeout
@@ -210,26 +254,26 @@ async function validateSession(token, req) {
        WHERE s.session_id = $1 AND s.user_id = $2 AND s.revoked = false`,
       [decoded.sessionId, decoded.userId]
     );
-    
+
     if (result.rows.length === 0) {
       return {
         success: false,
         error: 'Session not found or revoked'
       };
     }
-    
+
     const session = result.rows[0];
-    
+
     // Check for session inactivity timeout
     if (session.last_activity) {
       const inactivityTimeout = session.inactivity_timeout || SESSION_INACTIVITY_TIMEOUT;
       const lastActivity = new Date(session.last_activity).getTime();
       const now = Date.now();
-      
+
       if (now - lastActivity > inactivityTimeout) {
         // Session has timed out due to inactivity
         await revokeSession(decoded.sessionId);
-        
+
         return {
           success: false,
           error: 'Session expired due to inactivity',
@@ -237,12 +281,12 @@ async function validateSession(token, req) {
         };
       }
     }
-    
+
     // Verify device fingerprint if enabled
     if (ENABLE_DEVICE_FINGERPRINTING && session.device_fingerprint) {
       const clientInfo = getClientInfo(req);
       const currentFingerprint = generateDeviceFingerprint(clientInfo);
-      
+
       // If fingerprints don't match, this could be a token theft attempt
       if (currentFingerprint !== session.device_fingerprint) {
         // Log potential security issue
@@ -253,7 +297,7 @@ async function validateSession(token, req) {
           currentFingerprint,
           ip: req.ip
         });
-        
+
         // Don't revoke automatically, but return an error
         return {
           success: false,
@@ -262,13 +306,13 @@ async function validateSession(token, req) {
         };
       }
     }
-    
+
     // Update session last activity
     await db.query(
       'UPDATE user_sessions SET last_activity = NOW() WHERE id = $1',
       [session.id]
     );
-    
+
     return {
       success: true,
       userId: decoded.userId,
@@ -289,7 +333,7 @@ async function validateSession(token, req) {
         code: 'TOKEN_EXPIRED'
       };
     }
-    
+
     console.error('Error validating session:', error);
     return {
       success: false,
@@ -300,7 +344,7 @@ async function validateSession(token, req) {
 
 /**
  * Revoke a session
- * 
+ *
  * @param {string} sessionId - Session ID
  * @returns {Promise<Object>} - Revocation result
  */
@@ -310,20 +354,20 @@ async function revokeSession(sessionId) {
       'UPDATE user_sessions SET revoked = true, revoked_at = NOW() WHERE session_id = $1 RETURNING id, user_id',
       [sessionId]
     );
-    
+
     if (result.rows.length === 0) {
       return {
         success: false,
         error: 'Session not found'
       };
     }
-    
+
     // Log session revocation
     logger.info('Session revoked', {
       sessionId,
       userId: result.rows[0].user_id
     });
-    
+
     return {
       success: true
     };
@@ -338,7 +382,7 @@ async function revokeSession(sessionId) {
 
 /**
  * Revoke all sessions for a user
- * 
+ *
  * @param {number} userId - User ID
  * @param {string} currentSessionId - Current session ID to exclude (optional)
  * @returns {Promise<Object>} - Revocation result
@@ -347,22 +391,22 @@ async function revokeAllSessions(userId, currentSessionId = null) {
   try {
     let query = 'UPDATE user_sessions SET revoked = true, revoked_at = NOW() WHERE user_id = $1 AND revoked = false';
     const params = [userId];
-    
+
     // Exclude current session if provided
     if (currentSessionId) {
       query += ' AND session_id != $2';
       params.push(currentSessionId);
     }
-    
+
     const result = await db.query(query + ' RETURNING id', params);
-    
+
     // Log session revocation
     logger.info('All sessions revoked for user', {
       userId,
       count: result.rows.length,
       excludedSessionId: currentSessionId
     });
-    
+
     return {
       success: true,
       count: result.rows.length
@@ -378,7 +422,7 @@ async function revokeAllSessions(userId, currentSessionId = null) {
 
 /**
  * Get all active sessions for a user
- * 
+ *
  * @param {number} userId - User ID
  * @returns {Promise<Object>} - User sessions
  */
@@ -391,7 +435,7 @@ async function getUserSessions(userId) {
        ORDER BY last_activity DESC`,
       [userId]
     );
-    
+
     return {
       success: true,
       sessions: result.rows
@@ -407,7 +451,7 @@ async function getUserSessions(userId) {
 
 /**
  * Set session inactivity timeout
- * 
+ *
  * @param {string} sessionId - Session ID
  * @param {number} timeoutMs - Timeout in milliseconds
  * @returns {Promise<Object>} - Update result
@@ -418,14 +462,14 @@ async function setSessionInactivityTimeout(sessionId, timeoutMs) {
       'UPDATE user_sessions SET inactivity_timeout = $1 WHERE session_id = $2 RETURNING id',
       [timeoutMs, sessionId]
     );
-    
+
     if (result.rows.length === 0) {
       return {
         success: false,
         error: 'Session not found'
       };
     }
-    
+
     return {
       success: true,
       timeoutMs
@@ -441,7 +485,7 @@ async function setSessionInactivityTimeout(sessionId, timeoutMs) {
 
 /**
  * Enforce session limit per user
- * 
+ *
  * @param {number} userId - User ID
  * @returns {Promise<void>}
  */
@@ -452,30 +496,30 @@ async function enforceSessionLimit(userId) {
       'SELECT COUNT(*) FROM user_sessions WHERE user_id = $1 AND revoked = false AND expires_at > NOW()',
       [userId]
     );
-    
+
     const sessionCount = parseInt(countResult.rows[0].count);
-    
+
     // If under limit, no action needed
     if (sessionCount <= MAX_SESSIONS_PER_USER) {
       return;
     }
-    
+
     // Get oldest sessions to revoke
     const excessCount = sessionCount - MAX_SESSIONS_PER_USER;
-    
+
     const oldestSessions = await db.query(
-      `SELECT session_id FROM user_sessions 
+      `SELECT session_id FROM user_sessions
        WHERE user_id = $1 AND revoked = false AND expires_at > NOW()
        ORDER BY last_activity ASC
        LIMIT $2`,
       [userId, excessCount]
     );
-    
+
     // Revoke oldest sessions
     for (const session of oldestSessions.rows) {
       await revokeSession(session.session_id);
     }
-    
+
     logger.info('Enforced session limit', {
       userId,
       limit: MAX_SESSIONS_PER_USER,
@@ -488,7 +532,7 @@ async function enforceSessionLimit(userId) {
 
 /**
  * Generate device fingerprint
- * 
+ *
  * @param {Object} clientInfo - Client information
  * @returns {string} - Device fingerprint
  */
@@ -503,14 +547,14 @@ function generateDeviceFingerprint(clientInfo) {
     clientInfo.colorDepth,
     clientInfo.timezone
   ].filter(Boolean).join('|');
-  
+
   // Hash the fingerprint data
   return crypto.createHash('sha256').update(fingerprintData).digest('hex');
 }
 
 /**
  * Hash a token for secure storage
- * 
+ *
  * @param {string} token - Token to hash
  * @returns {string} - Hashed token
  */

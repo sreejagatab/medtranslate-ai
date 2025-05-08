@@ -54,7 +54,7 @@ const TRENDS_FILE = process.env.TRENDS_FILE || path.join(ANALYTICS_DIR, 'trends.
 const ANOMALIES_FILE = process.env.ANOMALIES_FILE || path.join(ANALYTICS_DIR, 'anomalies.json');
 const FEEDBACK_DIR = process.env.FEEDBACK_DIR || '../../feedback';
 const DEVICE_ID = process.env.DEVICE_ID || 'dev-edge-device';
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:4001';
 
 // Advanced analytics configuration
 const TREND_ANALYSIS_INTERVAL = parseInt(process.env.TREND_ANALYSIS_INTERVAL || '86400000'); // 24 hours

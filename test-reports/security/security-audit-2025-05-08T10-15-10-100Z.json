@@ -1,0 +1,1408 @@
+{
+  "timestamp": "2025-05-08T10-15-10-100Z",
+  "riskScore": 100,
+  "summary": {
+    "total": 139,
+    "pass": 4,
+    "fail": 0,
+    "manual": 135,
+    "skip": 0,
+    "error": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "results": [
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authentication",
+      "description": "**Multi-factor authentication (MFA)** is implemented for provider accounts",
+      "name": "Multi-factor authentication (MFA)",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authentication",
+      "description": "**Password policies** enforce strong passwords (minimum length, complexity, etc.)",
+      "name": "Password policies",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authentication",
+      "description": "**Account lockout** is implemented after multiple failed login attempts",
+      "name": "Account lockout",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authentication",
+      "description": "**Session management** includes proper timeout and invalidation",
+      "name": "Session management",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authentication",
+      "description": "**JWT tokens** are properly secured with appropriate expiration times",
+      "name": "JWT tokens",
+      "result": "PASS",
+      "severity": "MEDIUM",
+      "details": "JWT tokens have expiration times set.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authentication",
+      "description": "**Refresh token** mechanism is implemented securely",
+      "name": "Refresh token",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authentication",
+      "description": "**Patient session codes** are sufficiently random and single-use",
+      "name": "Patient session codes",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authorization",
+      "description": "**Role-based access control (RBAC)** is implemented for all API endpoints",
+      "name": "Role-based access control (RBAC)",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authorization",
+      "description": "**Principle of least privilege** is enforced for all user roles",
+      "name": "Principle of least privilege",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authorization",
+      "description": "**API endpoints** validate user permissions before processing requests",
+      "name": "API endpoints",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authorization",
+      "description": "**Frontend routes** are protected based on user roles",
+      "name": "Frontend routes",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authorization",
+      "description": "**Resource-level permissions** are enforced (e.g., providers can only access their patients)",
+      "name": "Resource-level permissions",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Authentication and Authorization",
+      "subcategory": "Authorization",
+      "description": "**Administrative functions** are restricted to authorized personnel",
+      "name": "Administrative functions",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data at Rest",
+      "description": "**Database encryption** is implemented for all sensitive data",
+      "name": "Database encryption",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data at Rest",
+      "description": "**S3 bucket encryption** is enabled for all storage buckets",
+      "name": "S3 bucket encryption",
+      "result": "PASS",
+      "severity": "MEDIUM",
+      "details": "S3 bucket encryption is configured.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data at Rest",
+      "description": "**DynamoDB encryption** is enabled for all tables",
+      "name": "DynamoDB encryption",
+      "result": "PASS",
+      "severity": "MEDIUM",
+      "details": "DynamoDB encryption is configured.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data at Rest",
+      "description": "**KMS keys** are properly managed with rotation policies",
+      "name": "KMS keys",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data at Rest",
+      "description": "**Encryption keys** are stored securely and access is restricted",
+      "name": "Encryption keys",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data at Rest",
+      "description": "**Edge device storage** is encrypted",
+      "name": "Edge device storage",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data in Transit",
+      "description": "**TLS 1.2+** is enforced for all API communications",
+      "name": "TLS 1.2+",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "TLS version enforcement could not be automatically verified.",
+      "remediation": "Manually verify TLS version enforcement."
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data in Transit",
+      "description": "**HTTPS** is enforced for all web traffic",
+      "name": "HTTPS",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "HTTPS enforcement could not be automatically verified.",
+      "remediation": "Manually verify HTTPS enforcement."
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data in Transit",
+      "description": "**WebSocket connections** are secured with TLS",
+      "name": "WebSocket connections",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data in Transit",
+      "description": "**API Gateway** is configured with appropriate security policies",
+      "name": "API Gateway",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data in Transit",
+      "description": "**Certificate management** is properly implemented with auto-renewal",
+      "name": "Certificate management",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data in Transit",
+      "description": "**Edge device communications** are encrypted",
+      "name": "Edge device communications",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data Minimization",
+      "description": "**Only necessary data** is collected and stored",
+      "name": "Only necessary data",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data Minimization",
+      "description": "**Data retention policies** are implemented and enforced",
+      "name": "Data retention policies",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data Minimization",
+      "description": "**Automatic data deletion** occurs after retention period expires",
+      "name": "Automatic data deletion",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data Minimization",
+      "description": "**PII/PHI** is properly identified and protected",
+      "name": "PII/PHI",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data Minimization",
+      "description": "**Data anonymization** is implemented where appropriate",
+      "name": "Data anonymization",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Data Protection",
+      "subcategory": "Data Minimization",
+      "description": "**Transcripts** are stored with appropriate security controls",
+      "name": "Transcripts",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "API Security",
+      "description": "**API Gateway** is configured with appropriate throttling",
+      "name": "API Gateway",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "API Security",
+      "description": "**CORS policies** are properly configured",
+      "name": "CORS policies",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "CORS is configured, but requires manual verification of allowed origins.",
+      "remediation": "Verify that CORS policy only allows necessary origins."
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "API Security",
+      "description": "**Input validation** is implemented for all API endpoints",
+      "name": "Input validation",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "API Security",
+      "description": "**Output encoding** is implemented to prevent injection attacks",
+      "name": "Output encoding",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "API Security",
+      "description": "**Rate limiting** is implemented to prevent abuse",
+      "name": "Rate limiting",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "API Security",
+      "description": "**API keys** are properly secured and rotated",
+      "name": "API keys",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "Infrastructure Security",
+      "description": "**VPC configuration** isolates resources appropriately",
+      "name": "VPC configuration",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "Infrastructure Security",
+      "description": "**Security groups** restrict access to necessary ports only",
+      "name": "Security groups",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "Infrastructure Security",
+      "description": "**Network ACLs** provide additional network security",
+      "name": "Network ACLs",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "Infrastructure Security",
+      "description": "**WAF** is configured to protect against common web attacks",
+      "name": "WAF",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "Infrastructure Security",
+      "description": "**DDoS protection** is implemented (e.g., AWS Shield)",
+      "name": "DDoS protection",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Network Security",
+      "subcategory": "Infrastructure Security",
+      "description": "**Infrastructure as Code** security checks are implemented",
+      "name": "Infrastructure as Code",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "Code Security",
+      "description": "**Code obfuscation** is implemented to protect intellectual property",
+      "name": "Code obfuscation",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "Code Security",
+      "description": "**Certificate pinning** is implemented to prevent MITM attacks",
+      "name": "Certificate pinning",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "Code Security",
+      "description": "**Jailbreak/root detection** is implemented",
+      "name": "Jailbreak/root detection",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "Code Security",
+      "description": "**Secure storage** is used for sensitive data (e.g., Keychain, Keystore)",
+      "name": "Secure storage",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "Code Security",
+      "description": "**Memory protection** prevents sensitive data from being stored in memory",
+      "name": "Memory protection",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "Code Security",
+      "description": "**Secure coding practices** are followed (e.g., no hardcoded secrets)",
+      "name": "Secure coding practices",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "App Store Security",
+      "description": "**App permissions** are minimized to only what is necessary",
+      "name": "App permissions",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "No permissions found. Manual verification required.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "App Store Security",
+      "description": "**Privacy policy** is up-to-date and compliant with regulations",
+      "name": "Privacy policy",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "App Store Security",
+      "description": "**Terms of service** are clear and comprehensive",
+      "name": "Terms of service",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "App Store Security",
+      "description": "**App store guidelines** are followed for both iOS and Android",
+      "name": "App store guidelines",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "App Store Security",
+      "description": "**App signing** is properly implemented with secure keys",
+      "name": "App signing",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Mobile Application Security",
+      "subcategory": "App Store Security",
+      "description": "**App updates** are delivered securely",
+      "name": "App updates",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Device Security",
+      "description": "**Secure boot** is implemented for edge devices",
+      "name": "Secure boot",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Device Security",
+      "description": "**Firmware updates** are signed and verified",
+      "name": "Firmware updates",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Device Security",
+      "description": "**Device authentication** is properly implemented",
+      "name": "Device authentication",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Device Security",
+      "description": "**Device authorization** restricts access to authorized users only",
+      "name": "Device authorization",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Device Security",
+      "description": "**Physical security** considerations are documented",
+      "name": "Physical security",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Device Security",
+      "description": "**Tamper detection** is implemented where appropriate",
+      "name": "Tamper detection",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Model Security",
+      "description": "**Model encryption** protects ML models on edge devices",
+      "name": "Model encryption",
+      "result": "PASS",
+      "severity": "MEDIUM",
+      "details": "Model encryption is implemented.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Model Security",
+      "description": "**Model integrity** is verified before use",
+      "name": "Model integrity",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Model Security",
+      "description": "**Model updates** are delivered securely",
+      "name": "Model updates",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Model Security",
+      "description": "**Model access** is restricted to authorized processes",
+      "name": "Model access",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Model Security",
+      "description": "**Inference security** prevents model extraction attacks",
+      "name": "Inference security",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Edge Device Security",
+      "subcategory": "Model Security",
+      "description": "**Model versioning** is properly tracked and managed",
+      "name": "Model versioning",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Logging",
+      "description": "**Centralized logging** is implemented for all components",
+      "name": "Centralized logging",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "Logging is implemented using: AWS CloudWatch logging, Centralized logging. Centralization requires manual verification.",
+      "remediation": "Verify that logs are centralized and properly managed."
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Logging",
+      "description": "**Log retention** policies comply with regulations",
+      "name": "Log retention",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Logging",
+      "description": "**Sensitive data** is not logged (e.g., PHI, PII, credentials)",
+      "name": "Sensitive data",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Logging",
+      "description": "**Log integrity** is protected against tampering",
+      "name": "Log integrity",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Logging",
+      "description": "**Log format** is standardized across all components",
+      "name": "Log format",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Logging",
+      "description": "**Log levels** are appropriate for each environment",
+      "name": "Log levels",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Monitoring",
+      "description": "**Real-time monitoring** is implemented for security events",
+      "name": "Real-time monitoring",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Monitoring",
+      "description": "**Alerting** is configured for suspicious activities",
+      "name": "Alerting",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Monitoring",
+      "description": "**Metrics collection** provides visibility into system health",
+      "name": "Metrics collection",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Monitoring",
+      "description": "**Anomaly detection** identifies unusual patterns",
+      "name": "Anomaly detection",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Monitoring",
+      "description": "**Dashboard** provides security overview",
+      "name": "Dashboard",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Logging and Monitoring",
+      "subcategory": "Monitoring",
+      "description": "**Incident response** procedures are documented and tested",
+      "name": "Incident response",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "HIPAA Compliance",
+      "description": "**Business Associate Agreements (BAAs)** are in place with all vendors",
+      "name": "Business Associate Agreements (BAAs)",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "HIPAA Compliance",
+      "description": "**Risk assessment** is conducted regularly",
+      "name": "Risk assessment",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "HIPAA Compliance",
+      "description": "**Security policies** are documented and followed",
+      "name": "Security policies",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "HIPAA Compliance",
+      "description": "**Employee training** is conducted regularly",
+      "name": "Employee training",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "HIPAA Compliance",
+      "description": "**Audit controls** are implemented",
+      "name": "Audit controls",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "HIPAA Compliance",
+      "description": "**Contingency plans** are documented and tested",
+      "name": "Contingency plans",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "GDPR Compliance",
+      "description": "**Data Processing Agreements (DPAs)** are in place with all processors",
+      "name": "Data Processing Agreements (DPAs)",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "GDPR Compliance",
+      "description": "**Privacy by design** principles are followed",
+      "name": "Privacy by design",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "GDPR Compliance",
+      "description": "**Data subject rights** are implemented (access, rectification, erasure, etc.)",
+      "name": "Data subject rights",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "GDPR Compliance",
+      "description": "**Consent management** is properly implemented",
+      "name": "Consent management",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "GDPR Compliance",
+      "description": "**Data Protection Impact Assessment (DPIA)** is conducted",
+      "name": "Data Protection Impact Assessment (DPIA)",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "GDPR Compliance",
+      "description": "**Data breach notification** procedures are documented",
+      "name": "Data breach notification",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "Other Regulations",
+      "description": "**CCPA/CPRA** compliance is implemented for California residents",
+      "name": "CCPA/CPRA",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "Other Regulations",
+      "description": "**LGPD** compliance is implemented for Brazilian users",
+      "name": "LGPD",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "Other Regulations",
+      "description": "**PIPEDA** compliance is implemented for Canadian users",
+      "name": "PIPEDA",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "Other Regulations",
+      "description": "**Industry-specific regulations** are identified and addressed",
+      "name": "Industry-specific regulations",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "Other Regulations",
+      "description": "**International data transfer** mechanisms are compliant",
+      "name": "International data transfer",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Compliance",
+      "subcategory": "Other Regulations",
+      "description": "**Regular compliance reviews** are conducted",
+      "name": "Regular compliance reviews",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Preparation",
+      "description": "**Incident response plan** is documented and up-to-date",
+      "name": "Incident response plan",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Preparation",
+      "description": "**Roles and responsibilities** are clearly defined",
+      "name": "Roles and responsibilities",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Preparation",
+      "description": "**Contact information** is current and accessible",
+      "name": "Contact information",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Preparation",
+      "description": "**Communication templates** are prepared",
+      "name": "Communication templates",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Preparation",
+      "description": "**Escalation procedures** are documented",
+      "name": "Escalation procedures",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Preparation",
+      "description": "**Training exercises** are conducted regularly",
+      "name": "Training exercises",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Detection and Analysis",
+      "description": "**Monitoring systems** are in place to detect incidents",
+      "name": "Monitoring systems",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Detection and Analysis",
+      "description": "**Alert thresholds** are properly configured",
+      "name": "Alert thresholds",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Detection and Analysis",
+      "description": "**Incident classification** criteria are defined",
+      "name": "Incident classification",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Detection and Analysis",
+      "description": "**Forensic capabilities** are available",
+      "name": "Forensic capabilities",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Detection and Analysis",
+      "description": "**Analysis procedures** are documented",
+      "name": "Analysis procedures",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Detection and Analysis",
+      "description": "**Evidence collection** procedures preserve chain of custody",
+      "name": "Evidence collection",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Containment and Eradication",
+      "description": "**Containment strategies** are documented for different types of incidents",
+      "name": "Containment strategies",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Containment and Eradication",
+      "description": "**System isolation** procedures are defined",
+      "name": "System isolation",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Containment and Eradication",
+      "description": "**Malware removal** procedures are documented",
+      "name": "Malware removal",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Containment and Eradication",
+      "description": "**Vulnerability patching** processes are defined",
+      "name": "Vulnerability patching",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Containment and Eradication",
+      "description": "**Service restoration** procedures prioritize security",
+      "name": "Service restoration",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Containment and Eradication",
+      "description": "**Root cause analysis** procedures are documented",
+      "name": "Root cause analysis",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Recovery and Post-Incident",
+      "description": "**Recovery procedures** are documented and tested",
+      "name": "Recovery procedures",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Recovery and Post-Incident",
+      "description": "**Data restoration** procedures maintain integrity",
+      "name": "Data restoration",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Recovery and Post-Incident",
+      "description": "**System hardening** is performed before returning to production",
+      "name": "System hardening",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Recovery and Post-Incident",
+      "description": "**Post-incident review** process is defined",
+      "name": "Post-incident review",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Recovery and Post-Incident",
+      "description": "**Lessons learned** are documented and implemented",
+      "name": "Lessons learned",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Incident Response",
+      "subcategory": "Recovery and Post-Incident",
+      "description": "**Incident documentation** is comprehensive and secure",
+      "name": "Incident documentation",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Pre-Audit",
+      "description": "**Audit scope** is clearly defined",
+      "name": "Audit scope",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Pre-Audit",
+      "description": "**Audit team** is identified and has necessary skills",
+      "name": "Audit team",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Pre-Audit",
+      "description": "**Audit schedule** is communicated to stakeholders",
+      "name": "Audit schedule",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Pre-Audit",
+      "description": "**Audit tools** are selected and configured",
+      "name": "Audit tools",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Pre-Audit",
+      "description": "**Documentation** is gathered and reviewed",
+      "name": "Documentation",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Pre-Audit",
+      "description": "**Environment access** is provisioned for auditors",
+      "name": "Environment access",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "During Audit",
+      "description": "**Regular status updates** are provided to stakeholders",
+      "name": "Regular status updates",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "During Audit",
+      "description": "**Issues are documented** with clear severity ratings",
+      "name": "Issues are documented",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "During Audit",
+      "description": "**Evidence is collected** for all findings",
+      "name": "Evidence is collected",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "During Audit",
+      "description": "**Remediation guidance** is provided for issues",
+      "name": "Remediation guidance",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "During Audit",
+      "description": "**Communication channels** are established for questions",
+      "name": "Communication channels",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "During Audit",
+      "description": "**Interim reports** are provided as needed",
+      "name": "Interim reports",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Post-Audit",
+      "description": "**Final report** is comprehensive and clear",
+      "name": "Final report",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Post-Audit",
+      "description": "**Executive summary** highlights key findings",
+      "name": "Executive summary",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Post-Audit",
+      "description": "**Remediation plan** is developed with priorities",
+      "name": "Remediation plan",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Post-Audit",
+      "description": "**Follow-up schedule** is established",
+      "name": "Follow-up schedule",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Post-Audit",
+      "description": "**Lessons learned** are documented",
+      "name": "Lessons learned",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    },
+    {
+      "category": "Security Audit Execution",
+      "subcategory": "Post-Audit",
+      "description": "**Continuous improvement** process is established",
+      "name": "Continuous improvement",
+      "result": "MANUAL CHECK REQUIRED",
+      "severity": "MEDIUM",
+      "details": "This check requires manual verification.",
+      "remediation": ""
+    }
+  ]
+}

@@ -30,7 +30,7 @@ const healthCheckRoutes = require('./routes/health-check-routes');
 
 // Create Express app
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 4001;
 
 // Middleware
 app.use(cors({

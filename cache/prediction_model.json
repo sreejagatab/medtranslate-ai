@@ -8,10 +8,10 @@
         "pediatrics": 0.25,
         "general": 0.25
       },
-      "recency": 1.0047618101851852,
-      "timeScore": 0.02857142857142857,
+      "recency": 0.9657069776234568,
+      "timeScore": 0,
       "probability": 0.05714285714285714,
-      "combinedScore": 0.42761900978835976
+      "combinedScore": 0.40342564819223986
     },
     "ja-zh": {
       "count": 2,
@@ -20,10 +20,10 @@
         "cardiology": 0.5,
         "neurology": 0.5
       },
-      "recency": 1.0103362700617284,
-      "timeScore": 0.014285714285714285,
+      "recency": 0.9712814375,
+      "timeScore": 0,
       "probability": 0.02857142857142857,
-      "combinedScore": 0.41699165088183426
+      "combinedScore": 0.3970840035714286
     },
     "de-en": {
       "count": 5,
@@ -33,10 +33,10 @@
         "oncology": 0.4,
         "neurology": 0.4
       },
-      "recency": 1.0011962237654322,
-      "timeScore": 0.1607142857142857,
+      "recency": 0.9621413915895062,
+      "timeScore": 0,
       "probability": 0.07142857142857142,
-      "combinedScore": 0.47012134664903
+      "combinedScore": 0.4062851280643739
     },
     "zh-en": {
       "count": 2,
@@ -45,10 +45,10 @@
         "pediatrics": 0.5,
         "cardiology": 0.5
       },
-      "recency": 1.0032764706790123,
-      "timeScore": 0.014285714285714285,
+      "recency": 0.9642216385030864,
+      "timeScore": 0,
       "probability": 0.02857142857142857,
-      "combinedScore": 0.4141677311287478
+      "combinedScore": 0.39426008397266316
     },
     "zh-es": {
       "count": 2,
@@ -57,10 +57,10 @@
         "pediatrics": 0.5,
         "general": 0.5
       },
-      "recency": 0.9962853441358025,
-      "timeScore": 0.014285714285714285,
+      "recency": 0.9572305119598765,
+      "timeScore": 0,
       "probability": 0.02857142857142857,
-      "combinedScore": 0.4113712805114639
+      "combinedScore": 0.3914636333553792
     },
     "fr-en": {
       "count": 6,
@@ -71,10 +71,10 @@
         "neurology": 0.16666666666666666,
         "general": 0.16666666666666666
       },
-      "recency": 1.0191017021604938,
-      "timeScore": 0.04285714285714286,
+      "recency": 0.9800468695987654,
+      "timeScore": 0,
       "probability": 0.08571428571428572,
-      "combinedScore": 0.44621210943562606
+      "combinedScore": 0.4177330335537919
     },
     "en-fr": {
       "count": 3,
@@ -83,10 +83,10 @@
         "cardiology": 0.6666666666666666,
         "neurology": 0.3333333333333333
       },
-      "recency": 1.014451625,
-      "timeScore": 0.02142857142857143,
+      "recency": 0.9753967924382716,
+      "timeScore": 0,
       "probability": 0.04285714285714286,
-      "combinedScore": 0.4250663642857143
+      "combinedScore": 0.40301585983245153
     },
     "zh-ja": {
       "count": 5,
@@ -96,10 +96,10 @@
         "oncology": 0.4,
         "general": 0.4
       },
-      "recency": 1.0103571033950618,
-      "timeScore": 0.03571428571428571,
+      "recency": 0.9713022708333333,
+      "timeScore": 0,
       "probability": 0.07142857142857142,
-      "combinedScore": 0.4362856985008819
+      "combinedScore": 0.40994947976190477
     },
     "de-zh": {
       "count": 1,
@@ -107,10 +107,10 @@
       "contexts": {
         "pediatrics": 1
       },
-      "recency": 0.9935681373456791,
-      "timeScore": 0.007142857142857143,
+      "recency": 0.9545133051697531,
+      "timeScore": 0,
       "probability": 0.014285714285714285,
-      "combinedScore": 0.4038558263668431
+      "combinedScore": 0.3860910363536155
     },
     "en-es": {
       "count": 13,
@@ -119,10 +119,10 @@
         "oncology": 0.07692307692307693,
         "cardiology": 0.9230769230769231
       },
-      "recency": 0.9966600219907408,
-      "timeScore": 0.09285714285714286,
+      "recency": 0.9576051894290123,
+      "timeScore": 0,
       "probability": 0.18571428571428572,
-      "combinedScore": 0.4822354373677249
+      "combinedScore": 0.43875636148589064
     },
     "en-zh": {
       "count": 2,
@@ -130,10 +130,10 @@
       "contexts": {
         "neurology": 1
       },
-      "recency": 1.0121607299382716,
-      "timeScore": 0.1392857142857143,
+      "recency": 0.9731058973765432,
+      "timeScore": 0,
       "probability": 0.02857142857142857,
-      "combinedScore": 0.4552214348324515
+      "combinedScore": 0.3978137875220459
     },
     "fr-zh": {
       "count": 2,
@@ -142,10 +142,10 @@
         "neurology": 0.5,
         "oncology": 0.5
       },
-      "recency": 1.0193343410493827,
-      "timeScore": 0.1392857142857143,
+      "recency": 0.9802795084876543,
+      "timeScore": 0,
       "probability": 0.02857142857142857,
-      "combinedScore": 0.45809087927689596
+      "combinedScore": 0.4006832319664903
     },
     "ja-fr": {
       "count": 2,
@@ -153,10 +153,10 @@
       "contexts": {
         "pediatrics": 1
       },
-      "recency": 1.0098590324074075,
-      "timeScore": 0.1392857142857143,
+      "recency": 0.970804199845679,
+      "timeScore": 0,
       "probability": 0.02857142857142857,
-      "combinedScore": 0.4543007558201059
+      "combinedScore": 0.39689310850970017
     },
     "zh-fr": {
       "count": 2,
@@ -164,10 +164,10 @@
       "contexts": {
         "cardiology": 1
       },
-      "recency": 1.010102087962963,
-      "timeScore": 0.014285714285714285,
+      "recency": 0.9710472554012346,
+      "timeScore": 0,
       "probability": 0.02857142857142857,
-      "combinedScore": 0.41689797804232803
+      "combinedScore": 0.3969903307319224
     },
     "ja-de": {
       "count": 3,
@@ -176,10 +176,10 @@
         "cardiology": 0.6666666666666666,
         "general": 0.3333333333333333
       },
-      "recency": 1.0181302515432098,
-      "timeScore": 0.02142857142857143,
+      "recency": 0.9790754189814814,
+      "timeScore": 0,
       "probability": 0.04285714285714286,
-      "combinedScore": 0.42653781490299825
+      "combinedScore": 0.40448731044973546
     },
     "ja-en": {
       "count": 4,
@@ -189,10 +189,10 @@
         "general": 0.25,
         "cardiology": 0.25
       },
-      "recency": 1.0113115787037037,
-      "timeScore": 0.02857142857142857,
+      "recency": 0.9722567461419753,
+      "timeScore": 0.25,
       "probability": 0.05714285714285714,
-      "combinedScore": 0.4302389171957672
+      "combinedScore": 0.4810455555996473
     },
     "en-ja": {
       "count": 3,
@@ -202,10 +202,10 @@
         "neurology": 0.3333333333333333,
         "cardiology": 0.3333333333333333
       },
-      "recency": 1.0114238472222221,
-      "timeScore": 0.02142857142857143,
+      "recency": 0.9723690146604939,
+      "timeScore": 0,
       "probability": 0.04285714285714286,
-      "combinedScore": 0.42385525317460315
+      "combinedScore": 0.4018047487213404
     },
     "de-ja": {
       "count": 1,
@@ -213,10 +213,10 @@
       "contexts": {
         "pediatrics": 1
       },
-      "recency": 1.0037000817901234,
-      "timeScore": 0.007142857142857143,
+      "recency": 0.9646452496141975,
+      "timeScore": 0,
       "probability": 0.014285714285714285,
-      "combinedScore": 0.4079086041446208
+      "combinedScore": 0.3901438141313933
     },
     "fr-ja": {
       "count": 3,
@@ -225,10 +225,10 @@
         "general": 0.6666666666666666,
         "pediatrics": 0.3333333333333333
       },
-      "recency": 1.0085858842592592,
-      "timeScore": 0.02142857142857143,
+      "recency": 0.9695310516975308,
+      "timeScore": 0,
       "probability": 0.04285714285714286,
-      "combinedScore": 0.422720067989418
+      "combinedScore": 0.4006695635361552
     },
     "zh-de": {
       "count": 1,
@@ -236,10 +236,10 @@
       "contexts": {
         "oncology": 1
       },
-      "recency": 1.0059080293209877,
-      "timeScore": 0.007142857142857143,
+      "recency": 0.9668531967592593,
+      "timeScore": 0.25,
       "probability": 0.014285714285714285,
-      "combinedScore": 0.4087917831569665
+      "combinedScore": 0.466026992989418
     },
     "de-es": {
       "count": 1,
@@ -247,10 +247,10 @@
       "contexts": {
         "oncology": 1
       },
-      "recency": 1.0076869645061728,
-      "timeScore": 0.007142857142857143,
+      "recency": 0.9686321319444444,
+      "timeScore": 0,
       "probability": 0.014285714285714285,
-      "combinedScore": 0.4095033572310406
+      "combinedScore": 0.3917385670634921
     },
     "fr-de": {
       "count": 1,
@@ -258,10 +258,10 @@
       "contexts": {
         "pediatrics": 1
       },
-      "recency": 1.0082351898148147,
-      "timeScore": 0.007142857142857143,
+      "recency": 0.9691803572530864,
+      "timeScore": 0,
       "probability": 0.014285714285714285,
-      "combinedScore": 0.40972264735449737
+      "combinedScore": 0.39195785718694887
     },
     "es-de": {
       "count": 1,
@@ -269,10 +269,10 @@
       "contexts": {
         "pediatrics": 1
       },
-      "recency": 1.0115021651234568,
-      "timeScore": 0.007142857142857143,
+      "recency": 0.9724473325617284,
+      "timeScore": 0,
       "probability": 0.014285714285714285,
-      "combinedScore": 0.4110294374779542
+      "combinedScore": 0.39326464731040567
     },
     "fr-es": {
       "count": 1,
@@ -280,10 +280,10 @@
       "contexts": {
         "pediatrics": 1
       },
-      "recency": 1.0182205293209876,
-      "timeScore": 0.007142857142857143,
+      "recency": 0.9791656967592592,
+      "timeScore": 0,
       "probability": 0.014285714285714285,
-      "combinedScore": 0.4137167831569665
+      "combinedScore": 0.395951992989418
     }
   },
   "contexts": {
@@ -2648,11 +2648,11 @@
       0,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
       1,
-      0,
-      0,
-      0,
-      0,
       0,
       0,
       0,
@@ -2676,5 +2676,5 @@
     "offlinePreparationThreshold": 0.6,
     "compressionThreshold": 1024
   },
-  "lastUpdated": 1746608434388
+  "lastUpdated": 1746709664513
 }

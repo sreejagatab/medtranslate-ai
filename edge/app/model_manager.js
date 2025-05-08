@@ -18,6 +18,7 @@ const MODEL_DIR = process.env.MODEL_DIR || path.join(__dirname, '../../models');
 const CONFIG_DIR = process.env.CONFIG_DIR || path.join(__dirname, '../../config');
 const MODEL_MANIFEST_FILE = path.join(MODEL_DIR, 'manifest.json');
 const DEVICE_CONFIG_FILE = path.join(CONFIG_DIR, 'device_capabilities.json');
+const MOCK_MODE = process.env.MOCK_MODE === 'true' || true; // Enable mock mode by default for testing
 
 // Model registry
 let modelRegistry = {};
@@ -419,6 +420,18 @@ function getModel(sourceLanguage, targetLanguage) {
  * @returns {Array<Object>} - Array of supported language pairs
  */
 function getSupportedLanguagePairs() {
+  // If in mock mode, return mock language pairs
+  if (MOCK_MODE) {
+    return [
+      { sourceLanguage: 'en', targetLanguage: 'es', model: 'mock-model-en-es.bin' },
+      { sourceLanguage: 'es', targetLanguage: 'en', model: 'mock-model-es-en.bin' },
+      { sourceLanguage: 'en', targetLanguage: 'fr', model: 'mock-model-en-fr.bin' },
+      { sourceLanguage: 'fr', targetLanguage: 'en', model: 'mock-model-fr-en.bin' },
+      { sourceLanguage: 'en', targetLanguage: 'de', model: 'mock-model-en-de.bin' },
+      { sourceLanguage: 'de', targetLanguage: 'en', model: 'mock-model-de-en.bin' }
+    ];
+  }
+
   return Object.keys(modelRegistry).map(key => {
     const [sourceLanguage, targetLanguage] = key.split('-');
     return {
@@ -437,6 +450,14 @@ function getSupportedLanguagePairs() {
  * @returns {boolean} - Whether the language pair is supported
  */
 function isLanguagePairSupported(sourceLanguage, targetLanguage) {
+  // If in mock mode, support common language pairs
+  if (MOCK_MODE) {
+    const supportedPairs = [
+      'en-es', 'es-en', 'en-fr', 'fr-en', 'en-de', 'de-en'
+    ];
+    return supportedPairs.includes(`${sourceLanguage}-${targetLanguage}`);
+  }
+
   return getModel(sourceLanguage, targetLanguage) !== null;
 }
 
@@ -453,6 +474,12 @@ function isLanguagePairSupported(sourceLanguage, targetLanguage) {
 async function translateText(text, sourceLanguage, targetLanguage, context = 'general', useMedicalTerminology = true) {
   if (!isInitialized) {
     await initialize();
+  }
+
+  // If in mock mode, return mock translation
+  if (MOCK_MODE) {
+    console.log(`Using mock translation for ${sourceLanguage} to ${targetLanguage}`);
+    return mockTranslate(text, sourceLanguage, targetLanguage, context);
   }
 
   const model = getModel(sourceLanguage, targetLanguage);
@@ -947,6 +974,80 @@ function translateWithTerminologyExport(text, sourceLanguage, targetLanguage, co
   return translateWithTerminology(text, sourceLanguage, targetLanguage, context);
 }
 
+/**
+ * Mock translation function for testing
+ *
+ * @param {string} text - Text to translate
+ * @param {string} sourceLanguage - Source language code
+ * @param {string} targetLanguage - Target language code
+ * @param {string} context - Medical context
+ * @returns {Promise<Object>} - Translation result
+ */
+function mockTranslate(text, sourceLanguage, targetLanguage, context = 'general') {
+  // Mock translations for testing
+  const translations = {
+    'en_es': {
+      'I have a headache': 'Tengo dolor de cabeza',
+      'My chest hurts when I breathe': 'Me duele el pecho cuando respiro',
+      'I\'m allergic to penicillin': 'Soy alérgico a la penicilina',
+      'I need to check my blood sugar': 'Necesito revisar mi nivel de azúcar en la sangre',
+      'I\'ve been feeling dizzy': 'Me he estado sintiendo mareado',
+      'I have a fever': 'Tengo fiebre',
+      'My throat hurts': 'Me duele la garganta',
+      'I feel dizzy': 'Me siento mareado'
+    },
+    'en_fr': {
+      'I have a headache': 'J\'ai mal à la tête',
+      'My chest hurts when I breathe': 'Ma poitrine me fait mal quand je respire',
+      'I\'m allergic to penicillin': 'Je suis allergique à la pénicilline',
+      'I need to check my blood sugar': 'Je dois vérifier ma glycémie',
+      'I\'ve been feeling dizzy': 'Je me sens étourdi',
+      'I have a fever': 'J\'ai de la fièvre',
+      'My throat hurts': 'J\'ai mal à la gorge',
+      'I feel dizzy': 'Je me sens étourdi'
+    }
+  };
+
+  // Create language pair key
+  const langPair = `${sourceLanguage}_${targetLanguage}`;
+
+  // Get translation or generate a mock one
+  let translatedText;
+  if (langPair in translations && text in translations[langPair]) {
+    translatedText = translations[langPair][text];
+  } else {
+    // For unknown text, just add a prefix to simulate translation
+    const prefixes = {
+      'es': 'ES: ',
+      'fr': 'FR: ',
+      'de': 'DE: ',
+      'it': 'IT: ',
+      'pt': 'PT: ',
+      'zh': 'ZH: ',
+      'ja': 'JA: ',
+      'ru': 'RU: '
+    };
+    const prefix = prefixes[targetLanguage] || `${targetLanguage}: `;
+    translatedText = `${prefix}${text}`;
+  }
+
+  // Add a small delay to simulate processing time
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({
+        originalText: text,
+        translatedText: translatedText,
+        confidence: 'high',
+        sourceLanguage,
+        targetLanguage,
+        context,
+        processingTime: Math.random() * 100 + 50, // 50-150ms
+        timestamp: new Date().toISOString()
+      });
+    }, 100);
+  });
+}
+
 module.exports = {
   initialize,
   getModel,
@@ -955,5 +1056,6 @@ module.exports = {
   translateText,
   translateWithTerminology: translateWithTerminologyExport,
   applyMedicalTerminology,
-  registerMedicalTerminology
+  registerMedicalTerminology,
+  mockTranslate
 };
